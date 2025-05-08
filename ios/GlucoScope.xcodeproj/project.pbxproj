@@ -20,7 +20,6 @@
 		2B1C9E8D2D5A518C00CA7861 /* DataSourceConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E8C2D5A518C00CA7861 /* DataSourceConfiguration.swift */; };
 		2B2854012D57A2CE009E86E9 /* GlucoScopeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854002D57A2CE009E86E9 /* GlucoScopeApp.swift */; };
 		2B2854032D57A2CE009E86E9 /* ColoredLineGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854022D57A2CE009E86E9 /* ColoredLineGraph.swift */; };
-		2B2854052D57A2D0009E86E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2B2854042D57A2D0009E86E9 /* Assets.xcassets */; };
 		2B2854102D57A40E009E86E9 /* Calendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B28540F2D57A40E009E86E9 /* Calendar.swift */; };
 		2B2854122D57A718009E86E9 /* GlucoseMeasurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854112D57A718009E86E9 /* GlucoseMeasurement.swift */; };
 		2B2854142D57B4BC009E86E9 /* SugarScopeDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854132D57B4BC009E86E9 /* SugarScopeDataSource.swift */; };
@@ -75,7 +74,6 @@
 		2B2853FD2D57A2CE009E86E9 /* GlucoScope.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlucoScope.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B2854002D57A2CE009E86E9 /* GlucoScopeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoScopeApp.swift; sourceTree = "<group>"; };
 		2B2854022D57A2CE009E86E9 /* ColoredLineGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColoredLineGraph.swift; sourceTree = "<group>"; };
-		2B2854042D57A2D0009E86E9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2B28540F2D57A40E009E86E9 /* Calendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Calendar.swift; sourceTree = "<group>"; };
 		2B2854112D57A718009E86E9 /* GlucoseMeasurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseMeasurement.swift; sourceTree = "<group>"; };
 		2B2854132D57B4BC009E86E9 /* SugarScopeDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SugarScopeDataSource.swift; sourceTree = "<group>"; };
@@ -91,7 +89,6 @@
 		2B4BAB532DAAB91E00D81158 /* PreferenceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceStorage.swift; sourceTree = "<group>"; };
 		2B4ED5BB2DA9507B00ADE664 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		2B514CE72DB3A8FE00AC5A6A /* ThemeSwatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSwatch.swift; sourceTree = "<group>"; };
-		2B64B9782D75EF0400F0BC14 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B64B9792D787BFE00F0BC14 /* IndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorView.swift; sourceTree = "<group>"; };
 		2B64B97D2D7880FF00F0BC14 /* RealtimeDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeDataService.swift; sourceTree = "<group>"; };
 		2B7667532DB28605008A2009 /* ConnectionSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionSettingsView.swift; sourceTree = "<group>"; };
@@ -116,8 +113,18 @@
 		2BAA50FD2DAE9883003981B0 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2B60086C2DCCE893006FDFEB /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2B2853FC2D57A2CE009E86E9 /* GlucoScope */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2BAA51032DAE9B97003981B0 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
+		2BAA51032DAE9B97003981B0 /* Resources */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2B60086C2DCCE893006FDFEB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Resources; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -220,8 +227,6 @@
 				2B1C9E8E2D5A522C00CA7861 /* Service */,
 				2B1C9E782D5A15B000CA7861 /* View */,
 				2B2854002D57A2CE009E86E9 /* GlucoScopeApp.swift */,
-				2B64B9782D75EF0400F0BC14 /* Info.plist */,
-				2B2854042D57A2D0009E86E9 /* Assets.xcassets */,
 			);
 			path = GlucoScope;
 			sourceTree = "<group>";
@@ -348,7 +353,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2B2854052D57A2D0009E86E9 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -541,12 +545,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = GlucoScope/Info.plist;
+				INFOPLIST_FILE = GlucoScope/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GlucoScope;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -574,12 +578,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = GlucoScope/Info.plist;
+				INFOPLIST_FILE = GlucoScope/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GlucoScope;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
