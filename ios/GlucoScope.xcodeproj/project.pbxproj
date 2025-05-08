@@ -197,7 +197,7 @@
 			isa = PBXGroup;
 			children = (
 				2B2853FE2D57A2CE009E86E9 /* Products */,
-				2B2853FF2D57A2CE009E86E9 /* SugarScope */,
+				2B2853FF2D57A2CE009E86E9 /* GlucoScope */,
 			);
 			sourceTree = "<group>";
 		};
@@ -209,7 +209,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		2B2853FF2D57A2CE009E86E9 /* SugarScope */ = {
+		2B2853FF2D57A2CE009E86E9 /* GlucoScope */ = {
 			isa = PBXGroup;
 			children = (
 				2BAA51032DAE9B97003981B0 /* Resources */,
@@ -223,7 +223,7 @@
 				2B64B9782D75EF0400F0BC14 /* Info.plist */,
 				2B2854042D57A2D0009E86E9 /* Assets.xcassets */,
 			);
-			path = SugarScope;
+			path = GlucoScope;
 			sourceTree = "<group>";
 		};
 		2B28540E2D57A3FF009E86E9 /* Extension */ = {
@@ -325,7 +325,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 2B2853F82D57A2CE009E86E9 /* Build configuration list for PBXProject "SugarScope" */;
+			buildConfigurationList = 2B2853F82D57A2CE009E86E9 /* Build configuration list for PBXProject "GlucoScope" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -542,11 +542,11 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"SugarScope/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SugarScope/Info.plist;
+				INFOPLIST_FILE = GlucoScope/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GlucoScope;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -575,11 +575,11 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"SugarScope/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SugarScope/Info.plist;
+				INFOPLIST_FILE = GlucoScope/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GlucoScope;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -603,7 +603,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2B2853F82D57A2CE009E86E9 /* Build configuration list for PBXProject "SugarScope" */ = {
+		2B2853F82D57A2CE009E86E9 /* Build configuration list for PBXProject "GlucoScope" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2B2854092D57A2D0009E86E9 /* Debug */,

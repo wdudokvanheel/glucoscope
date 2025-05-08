@@ -18,7 +18,7 @@
                BlueprintIdentifier = "2B2853FC2D57A2CE009E86E9"
                BuildableName = "GlucoScope.app"
                BlueprintName = "GlucoScope"
-               ReferencedContainer = "container:SugarScope.xcodeproj">
+               ReferencedContainer = "container:GlucoScope.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "2B2853FC2D57A2CE009E86E9"
             BuildableName = "GlucoScope.app"
             BlueprintName = "GlucoScope"
-            ReferencedContainer = "container:SugarScope.xcodeproj">
+            ReferencedContainer = "container:GlucoScope.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "2B2853FC2D57A2CE009E86E9"
             BuildableName = "GlucoScope.app"
             BlueprintName = "GlucoScope"
-            ReferencedContainer = "container:SugarScope.xcodeproj">
+            ReferencedContainer = "container:GlucoScope.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
