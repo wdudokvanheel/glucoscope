@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
     );
 
     start_libre_link_sync(influx_client.clone(), &settings).await;
-    webserver::start_server(influx_client.clone());
+    webserver::start_server(influx_client.clone(), settings.api_token);
 
     tokio::signal::ctrl_c()
         .await

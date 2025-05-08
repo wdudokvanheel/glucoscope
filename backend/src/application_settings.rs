@@ -21,6 +21,7 @@ pub struct ApplicationSettings {
     pub influx_url: String,
     pub influx_db: String,
     pub influx_token: String,
+    pub api_token: Option<String>,
 }
 
 impl ApplicationSettings {

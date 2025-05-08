@@ -1,0 +1,7 @@
+librelink_username = "user@domain.com"
+librelink_password = "plaintextpassword"
+librelink_realm = "EU"
+influx_url = "http://<ip>:<port>"
+influx_db = "sugarscope"
+influx_token = "token"
+api_token = "token"
