@@ -29,7 +29,7 @@ impl ApplicationSettings {
         let mut config_builder: Option<ConfigBuilder<DefaultState>> = None;
 
         // Check for a user-specified config file from the CARECHORDS_CONF environment variable
-        if let Ok(custom_conf) = env::var("SUGARSCOPE_CONF") {
+        if let Ok(custom_conf) = env::var("GLUCOSCOPE_CONF") {
             let path = Path::new(&custom_conf);
             if path.exists() {
                 config_builder = Some(
@@ -37,17 +37,17 @@ impl ApplicationSettings {
                 );
             } else {
                 anyhow::bail!(
-                    "The configuration file specified in SUGARSCOPE_CONF does not exist: {}",
+                    "The configuration file specified in GLUCOSCOPE_CONF does not exist: {}",
                     custom_conf
                 );
             }
         } else {
-            // Search in standard locations if SUGARSCOPE_CONF is not set
+            // Search in standard locations if GLUCOSCOPE_CONF is not set
             let config_paths = [
-                "/sugarscope.toml",
-                "/etc/sugarscope.toml",
-                "/usr/local/etc/sugarscope.toml",
-                "/opt/sugarscope/sugarscope.toml",
+                "/glucoscope.toml",
+                "/etc/glucoscope.toml",
+                "/usr/local/etc/glucoscope.toml",
+                "/opt/glucoscope/glucoscope.toml",
             ];
 
             for path in &config_paths {

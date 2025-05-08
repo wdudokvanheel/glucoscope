@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
         .init()
         .expect("Failed to init logger");
 
-    log::info!("Starting SugarScope v{}", env!("CARGO_PKG_VERSION"));
+    log::info!("Starting GlucoScope v{}", env!("CARGO_PKG_VERSION"));
 
     let settings = ApplicationSettings::load().context("Failed to load settings")?;
 
