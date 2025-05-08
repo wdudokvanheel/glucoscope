@@ -57,7 +57,7 @@ struct ConnectionTestView: View {
                         }
 
                         if model.testSuccessful {
-                            ThemedButton("Start using \(SugarScopeApp.APP_NAME)", model.completeWizard)
+                            ThemedButton("Start using \(GlucoScopeApp.APP_NAME)", model.completeWizard)
                         }
                         else {
                             ThemedButton("Test again", model.testConnection)
@@ -72,7 +72,7 @@ struct ConnectionTestView: View {
         .foregroundStyle(prefs.theme.textColor)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(SugarScopeApp.APP_NAME)
+                Text(GlucoScopeApp.APP_NAME)
                     .minimumScaleFactor(0.5)
                     .font(.title)
                     .foregroundStyle(prefs.theme.textColor)

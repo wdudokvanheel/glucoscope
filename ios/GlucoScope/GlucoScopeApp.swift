@@ -1,8 +1,11 @@
 import SwiftUI
 
 @main
-struct SugarScopeApp: App {
+struct GlucoScopeApp: App {
     public static let APP_NAME = "GlucoScope"
+    public static let URL_LICENSE = "https://wdudokvanheel.github.io/glucoscope/license.html"
+    public static let URL_PRIVACY = "https://wdudokvanheel.github.io/glucoscope/privacy.html"
+    
 
     private let preferences: PreferenceService
     private let dataService: DataSourceService

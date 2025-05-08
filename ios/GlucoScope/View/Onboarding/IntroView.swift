@@ -17,7 +17,7 @@ struct IntroView: View {
 
                 ThemedSection {
                     VStack(alignment: .leading) {
-                        Text("Welcome to \(SugarScopeApp.APP_NAME)")
+                        Text("Welcome to \(GlucoScopeApp.APP_NAME)")
                             .font(.title)
                             .fontWeight(.semibold)
 

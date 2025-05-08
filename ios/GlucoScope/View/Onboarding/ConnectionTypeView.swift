@@ -59,7 +59,7 @@ struct ConnectionTypeView: View {
         .foregroundStyle(prefs.theme.textColor)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(SugarScopeApp.APP_NAME)
+                Text(GlucoScopeApp.APP_NAME)
                     .minimumScaleFactor(0.5)
                     .font(.title)
                     .foregroundStyle(prefs.theme.textColor)

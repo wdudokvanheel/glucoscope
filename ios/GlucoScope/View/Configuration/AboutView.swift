@@ -29,7 +29,7 @@ struct AboutView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // App name & version
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(SugarScopeApp.APP_NAME)
+                        Text(GlucoScopeApp.APP_NAME)
                             .font(.title)
                             .fontWeight(.semibold)
                         Text("iOS client v\(UIApplication.appVersion) build \(UIApplication.appBuild)")
@@ -40,7 +40,8 @@ struct AboutView: View {
 
                     // Links
                     VStack(alignment: .leading) {
-                        Link("Privacy Policy", destination: URL(string: "https://wdudokvanheel.github.io/sugarscope-site/privacy.html")!)
+                        Link("License", destination: URL(string: GlucoScopeApp.URL_LICENSE)!)
+                        Link("Privacy Policy", destination: URL(string: GlucoScopeApp.URL_PRIVACY)!)
                     }
 
                     // Erase button
