@@ -16,13 +16,13 @@
 		2B1C9E822D5A287100CA7861 /* DataSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E812D5A287100CA7861 /* DataSourceService.swift */; };
 		2B1C9E862D5A4E6F00CA7861 /* ConnectionConfigurationEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E852D5A4E6F00CA7861 /* ConnectionConfigurationEditor.swift */; };
 		2B1C9E892D5A4F4D00CA7861 /* NightscoutConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E882D5A4F4D00CA7861 /* NightscoutConfigurationView.swift */; };
-		2B1C9E8B2D5A4F5800CA7861 /* SugarScopeConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E8A2D5A4F5800CA7861 /* SugarScopeConfigurationView.swift */; };
+		2B1C9E8B2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E8A2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift */; };
 		2B1C9E8D2D5A518C00CA7861 /* DataSourceConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1C9E8C2D5A518C00CA7861 /* DataSourceConfiguration.swift */; };
 		2B2854012D57A2CE009E86E9 /* GlucoScopeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854002D57A2CE009E86E9 /* GlucoScopeApp.swift */; };
 		2B2854032D57A2CE009E86E9 /* ColoredLineGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854022D57A2CE009E86E9 /* ColoredLineGraph.swift */; };
 		2B2854102D57A40E009E86E9 /* Calendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B28540F2D57A40E009E86E9 /* Calendar.swift */; };
 		2B2854122D57A718009E86E9 /* GlucoseMeasurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854112D57A718009E86E9 /* GlucoseMeasurement.swift */; };
-		2B2854142D57B4BC009E86E9 /* SugarScopeDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854132D57B4BC009E86E9 /* SugarScopeDataSource.swift */; };
+		2B2854142D57B4BC009E86E9 /* GlucoScopeDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854132D57B4BC009E86E9 /* GlucoScopeDataSource.swift */; };
 		2B2854162D58AECF009E86E9 /* NightscoutDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854152D58AECF009E86E9 /* NightscoutDataSource.swift */; };
 		2B2854182D58B64F009E86E9 /* Double.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854172D58B64F009E86E9 /* Double.swift */; };
 		2B28541A2D58BA36009E86E9 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2854192D58BA36009E86E9 /* Logger.swift */; };
@@ -69,14 +69,14 @@
 		2B1C9E812D5A287100CA7861 /* DataSourceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceService.swift; sourceTree = "<group>"; };
 		2B1C9E852D5A4E6F00CA7861 /* ConnectionConfigurationEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionConfigurationEditor.swift; sourceTree = "<group>"; };
 		2B1C9E882D5A4F4D00CA7861 /* NightscoutConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutConfigurationView.swift; sourceTree = "<group>"; };
-		2B1C9E8A2D5A4F5800CA7861 /* SugarScopeConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SugarScopeConfigurationView.swift; sourceTree = "<group>"; };
+		2B1C9E8A2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoScopeConfigurationView.swift; sourceTree = "<group>"; };
 		2B1C9E8C2D5A518C00CA7861 /* DataSourceConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceConfiguration.swift; sourceTree = "<group>"; };
 		2B2853FD2D57A2CE009E86E9 /* GlucoScope.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlucoScope.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B2854002D57A2CE009E86E9 /* GlucoScopeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoScopeApp.swift; sourceTree = "<group>"; };
 		2B2854022D57A2CE009E86E9 /* ColoredLineGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColoredLineGraph.swift; sourceTree = "<group>"; };
 		2B28540F2D57A40E009E86E9 /* Calendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Calendar.swift; sourceTree = "<group>"; };
 		2B2854112D57A718009E86E9 /* GlucoseMeasurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseMeasurement.swift; sourceTree = "<group>"; };
-		2B2854132D57B4BC009E86E9 /* SugarScopeDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SugarScopeDataSource.swift; sourceTree = "<group>"; };
+		2B2854132D57B4BC009E86E9 /* GlucoScopeDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoScopeDataSource.swift; sourceTree = "<group>"; };
 		2B2854152D58AECF009E86E9 /* NightscoutDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutDataSource.swift; sourceTree = "<group>"; };
 		2B2854172D58B64F009E86E9 /* Double.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Double.swift; sourceTree = "<group>"; };
 		2B2854192D58BA36009E86E9 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
@@ -171,7 +171,7 @@
 				2B1C9E8C2D5A518C00CA7861 /* DataSourceConfiguration.swift */,
 				2B1C9E812D5A287100CA7861 /* DataSourceService.swift */,
 				2B2854152D58AECF009E86E9 /* NightscoutDataSource.swift */,
-				2B2854132D57B4BC009E86E9 /* SugarScopeDataSource.swift */,
+				2B2854132D57B4BC009E86E9 /* GlucoScopeDataSource.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -186,7 +186,7 @@
 				2B4ED5BB2DA9507B00ADE664 /* SettingsView.swift */,
 				2B1C9E852D5A4E6F00CA7861 /* ConnectionConfigurationEditor.swift */,
 				2B1C9E882D5A4F4D00CA7861 /* NightscoutConfigurationView.swift */,
-				2B1C9E8A2D5A4F5800CA7861 /* SugarScopeConfigurationView.swift */,
+				2B1C9E8A2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift */,
 				2B1628292DAD3A7900652A69 /* GlucoseValuesSettingsView.swift */,
 			);
 			path = Configuration;
@@ -368,7 +368,7 @@
 				2B2854032D57A2CE009E86E9 /* ColoredLineGraph.swift in Sources */,
 				2B7CCCCE2DCB8C3A00A1AED5 /* ThemedTextField.swift in Sources */,
 				2B7CCCC12DCA0F9300A1AED5 /* ConnectionTestView.swift in Sources */,
-				2B1C9E8B2D5A4F5800CA7861 /* SugarScopeConfigurationView.swift in Sources */,
+				2B1C9E8B2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift in Sources */,
 				2B7CCCB72DCA0B5400A1AED5 /* AppView.swift in Sources */,
 				2B64B97E2D7880FF00F0BC14 /* RealtimeDataService.swift in Sources */,
 				2B1C9E7A2D5A15CA00CA7861 /* MainView.swift in Sources */,
@@ -376,7 +376,7 @@
 				2B16282A2DAD3A8200652A69 /* GlucoseValuesSettingsView.swift in Sources */,
 				2B2854102D57A40E009E86E9 /* Calendar.swift in Sources */,
 				2BAA50FE2DAE9883003981B0 /* Theme.swift in Sources */,
-				2B2854142D57B4BC009E86E9 /* SugarScopeDataSource.swift in Sources */,
+				2B2854142D57B4BC009E86E9 /* GlucoScopeDataSource.swift in Sources */,
 				2BAA50F82DAE5FCA003981B0 /* GraphRangeSelector.swift in Sources */,
 				2B4BAB522DAAB71400D81158 /* PreferenceService.swift in Sources */,
 				2B4BAB542DAAB91E00D81158 /* PreferenceStorage.swift in Sources */,

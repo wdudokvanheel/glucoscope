@@ -1,7 +1,7 @@
 import Foundation
 
 class PreferenceStorage<Value>: ObservableObject where Value: Codable & Equatable {
-    private let key: SugarScopePreferenceKey
+    private let key: GlucoScopePreferenceKey
     private let defaultValue: Value
 
     @Published var value: Value {
@@ -16,7 +16,7 @@ class PreferenceStorage<Value>: ObservableObject where Value: Codable & Equatabl
         }
     }
 
-    init(key: SugarScopePreferenceKey, defaultValue: Value) {
+    init(key: GlucoScopePreferenceKey, defaultValue: Value) {
         self.key = key
         self.defaultValue = defaultValue
 

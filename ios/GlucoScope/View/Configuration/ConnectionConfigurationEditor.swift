@@ -16,7 +16,7 @@ struct ConnectionConfigurationEditor: View {
         if let _ = configuration as? NightscoutDataSourceConfiguration {
             _selectedType = State(initialValue: .nightscout)
         } else {
-            _selectedType = State(initialValue: .sugarscope)
+            _selectedType = State(initialValue: .glucoscope)
         }
 
         self._configuration = State(initialValue: configuration)
@@ -32,7 +32,7 @@ struct ConnectionConfigurationEditor: View {
                     .foregroundStyle(prefs.theme.textColor)
 
                 Picker("Server type", selection: $selectedType) {
-                    Text("SugarScope").tag(DataSourceType.sugarscope)
+                    Text("GlucoScope").tag(DataSourceType.glucoscope)
                     Text("Nightscout").tag(DataSourceType.nightscout)
                 }
                 .onAppear {
@@ -44,9 +44,9 @@ struct ConnectionConfigurationEditor: View {
                 .pickerStyle(.segmented)
                 .onChange(of: selectedType) { newType in
                     switch newType {
-                    case .sugarscope:
-                        if !(configuration is SugarScopeDataSourceConfiguration) {
-                            configuration = SugarScopeDataSourceConfiguration(url: "")
+                    case .glucoscope:
+                        if !(configuration is GlucoScopeDataSourceConfiguration) {
+                            configuration = GlucoScopeDataSourceConfiguration(url: "")
                         }
                     case .nightscout:
                         if !(configuration is NightscoutDataSourceConfiguration) {
@@ -58,8 +58,8 @@ struct ConnectionConfigurationEditor: View {
                 ThemedDivider()
 
                 switch selectedType {
-                case .sugarscope:
-                    SugarScopeConfigurationView(configuration: $configuration)
+                case .glucoscope:
+                    GlucoScopeConfigurationView(configuration: $configuration)
                 case .nightscout:
                     NightscoutConfigurationView(configuration: $configuration)
                 }

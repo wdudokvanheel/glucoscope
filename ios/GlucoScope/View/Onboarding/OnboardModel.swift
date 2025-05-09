@@ -8,7 +8,7 @@ enum ConenctionTestState: Equatable {
 
 @MainActor
 class OnboardModel: ObservableObject {
-    @Published var connectionType: DataSourceType = .sugarscope
+    @Published var connectionType: DataSourceType = .glucoscope
     @Published var url: String = ""
     @Published var apiToken: String = ""
     @Published var connectionTestState: ConenctionTestState?
@@ -56,7 +56,7 @@ class OnboardModel: ObservableObject {
                 await self.updateTestState(.failed("Invalid URL"))
             }
             catch NetworkError.invalidResponse {
-                await self.updateTestState(.failed("Invalid response from SugarScope server"))
+                await self.updateTestState(.failed("Invalid response from server"))
             }
             catch {
                 await self.updateTestState(.failed("Failed \(error)"))
@@ -82,8 +82,8 @@ private func createDataSourceConfiguration(url: String, apiToken: String, type: 
     let cleanedToken = apiToken.trimmingCharacters(in: .whitespacesAndNewlines)
 
     switch type {
-    case .sugarscope:
-        return SugarScopeDataSourceConfiguration(url: cleanedURL)
+    case .glucoscope:
+        return GlucoScopeDataSourceConfiguration(url: cleanedURL)
 
     case .nightscout:
         return NightscoutDataSourceConfiguration(
@@ -98,9 +98,9 @@ private func createDataSourceFromConfiguration(url: String, apiToken: String, ty
     let cleanedToken = apiToken.trimmingCharacters(in: .whitespacesAndNewlines)
 
     switch type {
-    case .sugarscope:
-        let config = SugarScopeDataSourceConfiguration(url: cleanedURL)
-        return SugarScopeDataSource(config)
+    case .glucoscope:
+        let config = GlucoScopeDataSourceConfiguration(url: cleanedURL)
+        return GlucoScopeDataSource(config)
 
     case .nightscout:
         let config = NightscoutDataSourceConfiguration(

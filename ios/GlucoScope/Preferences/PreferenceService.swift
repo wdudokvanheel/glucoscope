@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-enum SugarScopePreferenceKey: String {
+enum GlucoScopePreferenceKey: String {
     case connection
     case graph
     case theme

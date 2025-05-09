@@ -1,16 +1,17 @@
 import SwiftUI
 
-struct SugarScopeConfigurationView: View {
+struct GlucoScopeConfigurationView: View {
     @EnvironmentObject var prefs: PreferenceService
     @Binding var configuration: DataSourceConfiguration?
 
     @State private var url: String = ""
+    @State private var api: String = ""
 
     init(configuration: Binding<DataSourceConfiguration?>) {
         _configuration = configuration
 
-        if let sugarScopeConfig = configuration.wrappedValue as? SugarScopeDataSourceConfiguration {
-            _url = State(initialValue: sugarScopeConfig.url)
+        if let glucoScopeConfig = configuration.wrappedValue as? GlucoScopeDataSourceConfiguration {
+            _url = State(initialValue: glucoScopeConfig.url)
         }
     }
 
@@ -24,7 +25,7 @@ struct SugarScopeConfigurationView: View {
             .onChange(of: url) { newValue in
                 configuration = newValue.isEmpty
                     ? nil
-                    : SugarScopeDataSourceConfiguration(url: newValue)
+                    : GlucoScopeDataSourceConfiguration(url: newValue)
             }
     }
 }

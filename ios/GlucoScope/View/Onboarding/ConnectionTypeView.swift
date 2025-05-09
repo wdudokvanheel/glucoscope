@@ -28,13 +28,13 @@ struct ConnectionTypeView: View {
                             .fontWeight(.light)
 
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Are you using Nightscout or SugarScope to store your blood glucose values?")
+                            Text("Are you using Nightscout or a GlucoScope Server to store your blood glucose values?")
                                 .fixedSize(horizontal: false, vertical: true)
                                 .font(.subheadline)
                                 .fontWeight(.light)
 
                             Picker("Server type", selection: $model.connectionType) {
-                                Text("SugarScope").tag(DataSourceType.sugarscope)
+                                Text("GlucoScope").tag(DataSourceType.glucoscope)
                                 Text("Nightscout").tag(DataSourceType.nightscout)
                             }
                             .onAppear {

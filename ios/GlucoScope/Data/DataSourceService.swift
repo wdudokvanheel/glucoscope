@@ -63,8 +63,8 @@ class DataSourceService: ObservableObject {
 
     func createDataSource(from config: DataSourceConfiguration) -> DataSource? {
         switch config {
-        case let config as SugarScopeDataSourceConfiguration:
-            return SugarScopeDataSource(config)
+        case let config as GlucoScopeDataSourceConfiguration:
+            return GlucoScopeDataSource(config)
         case let config as NightscoutDataSourceConfiguration:
             return NightscoutDataSource(config)
         default:

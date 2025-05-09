@@ -8,12 +8,12 @@ protocol DataSource {
 }
 
 enum DataSourceType: String, Codable {
-    case sugarscope
+    case glucoscope
     case nightscout
 
     var formattedName: String {
         switch self {
-        case .sugarscope: return "SugarScope"
+        case .glucoscope: return "GlucoScope"
         case .nightscout: return "Nightscout"
         }
     }

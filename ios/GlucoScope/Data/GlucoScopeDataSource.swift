@@ -1,15 +1,15 @@
 import Foundation
 import os
 
-struct SugarScopeDataSourceConfiguration: DataSourceConfiguration {
-    static let typeIdentifier = DataSourceType.sugarscope.rawValue
+struct GlucoScopeDataSourceConfiguration: DataSourceConfiguration {
+    static let typeIdentifier = DataSourceType.glucoscope.rawValue
 
     let url: String
 }
 
-class SugarScopeDataSource: DataSource {
-    private let logger = Logger.new("datasource.sugarscope")
-    private let configuration: SugarScopeDataSourceConfiguration
+class GlucoScopeDataSource: DataSource {
+    private let logger = Logger.new("datasource.glucoscope")
+    private let configuration: GlucoScopeDataSourceConfiguration
     
     private var baseUrl: String {
         if !configuration.url.starts(with: "http") {
@@ -19,7 +19,7 @@ class SugarScopeDataSource: DataSource {
         }
     }
     
-    init(_ configuration: SugarScopeDataSourceConfiguration) {
+    init(_ configuration: GlucoScopeDataSourceConfiguration) {
         self.configuration = configuration
     }
     
@@ -35,12 +35,12 @@ class SugarScopeDataSource: DataSource {
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200
         else {
-            logger.error("Invalid response from SugarScope server")
+            logger.error("Invalid response from GlucoScope server")
             throw NetworkError.invalidResponse
         }
            
         do {
-            let reply = try JSONDecoder().decode(SugarScopeStatusReplyDto.self, from: data)
+            let reply = try JSONDecoder().decode(GlucoScopeStatusReplyDto.self, from: data)
             return reply.status.lowercased() == "ok"
         } catch {
             logger.error("Decoding error: \(error.localizedDescription)")
@@ -63,7 +63,7 @@ class SugarScopeDataSource: DataSource {
         let (data, response) = try await URLSession.shared.data(from: url)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            logger.error("Invalid response from SugarScope server")
+            logger.error("Invalid response from GlucoScope server")
             throw NetworkError.invalidResponse
         }
         
@@ -85,6 +85,6 @@ class SugarScopeDataSource: DataSource {
     }
 }
 
-struct SugarScopeStatusReplyDto: Decodable {
+struct GlucoScopeStatusReplyDto: Decodable {
     let status: String
 }

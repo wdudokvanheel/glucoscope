@@ -35,7 +35,7 @@ struct ConnectionTestView: View {
                             .font(.title)
                             .fontWeight(.semibold)
 
-                        Text("SugarScope will now verify your connection settings to see if everything works correctly.")
+                        Text("GlucoScope will now verify your connection settings to see if everything works correctly.")
                             .fixedSize(horizontal: false, vertical: true)
                             .font(.subheadline)
 

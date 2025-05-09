@@ -28,8 +28,8 @@ struct DataSourceConfigurationStorage: Codable {
         let typeIdentifier = try container.decode(String.self, forKey: .type)
 
         switch typeIdentifier {
-        case SugarScopeDataSourceConfiguration.typeIdentifier:
-            config = try container.decode(SugarScopeDataSourceConfiguration.self, forKey: .data)
+        case GlucoScopeDataSourceConfiguration.typeIdentifier:
+            config = try container.decode(GlucoScopeDataSourceConfiguration.self, forKey: .data)
         case NightscoutDataSourceConfiguration.typeIdentifier:
             config = try container.decode(NightscoutDataSourceConfiguration.self, forKey: .data)
         default:
