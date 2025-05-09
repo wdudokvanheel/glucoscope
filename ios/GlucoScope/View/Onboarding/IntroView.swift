@@ -22,14 +22,15 @@ struct IntroView: View {
                             .fontWeight(.semibold)
 
                         Text("Beautiful blood glucose visualization for diabetics")
-                            .fixedSize(horizontal: false, vertical: true)
                             .font(.subheadline)
                             .fontWeight(.light)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         VStack(spacing: 16) {
-                            OnboardFeatureItem("hourglass", "Instant insight", "Quickly see your current and past levels without thinking")
-                            OnboardFeatureItem("hourglass", "Instant insight", "Quickly see your current and past levels without thinking")
-                            OnboardFeatureItem("hourglass", "Instant insight", "Quickly see your current and past levels without thinking")
+                            OnboardFeatureList()
+//                            OnboardFeatureItem("eye", "Instant insight", "Quickly see your current and past levels without thinking")
+//                            OnboardFeatureItem("chart.xyaxis.line", "Beautiful graphs", "Select one of the many themes to customize your experience")
+//                            OnboardFeatureItem("timer", "Real time updates", "Values are updated often so you never miss a high or low")
                         }
                         .padding(.vertical, 32)
 
@@ -41,6 +42,57 @@ struct IntroView: View {
             }
         }
         .foregroundStyle(prefs.theme.textColor)
+    }
+}
+
+// MARK: – Model of one feature line
+
+struct Feature: Identifiable {
+    let id = UUID()
+    let icon: String
+    let title: String
+    let description: String
+}
+
+// Your three lines
+private let onboardFeatures: [Feature] = [
+    .init(icon: "eye",
+          title: "Instant insight",
+          description: "Quickly see your current and past levels without thinking"),
+    .init(icon: "chart.xyaxis.line",
+          title: "Beautiful graphs",
+          description: "Select one of the many themes to customize your experience"),
+    .init(icon: "timer",
+          title: "Real time updates",
+          description: "Values are updated often so you never miss a high or low")
+]
+
+struct OnboardFeatureList: View {
+    var body: some View {
+        Grid(alignment: .leading,
+             horizontalSpacing: 16,
+             verticalSpacing: 16)
+        {
+
+            ForEach(onboardFeatures) { feature in
+                GridRow {
+                    Image(systemName: feature.icon)
+                        .font(.system(size: 34))
+                        .gridColumnAlignment(.center)
+
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(feature.title)
+                            .font(.callout).fontWeight(.semibold)
+                        Text(feature.description)
+                            .font(.footnote).fontWeight(.light)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .opacity(0.9)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -68,10 +120,11 @@ struct OnboardFeatureItem: View {
                     .fontWeight(.semibold)
 
                 Text(description)
+                    .fontWeight(.light)
                     .fixedSize(horizontal: false, vertical: true)
                     .font(.footnote)
-                    .fontWeight(.light)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

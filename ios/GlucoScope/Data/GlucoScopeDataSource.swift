@@ -15,7 +15,7 @@ class GlucoScopeDataSource: DataSource {
     // Convenience URL builder
     private var baseUrl: String {
         if !configuration.url.starts(with: "http") {
-            return "http://\(configuration.url)/api/s1"
+            return "https://\(configuration.url)/api/s1"
         } else {
             return "\(configuration.url)/api/s1"
         }

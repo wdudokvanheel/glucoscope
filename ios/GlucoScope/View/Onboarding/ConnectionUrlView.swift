@@ -24,18 +24,18 @@ struct ConnectionUrlView: View {
 
                         VStack(alignment: .leading) {
                             Text("Enter the address of your \(model.connectionType.formattedName) server")
+                                .fontWeight(.light)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .font(.subheadline)
-                                .fontWeight(.light)
 
                             ThemedTextField("Server address", $model.url)
                         }
 
                         VStack(alignment: .leading) {
                             Text("Optionally enter the API token required for authentication")
-                                .fixedSize(horizontal: false, vertical: true)
                                 .font(.subheadline)
                                 .fontWeight(.light)
+                                .fixedSize(horizontal: false, vertical: true)
 
                             ThemedSecureField("API Token", $model.apiToken)
                         }
@@ -57,20 +57,5 @@ struct ConnectionUrlView: View {
                     .foregroundStyle(prefs.theme.textColor)
             }
         }
-
-//        VStack {
-//            Text("Enter url & API Key")
-//            Spacer()
-//
-//            ThemedNavigationButton("Test connection", ConnectionTestView())
-//
-//            NavigationLink(destination: ConnectionTestView()) {
-//                Text("Next")
-//                    .frame(maxWidth: .infinity)
-//            }
-//            .buttonStyle(.borderedProminent)
-//            .tint(prefs.theme.accentColor)
-//        }
-//        .padding(32)
     }
 }
