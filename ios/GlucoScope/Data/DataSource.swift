@@ -22,4 +22,5 @@ enum DataSourceType: String, Codable {
 enum NetworkError: Error {
     case invalidURL
     case invalidResponse
+    case unauthorized
 }

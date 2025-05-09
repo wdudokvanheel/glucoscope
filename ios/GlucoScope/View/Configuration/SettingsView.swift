@@ -18,7 +18,7 @@ struct SettingsView: View {
         SettingsTab(id: "theme", label: "Themes", icon: "paintpalette.fill"),
         SettingsTab(id: "bgvalues", label: "Glucose values", icon: "drop.fill"),
         SettingsTab(id: "connection", label: "Connection", icon: "network"),
-        SettingsTab(id: "about", label: "About", icon: "info")
+        SettingsTab(id: "about", label: "About", icon: "info.circle")
     ]
 
     init() {

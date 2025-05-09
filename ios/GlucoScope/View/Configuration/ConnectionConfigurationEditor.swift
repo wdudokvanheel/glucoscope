@@ -46,7 +46,7 @@ struct ConnectionConfigurationEditor: View {
                     switch newType {
                     case .glucoscope:
                         if !(configuration is GlucoScopeDataSourceConfiguration) {
-                            configuration = GlucoScopeDataSourceConfiguration(url: "")
+                            configuration = GlucoScopeDataSourceConfiguration(url: "", apiToken: nil)
                         }
                     case .nightscout:
                         if !(configuration is NightscoutDataSourceConfiguration) {
@@ -72,9 +72,9 @@ struct ConnectionConfigurationEditor: View {
                     }
                 }
 
-                Button("Reset connection settings") {
-                    self.onReset()
-                }
+//                Button("Reset connection settings") {
+//                    self.onReset()
+//                }
 
                 .disabled(configuration == nil)
             }

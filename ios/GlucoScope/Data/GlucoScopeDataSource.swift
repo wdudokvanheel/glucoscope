@@ -5,12 +5,14 @@ struct GlucoScopeDataSourceConfiguration: DataSourceConfiguration {
     static let typeIdentifier = DataSourceType.glucoscope.rawValue
 
     let url: String
+    let apiToken: String?
 }
 
 class GlucoScopeDataSource: DataSource {
     private let logger = Logger.new("datasource.glucoscope")
     private let configuration: GlucoScopeDataSourceConfiguration
-    
+
+    // Convenience URL builder
     private var baseUrl: String {
         if !configuration.url.starts(with: "http") {
             return "http://\(configuration.url)/api/s1"
@@ -18,66 +20,76 @@ class GlucoScopeDataSource: DataSource {
             return "\(configuration.url)/api/s1"
         }
     }
-    
+
     init(_ configuration: GlucoScopeDataSourceConfiguration) {
         self.configuration = configuration
     }
-    
+
     func testConnection() async throws -> Bool {
         guard let url = URL(string: "\(baseUrl)/status") else {
-            logger.warning("\(self.baseUrl)/status")
-            logger.error("Invalid status URL!")
+            logger.error("Invalid status URL: \(self.baseUrl)/status")
             throw NetworkError.invalidURL
         }
-           
-        let (data, response) = try await URLSession.shared.data(from: url)
-           
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200
-        else {
-            logger.error("Invalid response from GlucoScope server")
-            throw NetworkError.invalidResponse
-        }
-           
-        do {
-            let reply = try JSONDecoder().decode(GlucoScopeStatusReplyDto.self, from: data)
-            return reply.status.lowercased() == "ok"
-        } catch {
-            logger.error("Decoding error: \(error.localizedDescription)")
-            throw error
-        }
+
+        let reply: GlucoScopeStatusReplyDto = try await fetch(GlucoScopeStatusReplyDto.self, from: url)
+        return reply.status.lowercased() == "ok"
     }
-    
+
     func getLatestEntries(hours: Int, window: Int) async throws -> [GlucoseMeasurement] {
-        var urlComponents = URLComponents(string: "\(self.baseUrl)/entries/last")
-        urlComponents?.queryItems = [
+        var components = URLComponents(string: "\(baseUrl)/entries/last")
+        components?.queryItems = [
             URLQueryItem(name: "hours", value: "\(hours)"),
             URLQueryItem(name: "window", value: "\(window)")
         ]
-        
-        guard let url = urlComponents?.url else {
-            logger.error("Invalid URL!")
+
+        guard let url = components?.url else {
+            logger.error("Invalid entries URL")
             throw NetworkError.invalidURL
         }
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            logger.error("Invalid response from GlucoScope server")
+
+        return try await fetch([GlucoseMeasurement].self, from: url)
+    }
+
+    /// Builds a `URLRequest` for the given URL, injecting the Authorization header when an API token is provided.
+    private func makeRequest(for url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+
+        if let token = configuration.apiToken?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        return request
+    }
+
+    private func fetch<T: Decodable>(_ type: T.Type, from url: URL) async throws -> T {
+        let request = makeRequest(for: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Non‑HTTP response from GlucoScope server")
             throw NetworkError.invalidResponse
         }
-        
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401, 403:
+            logger.error("Unauthorized (status: \(httpResponse.statusCode)) – check API token")
+            throw NetworkError.unauthorized
+        default:
+            logger.error("Unexpected status code \(httpResponse.statusCode) from GlucoScope server")
+            throw NetworkError.invalidResponse
+        }
+
         if let responseString = String(data: data, encoding: .utf8) {
             logger.trace("Response from \(url)\n\(responseString)")
-        } else {
-            logger.warning("Unable to decode response data as UTF-8 string")
         }
-        
+
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase
-            let measurements = try decoder.decode([GlucoseMeasurement].self, from: data)
-            return measurements
+            return try decoder.decode(T.self, from: data)
         } catch {
             logger.error("Decoding error: \(error.localizedDescription)")
             throw error

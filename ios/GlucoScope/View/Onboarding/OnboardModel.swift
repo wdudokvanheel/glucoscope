@@ -58,14 +58,17 @@ class OnboardModel: ObservableObject {
             catch NetworkError.invalidResponse {
                 await self.updateTestState(.failed("Invalid response from server"))
             }
+            catch NetworkError.unauthorized {
+                await self.updateTestState(.failed("Authentication failed, make sure the API token is correct"))
+            }
             catch {
-                await self.updateTestState(.failed("Failed \(error)"))
+                await self.updateTestState(.failed("Server not found"))
             }
         }
     }
 
     func completeWizard() {
-        if let config = self.testedConfiguration {
+        if let config = testedConfiguration {
             dataSourceService.saveConfiguration(config)
         }
     }
@@ -83,30 +86,12 @@ private func createDataSourceConfiguration(url: String, apiToken: String, type: 
 
     switch type {
     case .glucoscope:
-        return GlucoScopeDataSourceConfiguration(url: cleanedURL)
+        return GlucoScopeDataSourceConfiguration(url: cleanedURL, apiToken: apiToken)
 
     case .nightscout:
         return NightscoutDataSourceConfiguration(
             url: cleanedURL,
             apiToken: cleanedToken.isEmpty ? nil : cleanedToken
         )
-    }
-}
-
-private func createDataSourceFromConfiguration(url: String, apiToken: String, type: DataSourceType) -> DataSource {
-    let cleanedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
-    let cleanedToken = apiToken.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    switch type {
-    case .glucoscope:
-        let config = GlucoScopeDataSourceConfiguration(url: cleanedURL)
-        return GlucoScopeDataSource(config)
-
-    case .nightscout:
-        let config = NightscoutDataSourceConfiguration(
-            url: cleanedURL,
-            apiToken: cleanedToken.isEmpty ? nil : cleanedToken
-        )
-        return NightscoutDataSource(config)
     }
 }

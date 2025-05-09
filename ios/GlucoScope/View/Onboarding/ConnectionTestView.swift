@@ -44,7 +44,7 @@ struct ConnectionTestView: View {
                                 Text("Testing connectiong, please stand by...")
                                     .font(.subheadline)
                             case .failed(let error):
-                                Text("Failed to connect:\n\(error)")
+                                Text("Failed to connect: \(error)")
                                     .foregroundStyle(prefs.theme.upperColor)
                                     .font(.subheadline)
                                     .fixedSize(horizontal: false, vertical: true)
