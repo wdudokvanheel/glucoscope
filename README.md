@@ -9,6 +9,8 @@ GlucoScope is a highly customizable iOS app for diabetics to display track their
 | ![1](docs/1.jpeg)   | ![settings](docs/settings.jpeg)  | ![2](docs/2.jpeg) |
 |---------------------|---------------------------|-------------------|
 
+## Stats
+![Project stats](https://pstatool.wdudokvanheel.nl/wdudokvanheel/glucoscope.svg)
 
 [appstore-image]: docs/appstore.png
 [appstore-url]: https://apps.apple.com/app/glucoscope/id6745609594
