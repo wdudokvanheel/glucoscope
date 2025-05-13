@@ -16,13 +16,10 @@ struct AboutView: View {
 
     var body: some View {
         VStack {
-            Image("OnboardLogo")
-                .resizable()
-                .scaledToFit()
-                .aspectRatio(contentMode: .fit)
-                .padding(.top, 32)
-                .padding(.horizontal, 32)
-
+            ThemedLogo(showBackground: true)
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
+            
             Spacer()
 
             ThemedSection {

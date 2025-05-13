@@ -6,15 +6,13 @@ struct IntroView: View {
     var body: some View {
         ThemedScreen {
             VStack {
-                Image("OnboardLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .aspectRatio(contentMode: .fit)
-                    .padding(.top, 32)
-                    .padding(.horizontal, 32)
-
-                Spacer()
-
+                VStack {
+                    ThemedLogo(showBackground: true)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .padding(.horizontal, 32)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                }
                 ThemedSection {
                     VStack(alignment: .leading) {
                         Text("Welcome to \(GlucoScopeApp.APP_NAME)")
@@ -28,24 +26,30 @@ struct IntroView: View {
 
                         VStack(spacing: 16) {
                             OnboardFeatureList()
-//                            OnboardFeatureItem("eye", "Instant insight", "Quickly see your current and past levels without thinking")
-//                            OnboardFeatureItem("chart.xyaxis.line", "Beautiful graphs", "Select one of the many themes to customize your experience")
-//                            OnboardFeatureItem("timer", "Real time updates", "Values are updated often so you never miss a high or low")
                         }
-                        .padding(.vertical, 32)
+                        .padding(.vertical, 8)
 
                         ThemedNavigationButton("Get started", ConnectionTypeView())
                     }
                     .padding(16)
                 }
-                .padding(.top, 32)
+                .padding(.vertical, 16)
+                .padding(.horizontal, 16)
             }
+            .padding(.top, 8)
         }
         .foregroundStyle(prefs.theme.textColor)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(GlucoScopeApp.APP_NAME)
+                    .minimumScaleFactor(0.5)
+                    .font(.title)
+                    .foregroundStyle(prefs.theme.textColor)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
-
-// MARK: – Model of one feature line
 
 struct Feature: Identifiable {
     let id = UUID()
@@ -54,7 +58,6 @@ struct Feature: Identifiable {
     let description: String
 }
 
-// Your three lines
 private let onboardFeatures: [Feature] = [
     .init(icon: "eye",
           title: "Instant insight",
@@ -77,7 +80,7 @@ struct OnboardFeatureList: View {
             ForEach(onboardFeatures) { feature in
                 GridRow {
                     Image(systemName: feature.icon)
-                        .font(.system(size: 34))
+                        .font(.system(size: 32))
                         .gridColumnAlignment(.center)
 
                     VStack(alignment: .leading, spacing: 0) {

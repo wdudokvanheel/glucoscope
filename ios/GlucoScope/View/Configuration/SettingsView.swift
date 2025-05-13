@@ -59,7 +59,7 @@ struct SettingsView: View {
                                 .foregroundStyle(tab == selectedTab ? prefs.theme.accentColor : prefs.theme.textColor.opacity(0.65))
                             })
                         }
-                        .padding(.top, 2)
+                        .padding(.top, 16)
                         .frame(maxWidth: .infinity)
                     }
                 }
@@ -71,6 +71,7 @@ struct SettingsView: View {
         }
         .navigationBarItems(leading: backButton)
         .navigationBarBackButtonHidden()
+        .navigationBarTitleDisplayMode(.inline)
         .accentColor(prefs.theme.accentColor)
         .background(prefs.theme.backgroundColor.ignoresSafeArea())
     }

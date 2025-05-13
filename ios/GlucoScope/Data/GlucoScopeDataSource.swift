@@ -12,9 +12,8 @@ class GlucoScopeDataSource: DataSource {
     private let logger = Logger.new("datasource.glucoscope")
     private let configuration: GlucoScopeDataSourceConfiguration
 
-    // Convenience URL builder
     private var baseUrl: String {
-        if !configuration.url.starts(with: "http") {
+        if !configuration.url.lowercased().starts(with: "http") {
             return "https://\(configuration.url)/api/s1"
         } else {
             return "\(configuration.url)/api/s1"

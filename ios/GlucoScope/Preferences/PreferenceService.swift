@@ -81,12 +81,29 @@ class PreferenceService: ObservableObject {
             .store(in: &self.cancellables)
     }
 
-    var themePublisher: Published<Theme>.Publisher{
+    var themePublisher: Published<Theme>.Publisher {
         self._theme.publisher
     }
 }
 
 extension Theme {
+    var isLight: Bool {
+        #if os(iOS) || os(tvOS) || os(watchOS)
+        let native = UIColor(backgroundColor)
+        #elseif os(macOS)
+        let native = NSColor(backgroundColor)
+        #endif
+
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        native.getRed(&r, green: &g, blue: &b, alpha: &a)
+
+        // Euclidean distance in RGB space
+        let distanceToWhite = sqrt(pow(1 - r, 2) + pow(1 - g, 2) + pow(1 - b, 2))
+        let distanceToBlack = sqrt(pow(r, 2) + pow(g, 2) + pow(b, 2))
+
+        return distanceToWhite < distanceToBlack
+    }
+
     var backgroundColor: Color {
         Color(hex: background)
     }
