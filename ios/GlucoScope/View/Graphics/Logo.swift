@@ -10,8 +10,8 @@ struct ThemedLogo: View {
     }
 
     var body: some View {
-        var light = prefs.theme.isLight ? prefs.theme.surfaceColor : prefs.theme.textColor
-        var stroke = prefs.theme.isLight ? prefs.theme.textColor : prefs.theme.surfaceColor
+        let light = prefs.theme.isLight ? prefs.theme.surfaceColor : prefs.theme.textColor
+        let stroke = prefs.theme.isLight ? prefs.theme.textColor : prefs.theme.surfaceColor
 
         Logo(fill: prefs.theme.lowColor, stroke: stroke, light: light, background: showBackground ? light : nil)
     }
@@ -210,7 +210,7 @@ struct PowerLight: View {
             let h = geo.size.height
             let lightW = 0.125*w
             let lightH = 0.0625*h
-            let lightX = 0.10547*w
+            let lightX = 0.08984*w
             let lightY = 0.10547*h
 
             Rectangle()
@@ -242,7 +242,7 @@ struct BurgerMenu: View {
             let h = geo.size.height
             let barW = 0.125*w
             let barH = 0.03125*h
-            let xOff = 0.74805*w
+            let xOff = 0.78516*w
             let ys: [CGFloat] = [0.10547, 0.15918].map { $0*h }
 
             ZStack {
