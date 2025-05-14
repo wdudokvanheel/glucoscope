@@ -6,6 +6,10 @@ struct AboutView: View {
 
     @State private var showingEraseAlert = false
 
+    var sourceCodeUrl: String {
+        GlucoScopeApp.URL_SOURCE + "tree/ios-v" + UIApplication.appVersion
+    }
+
     private func eraseAllData() {
         if let bundleID = Bundle.main.bundleIdentifier {
             UserDefaults.standard.removePersistentDomain(forName: bundleID)
@@ -19,7 +23,7 @@ struct AboutView: View {
             ThemedLogo(showBackground: true)
                 .padding(.top, 16)
                 .padding(.horizontal, 16)
-            
+
             Spacer()
 
             ThemedSection {
@@ -37,6 +41,7 @@ struct AboutView: View {
 
                     // Links
                     VStack(alignment: .leading) {
+                        Link("Source code", destination: URL(string: sourceCodeUrl)!)
                         Link("License", destination: URL(string: GlucoScopeApp.URL_LICENSE)!)
                         Link("Privacy Policy", destination: URL(string: GlucoScopeApp.URL_PRIVACY)!)
                     }
