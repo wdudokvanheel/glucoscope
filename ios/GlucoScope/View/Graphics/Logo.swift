@@ -3,22 +3,16 @@ import SwiftUI
 struct ThemedLogo: View {
     @EnvironmentObject var prefs: PreferenceService
 
-    let showBackground: Bool
-
-    init(showBackground: Bool = false) {
-        self.showBackground = showBackground
-    }
-
     var body: some View {
         let light = prefs.theme.isLight ? prefs.theme.surfaceColor : prefs.theme.textColor
         let stroke = prefs.theme.isLight ? prefs.theme.textColor : prefs.theme.surfaceColor
 
-        Logo(fill: prefs.theme.lowColor, stroke: stroke, light: light, background: showBackground ? light : nil)
+        Logo(fill: prefs.theme.lowColor, stroke: stroke, light: light, background: light)
     }
 }
 
 struct Logo: View {
-    let background: Color?
+    let background: Color
     let dropFill: Color
     let dropStroke: Color
 
@@ -28,14 +22,14 @@ struct Logo: View {
     let graphNodesStroke = Color(hex: "#D9D9D9")
 
     init() {
-        self.background = nil
+        self.background = .white
         self.dropFill = .red
         self.dropStroke = Color(hex: "#323C4B")
         self.reflectionFill = .white
         self.graphNodesFill = .white
     }
 
-    init(fill: Color, stroke: Color, light: Color, background: Color? = nil) {
+    init(fill: Color, stroke: Color, light: Color, background: Color) {
         self.background = background
         self.dropFill = fill
         self.dropStroke = stroke
@@ -48,18 +42,18 @@ struct Logo: View {
             let lineWidth = ((geom.size.width / 376)*16)
 
             ZStack(alignment: .top) {
-                if let background = background {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(background)
+                // Background rectangle
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(background)
 
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(LinearGradient(colors: [.black.opacity(0), .black.opacity(0), .black.opacity(0.15)], startPoint: UnitPoint(x: 0.5, y: 0.65), endPoint: UnitPoint(x: 0.5, y: 1.0)))
+                // Background gradient overlay
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(LinearGradient(colors: [.black.opacity(0), .black.opacity(0), .black.opacity(0.15)], startPoint: UnitPoint(x: 0.5, y: 0.65), endPoint: UnitPoint(x: 0.5, y: 1.0)))
 
 //                    RoundedRectangle(cornerRadius: 16)
 //                        .stroke(self.dropStroke, style: StrokeStyle(lineWidth: lineWidth))
-                }
 
-                BurgerMenu(color: dropStroke)
+                BurgerMenu(foreground: dropStroke, background: background)
 
                 PowerLight(color: dropFill)
 
@@ -113,8 +107,9 @@ struct Logo: View {
 
                 Reflections()
                     .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
-                    .foregroundStyle(reflectionFill)
+                    .foregroundStyle(reflectionFill.opacity(0.9))
 
+                // Render for the shadows first
                 GraphNodes()
                     .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
                     .shadow(color: .black.opacity(0.65), radius: 5, x: 0, y: 6)
@@ -125,11 +120,14 @@ struct Logo: View {
                     .shadow(color: .black.opacity(0.65), radius: 5, x: 0, y: 6)
 
                 ZStack {
+                    // Nodes fill
                     GraphNodes()
                         .fill(graphNodesFill)
+                    // Nodes outline
                     GraphNodes()
                         .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
                         .foregroundStyle(graphNodesFill)
+                    // Overlay to darken nodes
                     GraphNodes()
                         .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
                         .foregroundStyle(Color.black.opacity(0.2))
@@ -216,13 +214,14 @@ struct PowerLight: View {
             Rectangle()
                 .fill(color)
                 .overlay(
-                    LinearGradient(
+                    RadialGradient(
                         gradient: Gradient(colors: [
                             .white.opacity(0.15),
-                            .white.opacity(0)
+                            .white.opacity(0.0)
                         ]),
-                        startPoint: .top,
-                        endPoint: .bottom
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: max(lightW, lightH) / 2
                     )
                 )
                 .frame(width: lightW, height: lightH)
@@ -234,7 +233,8 @@ struct PowerLight: View {
 }
 
 struct BurgerMenu: View {
-    let color: Color
+    let foreground: Color
+    let background: Color
 
     var body: some View {
         GeometryReader { geo in
@@ -247,7 +247,9 @@ struct BurgerMenu: View {
 
             ZStack {
                 ForEach(ys, id: \.self) { y in
-                    color
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(.shadow(.inner(color: background, radius: 1, y: 2)))
+                        .foregroundStyle(foreground)
                         .overlay(
                             LinearGradient(
                                 gradient: Gradient(colors: [.black.opacity(0.3), .black.opacity(0)]),

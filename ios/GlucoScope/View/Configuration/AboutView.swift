@@ -20,7 +20,7 @@ struct AboutView: View {
 
     var body: some View {
         VStack {
-            ThemedLogo(showBackground: true)
+            ThemedLogo()
                 .padding(.top, 16)
                 .padding(.horizontal, 16)
 
