@@ -7,12 +7,7 @@ struct ConnectionUrlView: View {
     var body: some View {
         ThemedScreen {
             VStack {
-                Image("OnboardUrl")
-                    .resizable()
-                    .scaledToFit()
-                    .aspectRatio(contentMode: .fit)
-                    .padding(.top, 32)
-                    .padding(.horizontal, 32)
+                ServerSettingsGraphic()
 
                 Spacer()
 
@@ -39,7 +34,7 @@ struct ConnectionUrlView: View {
 
                             ThemedSecureField("API Token", $model.apiToken)
                         }
-                        
+
                         ThemedNavigationButton("Test connection", ConnectionTestView())
                             .padding(.top, 16)
                     }
@@ -57,5 +52,6 @@ struct ConnectionUrlView: View {
                     .foregroundStyle(prefs.theme.textColor)
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

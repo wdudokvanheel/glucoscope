@@ -147,9 +147,7 @@ private struct Drop: Shape {
     }
 }
 
-import SwiftUI
-
-struct Cloud: Shape {
+private struct Cloud: Shape {
     static let top: CGFloat = 0.70441
     static let bottom: CGFloat = 0.87304
 
