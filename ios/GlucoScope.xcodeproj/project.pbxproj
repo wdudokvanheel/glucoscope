@@ -52,7 +52,7 @@
 		2B7CCCCE2DCB8C3A00A1AED5 /* ThemedTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B7CCCCD2DCB8C3A00A1AED5 /* ThemedTextField.swift */; };
 		2B7CCCD02DCB8CFA00A1AED5 /* ThemedSecureField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B7CCCCF2DCB8CFA00A1AED5 /* ThemedSecureField.swift */; };
 		2B7CCCD22DCB988D00A1AED5 /* ThemedButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B7CCCD12DCB988D00A1AED5 /* ThemedButton.swift */; };
-		2B879D062DD34CFB00953CE8 /* Logo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B879D052DD34CF900953CE8 /* Logo.swift */; };
+		2B879D062DD34CFB00953CE8 /* LogoGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B879D052DD34CF900953CE8 /* LogoGraphic.swift */; };
 		2B8C01B92DCCAD1C0091BED2 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8C01B82DCCAD190091BED2 /* AboutView.swift */; };
 		2B8C01BD2DCCAE5D0091BED2 /* ProjectVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */; };
 		2BAA50F82DAE5FCA003981B0 /* GraphRangeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */; };
@@ -109,7 +109,7 @@
 		2B7CCCCD2DCB8C3A00A1AED5 /* ThemedTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedTextField.swift; sourceTree = "<group>"; };
 		2B7CCCCF2DCB8CFA00A1AED5 /* ThemedSecureField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedSecureField.swift; sourceTree = "<group>"; };
 		2B7CCCD12DCB988D00A1AED5 /* ThemedButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedButton.swift; sourceTree = "<group>"; };
-		2B879D052DD34CF900953CE8 /* Logo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logo.swift; sourceTree = "<group>"; };
+		2B879D052DD34CF900953CE8 /* LogoGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoGraphic.swift; sourceTree = "<group>"; };
 		2B8C01B82DCCAD190091BED2 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectVersion.swift; sourceTree = "<group>"; };
 		2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphRangeSelector.swift; sourceTree = "<group>"; };
@@ -304,7 +304,7 @@
 			isa = PBXGroup;
 			children = (
 				2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */,
-				2B879D052DD34CF900953CE8 /* Logo.swift */,
+				2B879D052DD34CF900953CE8 /* LogoGraphic.swift */,
 			);
 			path = Graphics;
 			sourceTree = "<group>";
@@ -405,7 +405,7 @@
 				2BDAE3282DD4CC8C001A833E /* ConnectionTypeGraphic.swift in Sources */,
 				2B2854012D57A2CE009E86E9 /* GlucoScopeApp.swift in Sources */,
 				2B7CCCB92DCA0D3400A1AED5 /* IntroView.swift in Sources */,
-				2B879D062DD34CFB00953CE8 /* Logo.swift in Sources */,
+				2B879D062DD34CFB00953CE8 /* LogoGraphic.swift in Sources */,
 				2B1C9E7C2D5A162E00CA7861 /* GraphView.swift in Sources */,
 				2B2854122D57A718009E86E9 /* GlucoseMeasurement.swift in Sources */,
 				2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */,

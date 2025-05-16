@@ -1,17 +1,17 @@
 import SwiftUI
 
-struct ThemedLogo: View {
+struct ThemedLogoGraphic: View {
     @EnvironmentObject var prefs: PreferenceService
 
     var body: some View {
         let light = prefs.theme.isLight ? prefs.theme.surfaceColor : prefs.theme.textColor
         let stroke = prefs.theme.isLight ? prefs.theme.textColor : prefs.theme.surfaceColor
 
-        Logo(fill: prefs.theme.lowColor, stroke: stroke, light: light, background: light)
+        LogoGraphic(fill: prefs.theme.lowColor, stroke: stroke, light: light, background: light)
     }
 }
 
-struct Logo: View {
+struct LogoGraphic: View {
     let background: Color
     let dropFill: Color
     let dropStroke: Color

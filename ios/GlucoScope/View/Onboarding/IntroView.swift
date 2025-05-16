@@ -7,7 +7,7 @@ struct IntroView: View {
         ThemedScreen {
             VStack {
                 VStack {
-                    ThemedLogo()
+                    ThemedLogoGraphic()
                         .frame(maxWidth: .infinity, alignment: .top)
                         .padding(.horizontal, 32)
                         .fixedSize(horizontal: false, vertical: true)
