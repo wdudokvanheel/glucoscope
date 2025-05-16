@@ -1,24 +1,32 @@
 import SwiftUI
 
 struct ConnectionSettingsView: View {
+    @EnvironmentObject var prefs: PreferenceService
     @EnvironmentObject var dataService: DataSourceService
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        let configuration = dataService.configuration
+        VStack {
+            let configuration = dataService.configuration
 
-        Image("SettingsConnection")
-            .resizable()
-            .scaledToFit()
-            .padding(.horizontal, 64)
+            ThemedServerSettingsGraphic()
 
-        ConnectionConfigurationEditor(configuration: configuration) { conf in
-            self.dataService.saveConfiguration(conf)
-            dismiss()
-        } onReset: {
-            dataService.clearConfiguration()
+            Spacer()
+
+            ConnectionConfigurationEditor(configuration: configuration) { conf in
+                self.dataService.saveConfiguration(conf)
+            } onReset: {
+                dataService.clearConfiguration()
+            }
+            .padding(.bottom, 16)
         }
-        
-        Spacer()
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Connection")
+                    .minimumScaleFactor(0.5)
+                    .font(.title)
+                    .foregroundStyle(prefs.theme.textColor)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

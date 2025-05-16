@@ -77,6 +77,7 @@ struct AboutView: View {
                         .foregroundStyle(prefs.theme.textColor)
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
