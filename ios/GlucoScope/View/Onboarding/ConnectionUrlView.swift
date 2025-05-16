@@ -7,7 +7,7 @@ struct ConnectionUrlView: View {
     var body: some View {
         ThemedScreen {
             VStack {
-                ServerSettingsGraphic()
+                ThemedServerSettingsGraphic()
 
                 Spacer()
 

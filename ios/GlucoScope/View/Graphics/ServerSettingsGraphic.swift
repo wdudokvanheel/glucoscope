@@ -1,24 +1,31 @@
 import SwiftUI
 
+struct ThemedServerSettingsGraphic: View {
+    @EnvironmentObject var prefs: PreferenceService
+
+    var body: some View {
+        ServerSettingsGraphic(iconFill: prefs.theme.textColor, dropFill: prefs.theme.lowColor)
+    }
+}
+
 struct ServerSettingsGraphic: View {
-    let cloudFill: Color
-    let cloudStroke: Color
+    let iconFill: Color
     let dropFill: Color
-    let dropStroke: Color
-    let gearsFill: Color
+
+    init(iconFill: Color, dropFill: Color) {
+        self.iconFill = iconFill
+        self.dropFill = dropFill
+    }
 
     init() {
         self.dropFill = .red
-        self.dropStroke = .gray
-        self.cloudFill = .white
-        self.gearsFill = .white
-        self.cloudStroke = .gray
+        self.iconFill = .white
     }
 
     var body: some View {
         DynamicGraphic { gfx in
             Cloud()
-                .foregroundStyle(cloudFill)
+                .foregroundStyle(iconFill)
 
             Cloud()
                 .fill(
@@ -47,16 +54,13 @@ struct ServerSettingsGraphic: View {
                     )
                 )
 
-            Drop()
-                .stroke(dropStroke, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
-
             Gears()
-                .stroke(cloudFill, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
+                .stroke(iconFill, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
         }
     }
 }
 
-struct Gears: Shape {
+private struct Gears: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let width = rect.size.width
