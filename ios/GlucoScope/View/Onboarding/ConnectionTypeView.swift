@@ -7,12 +7,7 @@ struct ConnectionTypeView: View {
     var body: some View {
         ThemedScreen {
             VStack {
-                Image("OnboardConnection")
-                    .resizable()
-                    .scaledToFit()
-                    .aspectRatio(contentMode: .fit)
-                    .padding(.top, 32)
-                    .padding(.horizontal, 32)
+                ThemedConnectionTypeGraphic()
 
                 Spacer()
 
@@ -65,5 +60,6 @@ struct ConnectionTypeView: View {
                     .foregroundStyle(prefs.theme.textColor)
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

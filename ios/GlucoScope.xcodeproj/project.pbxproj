@@ -59,6 +59,7 @@
 		2BAA50FA2DAE703E003981B0 /* GraphOverlayMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */; };
 		2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */; };
 		2BAA50FE2DAE9883003981B0 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FD2DAE9883003981B0 /* Theme.swift */; };
+		2BDAE3282DD4CC8C001A833E /* ConnectionTypeGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -115,6 +116,7 @@
 		2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphOverlayMenu.swift; sourceTree = "<group>"; };
 		2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
 		2BAA50FD2DAE9883003981B0 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionTypeGraphic.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -301,6 +303,7 @@
 		2B879CFC2DD34BC300953CE8 /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
+				2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */,
 				2B879D052DD34CF900953CE8 /* Logo.swift */,
 			);
 			path = Graphics;
@@ -399,6 +402,7 @@
 				2B1628282DAD002700652A69 /* ColorHex.swift in Sources */,
 				2B514CE82DB3A8FE00AC5A6A /* ThemeSwatch.swift in Sources */,
 				2B64B97A2D787BFE00F0BC14 /* IndicatorView.swift in Sources */,
+				2BDAE3282DD4CC8C001A833E /* ConnectionTypeGraphic.swift in Sources */,
 				2B2854012D57A2CE009E86E9 /* GlucoScopeApp.swift in Sources */,
 				2B7CCCB92DCA0D3400A1AED5 /* IntroView.swift in Sources */,
 				2B879D062DD34CFB00953CE8 /* Logo.swift in Sources */,
@@ -561,7 +565,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
@@ -596,7 +600,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;

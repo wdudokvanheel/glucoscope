@@ -138,12 +138,11 @@ struct Logo: View {
     }
 }
 
-struct Drop: Shape {
+private struct Drop: Shape {
     public static let top = 0.12971
     public static let bottom = 0.87891
 
     func path(in rect: CGRect) -> Path {
-        print(rect.size.width)
         var path = Path()
         let width = rect.size.width
         let height = rect.size.height
@@ -158,7 +157,7 @@ struct Drop: Shape {
     }
 }
 
-struct Reflections: Shape {
+private struct Reflections: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let width = rect.size.width
