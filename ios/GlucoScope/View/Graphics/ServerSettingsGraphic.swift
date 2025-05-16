@@ -16,48 +16,43 @@ struct ServerSettingsGraphic: View {
     }
 
     var body: some View {
-        GeometryReader { geom in
-            let lineWidth = ((geom.size.width / 376) * 16)
+        DynamicGraphic { gfx in
+            Cloud()
+                .foregroundStyle(cloudFill)
 
-            ZStack {
-                Cloud()
-                    .foregroundStyle(cloudFill)
-
-                Cloud()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .black.opacity(0),
-                                .black.opacity(0.15)
-                            ]),
-                            startPoint: UnitPoint(x: 0.5, y: Cloud.top + 0.1),
-                            endPoint: UnitPoint(x: 0.5, y: Cloud.bottom)
-                        )
+            Cloud()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .black.opacity(0),
+                            .black.opacity(0.15)
+                        ]),
+                        startPoint: UnitPoint(x: 0.5, y: Cloud.top + 0.1),
+                        endPoint: UnitPoint(x: 0.5, y: Cloud.bottom)
                     )
+                )
 
-                Drop()
-                    .foregroundStyle(dropFill)
+            Drop()
+                .foregroundStyle(dropFill)
 
-                Drop()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .black.opacity(0),
-                                .black.opacity(0.5)
-                            ]),
-                            startPoint: UnitPoint(x: 0.5, y: Drop.top),
-                            endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
-                        )
+            Drop()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .black.opacity(0),
+                            .black.opacity(0.5)
+                        ]),
+                        startPoint: UnitPoint(x: 0.5, y: Drop.top),
+                        endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
                     )
+                )
 
-                Drop()
-                    .stroke(dropStroke, style: StrokeStyle(lineWidth: lineWidth * 0.5, lineCap: .round, lineJoin: .round))
+            Drop()
+                .stroke(dropStroke, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
 
-                Gears()
-                    .stroke(cloudFill, style: StrokeStyle(lineWidth: lineWidth * 0.5, lineCap: .round, lineJoin: .round))
-            }
+            Gears()
+                .stroke(cloudFill, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
         }
-        .aspectRatio(1, contentMode: .fit)
     }
 }
 

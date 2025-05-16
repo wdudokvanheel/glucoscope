@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2B109BA32DD7492C0052D0E1 /* ServerSettingsGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */; };
+		2B109BA52DD74E850052D0E1 /* DynamicGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B109BA42DD74E7A0052D0E1 /* DynamicGraphic.swift */; };
 		2B1628282DAD002700652A69 /* ColorHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1628272DAD002500652A69 /* ColorHex.swift */; };
 		2B16282A2DAD3A8200652A69 /* GlucoseValuesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1628292DAD3A7900652A69 /* GlucoseValuesSettingsView.swift */; };
 		2B16282C2DAD403800652A69 /* ThemeColorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B16282B2DAD403800652A69 /* ThemeColorSettingsView.swift */; };
@@ -63,6 +65,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSettingsGraphic.swift; sourceTree = "<group>"; };
+		2B109BA42DD74E7A0052D0E1 /* DynamicGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicGraphic.swift; sourceTree = "<group>"; };
 		2B1628272DAD002500652A69 /* ColorHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHex.swift; sourceTree = "<group>"; };
 		2B1628292DAD3A7900652A69 /* GlucoseValuesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseValuesSettingsView.swift; sourceTree = "<group>"; };
 		2B16282B2DAD403800652A69 /* ThemeColorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeColorSettingsView.swift; sourceTree = "<group>"; };
@@ -256,6 +260,7 @@
 		2B4BAB492DAA674C00D81158 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				2B109BA42DD74E7A0052D0E1 /* DynamicGraphic.swift */,
 				2B7CCCCF2DCB8CFA00A1AED5 /* ThemedSecureField.swift */,
 				2B7CCCCD2DCB8C3A00A1AED5 /* ThemedTextField.swift */,
 				2B7CCCC82DCB5C2D00A1AED5 /* ThemedNavigationButton.swift */,
@@ -303,6 +308,7 @@
 		2B879CFC2DD34BC300953CE8 /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
+				2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */,
 				2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */,
 				2B879D052DD34CF900953CE8 /* LogoGraphic.swift */,
 			);
@@ -390,6 +396,7 @@
 				2B64B97E2D7880FF00F0BC14 /* RealtimeDataService.swift in Sources */,
 				2B1C9E7A2D5A15CA00CA7861 /* MainView.swift in Sources */,
 				2B7CCCBF2DCA0F5D00A1AED5 /* ConnectionUrlView.swift in Sources */,
+				2B109BA32DD7492C0052D0E1 /* ServerSettingsGraphic.swift in Sources */,
 				2B16282A2DAD3A8200652A69 /* GlucoseValuesSettingsView.swift in Sources */,
 				2B2854102D57A40E009E86E9 /* Calendar.swift in Sources */,
 				2BAA50FE2DAE9883003981B0 /* Theme.swift in Sources */,
@@ -420,6 +427,7 @@
 				2B7CCCD22DCB988D00A1AED5 /* ThemedButton.swift in Sources */,
 				2B4BAB482DAA664C00D81158 /* OrientationView.swift in Sources */,
 				2B1C9E802D5A170700CA7861 /* DataSource.swift in Sources */,
+				2B109BA52DD74E850052D0E1 /* DynamicGraphic.swift in Sources */,
 				2B7CCCC92DCB5C2D00A1AED5 /* ThemedNavigationButton.swift in Sources */,
 				2B1C9E862D5A4E6F00CA7861 /* ConnectionConfigurationEditor.swift in Sources */,
 				2B16282C2DAD403800652A69 /* ThemeColorSettingsView.swift in Sources */,

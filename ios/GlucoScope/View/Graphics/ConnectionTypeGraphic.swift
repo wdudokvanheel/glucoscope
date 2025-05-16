@@ -35,73 +35,68 @@ struct ConnectionTypeGraphic: View {
     }
 
     var body: some View {
-        GeometryReader { geom in
-            let lineWidth = ((geom.size.width / 376) * 16)
+        DynamicGraphic { gfx in
+            Drop()
+                .foregroundStyle(dropFill)
 
-            ZStack {
-                Drop()
-                    .foregroundStyle(dropFill)
-
-                Drop()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .black.opacity(0),
-                                .black.opacity(0.5)
-                            ]),
-                            startPoint: UnitPoint(x: 0.5, y: Drop.top),
-                            endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
-                        )
+            Drop()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .black.opacity(0),
+                            .black.opacity(0.5)
+                        ]),
+                        startPoint: UnitPoint(x: 0.5, y: Drop.top),
+                        endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
                     )
+                )
 
-                Drop()
-                    .stroke(toggleStroke, style: StrokeStyle(lineWidth: lineWidth * 0.5, lineCap: .round, lineJoin: .round))
+            Drop()
+                .stroke(toggleStroke, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
 
-                // Drop stroke overlay
-                Drop()
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .black.opacity(0),
-                                .black.opacity(0.5)
-                            ]),
-                            startPoint: UnitPoint(x: 0.5, y: Drop.top),
-                            endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
-                        ),
-                        style: StrokeStyle(
-                            lineWidth: lineWidth * 0.5,
-                            lineCap: .round,
-                            lineJoin: .round
-                        )
+            // Drop stroke overlay
+            Drop()
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .black.opacity(0),
+                            .black.opacity(0.5)
+                        ]),
+                        startPoint: UnitPoint(x: 0.5, y: Drop.top),
+                        endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
+                    ),
+                    style: StrokeStyle(
+                        lineWidth: gfx.lineWidth * 0.5,
+                        lineCap: .round,
+                        lineJoin: .round
                     )
+                )
 
-                Cloud()
-                    .foregroundStyle(cloudFill)
+            Cloud()
+                .foregroundStyle(cloudFill)
 
-                Cloud()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .black.opacity(0),
-                                .black.opacity(0.15)
-                            ]),
-                            startPoint: UnitPoint(x: 0.5, y: Cloud.top + 0.1),
-                            endPoint: UnitPoint(x: 0.5, y: Cloud.bottom)
-                        )
+            Cloud()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .black.opacity(0),
+                            .black.opacity(0.15)
+                        ]),
+                        startPoint: UnitPoint(x: 0.5, y: Cloud.top + 0.1),
+                        endPoint: UnitPoint(x: 0.5, y: Cloud.bottom)
                     )
+                )
 
-                Cloud()
-                    .stroke(toggleStroke, style: StrokeStyle(lineWidth: lineWidth * 0.5, lineCap: .round))
+            Cloud()
+                .stroke(toggleStroke, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round))
 
-                LineTop()
-                    .stroke(lineStroke, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-            
-                LineBottom()
-                    .stroke(lineStroke, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            LineTop()
+                .stroke(lineStroke, style: StrokeStyle(lineWidth: gfx.lineWidth, lineCap: .round))
 
-                ToggleShape(stroke: toggleStroke, selector: self.toggleSelector, lineWidth: lineWidth)
-            }
-            .aspectRatio(1, contentMode: .fit)
+            LineBottom()
+                .stroke(lineStroke, style: StrokeStyle(lineWidth: gfx.lineWidth, lineCap: .round))
+
+            ToggleShape(stroke: toggleStroke, selector: self.toggleSelector, lineWidth: gfx.lineWidth)
         }
     }
 }
@@ -337,7 +332,6 @@ private struct LineTop: Shape {
         let start = CGPoint(x: 0.50391 * width, y: 0.19629 * height)
         let cornerCenter = CGPoint(x: 0.75391 * width - cornerRadius, y: 0.19629 * height + cornerRadius)
         let end = CGPoint(x: 0.75391 * width, y: 0.32129 * height)
-
 
         path.move(to: start)
 

@@ -38,103 +38,98 @@ struct LogoGraphic: View {
     }
 
     var body: some View {
-        GeometryReader { geom in
-            let lineWidth = ((geom.size.width / 376)*16)
+        DynamicGraphic { gfx in
+            // Background rectangle
+            RoundedRectangle(cornerRadius: 16)
+                .fill(background)
 
-            ZStack(alignment: .top) {
-                // Background rectangle
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(background)
-
-                // Background gradient overlay
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(LinearGradient(colors: [.black.opacity(0), .black.opacity(0), .black.opacity(0.15)], startPoint: UnitPoint(x: 0.5, y: 0.65), endPoint: UnitPoint(x: 0.5, y: 1.0)))
+            // Background gradient overlay
+            RoundedRectangle(cornerRadius: 16)
+                .fill(LinearGradient(colors: [.black.opacity(0), .black.opacity(0), .black.opacity(0.15)], startPoint: UnitPoint(x: 0.5, y: 0.65), endPoint: UnitPoint(x: 0.5, y: 1.0)))
 
 //                    RoundedRectangle(cornerRadius: 16)
 //                        .stroke(self.dropStroke, style: StrokeStyle(lineWidth: lineWidth))
 
-                BurgerMenu(foreground: dropStroke, background: background)
+            BurgerMenu(foreground: dropStroke, background: background)
 
-                PowerLight(color: dropFill)
+            PowerLight(color: dropFill)
 
-                ZStack {
-                    // Drop fill
-                    Drop()
-                        .fill(dropFill)
+            ZStack {
+                // Drop fill
+                Drop()
+                    .fill(dropFill)
 
-                    // Drop fill overlay (darker bottom)
-                    Drop()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    .black.opacity(0),
-                                    .black.opacity(0.5)
-                                ]),
-                                startPoint: UnitPoint(x: 0.5, y: Drop.top),
-                                endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
-                            )
+                // Drop fill overlay (darker bottom)
+                Drop()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                .black.opacity(0),
+                                .black.opacity(0.5)
+                            ]),
+                            startPoint: UnitPoint(x: 0.5, y: Drop.top),
+                            endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
                         )
+                    )
 
-                    // Drop stroke
-                    Drop()
-                        .stroke(
-                            dropStroke,
-                            style: StrokeStyle(
-                                lineWidth: lineWidth,
-                                lineCap: .round,
-                                lineJoin: .round
-                            )
+                // Drop stroke
+                Drop()
+                    .stroke(
+                        dropStroke,
+                        style: StrokeStyle(
+                            lineWidth: gfx.lineWidth,
+                            lineCap: .round,
+                            lineJoin: .round
                         )
+                    )
 
-                    // Drop stroke overlay
-                    Drop()
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    .black.opacity(0),
-                                    .black.opacity(0.3)
-                                ]),
-                                startPoint: UnitPoint(x: 0.5, y: Drop.top),
-                                endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
-                            ),
-                            style: StrokeStyle(
-                                lineWidth: lineWidth,
-                                lineCap: .round,
-                                lineJoin: .round
-                            )
+                // Drop stroke overlay
+                Drop()
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                .black.opacity(0),
+                                .black.opacity(0.3)
+                            ]),
+                            startPoint: UnitPoint(x: 0.5, y: Drop.top),
+                            endPoint: UnitPoint(x: 0.5, y: Drop.bottom)
+                        ),
+                        style: StrokeStyle(
+                            lineWidth: gfx.lineWidth,
+                            lineCap: .round,
+                            lineJoin: .round
                         )
-                }
+                    )
+            }
 
-                Reflections()
-                    .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
-                    .foregroundStyle(reflectionFill.opacity(0.9))
+            Reflections()
+                .stroke(style: StrokeStyle(lineWidth: gfx.lineWidth*0.75, lineCap: .round))
+                .foregroundStyle(reflectionFill.opacity(0.9))
 
-                // Render for the shadows first
+            // Render for the shadows first
+            GraphNodes()
+                .stroke(style: StrokeStyle(lineWidth: gfx.lineWidth*0.75, lineCap: .round))
+                .shadow(color: .black.opacity(0.65), radius: 5, x: 0, y: 6)
+
+            GraphLine()
+                .stroke(style: StrokeStyle(lineWidth: gfx.lineWidth*0.75, lineCap: .round))
+                .foregroundStyle(graphNodesFill)
+                .shadow(color: .black.opacity(0.65), radius: 5, x: 0, y: 6)
+
+            ZStack {
+                // Nodes fill
                 GraphNodes()
-                    .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
-                    .shadow(color: .black.opacity(0.65), radius: 5, x: 0, y: 6)
-
-                GraphLine()
-                    .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
+                    .fill(graphNodesFill)
+                // Nodes outline
+                GraphNodes()
+                    .stroke(style: StrokeStyle(lineWidth: gfx.lineWidth*0.75, lineCap: .round))
                     .foregroundStyle(graphNodesFill)
-                    .shadow(color: .black.opacity(0.65), radius: 5, x: 0, y: 6)
-
-                ZStack {
-                    // Nodes fill
-                    GraphNodes()
-                        .fill(graphNodesFill)
-                    // Nodes outline
-                    GraphNodes()
-                        .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
-                        .foregroundStyle(graphNodesFill)
-                    // Overlay to darken nodes
-                    GraphNodes()
-                        .stroke(style: StrokeStyle(lineWidth: lineWidth*0.75, lineCap: .round))
-                        .foregroundStyle(Color.black.opacity(0.2))
-                }
+                // Overlay to darken nodes
+                GraphNodes()
+                    .stroke(style: StrokeStyle(lineWidth: gfx.lineWidth*0.75, lineCap: .round))
+                    .foregroundStyle(Color.black.opacity(0.2))
             }
         }
-        .aspectRatio(1, contentMode: .fit)
     }
 }
 
