@@ -10,22 +10,16 @@ struct ConnectionTestView: View {
         }
 
         return switch state {
-            case .success: "Success"
-            case .failed: "Fail"
-            case .pending: "Pending"
+        case .success: "Success"
+        case .failed: "Fail"
+        case .pending: "Pending"
         }
     }
 
     var body: some View {
-
         ThemedScreen {
             VStack {
-                Image("OnboardTest\(imageName)")
-                    .resizable()
-                    .scaledToFit()
-                    .aspectRatio(contentMode: .fit)
-                    .padding(.top, 32)
-                    .padding(.horizontal, 32)
+                ThemedConnectionTestGraphic(state: model.connectionTestState)
 
                 Spacer()
 
@@ -35,28 +29,46 @@ struct ConnectionTestView: View {
                             .font(.title)
                             .fontWeight(.semibold)
 
-                        Text("GlucoScope will now verify your connection settings to see if everything works correctly.")
-                            .fixedSize(horizontal: false, vertical: true)
-                            .font(.subheadline)
-
-                        switch model.connectionTestState {
+                        ZStack(alignment: .topLeading) {
+                            switch model.connectionTestState {
                             case .pending:
                                 Text("Testing connectiong, please stand by...")
                                     .font(.subheadline)
                             case .failed(let error):
-                                Text("Failed to connect: \(error)")
-                                    .foregroundStyle(prefs.theme.upperColor)
-                                    .font(.subheadline)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                VStack (alignment: .leading){
+                                    Text("\(GlucoScopeApp.APP_NAME) failed to connect to your server:")
+                                        .font(.subheadline)
+                                        .fixedSize(horizontal: false, vertical: true)
+
+                                    Text(error)
+                                        .foregroundStyle(prefs.theme.lowColor)
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    
+                                    Text("\nGo back to change your settings and try again")
+                                        .font(.subheadline)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             case .success:
                                 Text("The connection has been verified, you can now use this server to retrieve your blood glucose values.")
                                     .font(.subheadline)
                             case .none:
-                                Text("Testing connectiong, please stand by...")
+                                Text("GlucoScope will now verify your connection settings to see if everything works correctly.")
+                                    .fixedSize(horizontal: false, vertical: true)
                                     .font(.subheadline)
+                            }
+
+                            Text("\n\n\n")
+                                .fixedSize(horizontal: false, vertical: true)
+                                .font(.subheadline)
                         }
 
-                        if model.testSuccessful {
+                        if model.connectionTestState == nil {
+                            ThemedButton("Test now", model.testConnection)
+                                .disabled(!model.canTest)
+                        }
+                        else if model.testSuccessful {
                             ThemedButton("Start using \(GlucoScopeApp.APP_NAME)", model.completeWizard)
                         }
                         else {
@@ -78,8 +90,9 @@ struct ConnectionTestView: View {
                     .foregroundStyle(prefs.theme.textColor)
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            model.testConnection()
+            model.connectionTestState = nil
         }
     }
 }

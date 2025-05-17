@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2B109BA32DD7492C0052D0E1 /* ServerSettingsGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */; };
 		2B109BA52DD74E850052D0E1 /* DynamicGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B109BA42DD74E7A0052D0E1 /* DynamicGraphic.swift */; };
+		2B109BA72DD772EF0052D0E1 /* ConnectionTestGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B109BA62DD772EF0052D0E1 /* ConnectionTestGraphic.swift */; };
 		2B1628282DAD002700652A69 /* ColorHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1628272DAD002500652A69 /* ColorHex.swift */; };
 		2B16282A2DAD3A8200652A69 /* GlucoseValuesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1628292DAD3A7900652A69 /* GlucoseValuesSettingsView.swift */; };
 		2B16282C2DAD403800652A69 /* ThemeColorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B16282B2DAD403800652A69 /* ThemeColorSettingsView.swift */; };
@@ -67,6 +68,7 @@
 /* Begin PBXFileReference section */
 		2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSettingsGraphic.swift; sourceTree = "<group>"; };
 		2B109BA42DD74E7A0052D0E1 /* DynamicGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicGraphic.swift; sourceTree = "<group>"; };
+		2B109BA62DD772EF0052D0E1 /* ConnectionTestGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionTestGraphic.swift; sourceTree = "<group>"; };
 		2B1628272DAD002500652A69 /* ColorHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHex.swift; sourceTree = "<group>"; };
 		2B1628292DAD3A7900652A69 /* GlucoseValuesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseValuesSettingsView.swift; sourceTree = "<group>"; };
 		2B16282B2DAD403800652A69 /* ThemeColorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeColorSettingsView.swift; sourceTree = "<group>"; };
@@ -308,6 +310,7 @@
 		2B879CFC2DD34BC300953CE8 /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
+				2B109BA62DD772EF0052D0E1 /* ConnectionTestGraphic.swift */,
 				2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */,
 				2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */,
 				2B879D052DD34CF900953CE8 /* LogoGraphic.swift */,
@@ -416,6 +419,7 @@
 				2B1C9E7C2D5A162E00CA7861 /* GraphView.swift in Sources */,
 				2B2854122D57A718009E86E9 /* GlucoseMeasurement.swift in Sources */,
 				2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */,
+				2B109BA72DD772EF0052D0E1 /* ConnectionTestGraphic.swift in Sources */,
 				2B1C9E8D2D5A518C00CA7861 /* DataSourceConfiguration.swift in Sources */,
 				2B1C9E892D5A4F4D00CA7861 /* NightscoutConfigurationView.swift in Sources */,
 				2B2854162D58AECF009E86E9 /* NightscoutDataSource.swift in Sources */,

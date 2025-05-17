@@ -193,7 +193,7 @@ struct GraphLine: Shape {
     }
 }
 
-struct PowerLight: View {
+private struct PowerLight: View {
     let color: Color
 
     var body: some View {
@@ -226,7 +226,7 @@ struct PowerLight: View {
     }
 }
 
-struct BurgerMenu: View {
+private struct BurgerMenu: View {
     let foreground: Color
     let background: Color
 

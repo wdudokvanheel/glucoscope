@@ -9,7 +9,7 @@ enum ConenctionTestState: Equatable {
 @MainActor
 class OnboardModel: ObservableObject {
     @Published var connectionType: DataSourceType = .glucoscope
-    @Published var url: String = ""
+    @Published var url: String = "http://10.0.0.12:9090"
     @Published var apiToken: String = ""
     @Published var connectionTestState: ConenctionTestState?
     @Published var testedConfiguration: DataSourceConfiguration?

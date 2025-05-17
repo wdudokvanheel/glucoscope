@@ -24,6 +24,7 @@ struct DynamicGraphic<Content: View>: View {
                 content(info)
             }
         }
+        .clipped()
         .aspectRatio(1, contentMode: .fit)
     }
 }

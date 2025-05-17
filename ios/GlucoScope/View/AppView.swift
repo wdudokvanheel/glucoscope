@@ -13,6 +13,9 @@ struct AppView: View {
                 MainView()
             }
             else {
+//                ConnectionUrlView()
+//                ConnectionTypeView()
+//                ConnectionTestView()
                 IntroView()
             }
         }
