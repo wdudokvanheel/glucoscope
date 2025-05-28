@@ -11,23 +11,22 @@ struct GraphOverlayMenu: View {
     }
 
     var body: some View {
-        OrientationView { orientation in
+        OrientationAdaptiveView {
             VStack(alignment: .trailing) {
                 Spacer()
-                switch orientation {
-                case .portrait:
-                    GraphRangeSelector(range, self.graphRangeSelected)
-                case .landscape:
-                    HStack {
-                        Spacer()
-                        GraphRangeSelector(range, self.graphRangeSelected)
-                            .fixedSize(horizontal: true, vertical: true)
-                        Spacer()
-                    }
-                    .padding(.bottom, 4)
-                }
+                GraphRangeSelector(range, graphRangeSelected)
             }
-            .padding(.horizontal, 8)
+        } landscape: {
+            VStack(alignment: .trailing) {
+                Spacer()
+                HStack {
+                    Spacer()
+                    GraphRangeSelector(range, self.graphRangeSelected)
+                        .fixedSize(horizontal: true, vertical: true)
+                    Spacer()
+                }
+                .padding(.bottom, 4)
+            }
         }
         .padding(.horizontal, 8)
     }

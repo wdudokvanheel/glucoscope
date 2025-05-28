@@ -18,6 +18,7 @@ struct ThemedNavigationButton<Destination: View>: View {
                 .fontWeight(.regular)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
+                .foregroundStyle(prefs.theme.indicatorLabelColor)
         }
         .buttonStyle(.borderedProminent)
         .tint(prefs.theme.accentColor)

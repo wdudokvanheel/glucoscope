@@ -9,7 +9,7 @@ struct ThemedLogoGraphic: View {
 
         LogoGraphic(
             fill: prefs.theme.lowColor,
-            power: prefs.theme.accentColor,
+            power: prefs.theme.lowColor,
             stroke: stroke,
             light: light
         )

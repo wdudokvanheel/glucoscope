@@ -7,29 +7,26 @@ struct ThemeSettingsView: View {
     @State var previewData: [GlucoseMeasurement] = []
 
     var body: some View {
-        OrientationView { orientation in
-            switch orientation {
-                case .portrait:
-                    GeometryReader { geom in
-                        VStack(spacing: 16) {
-                            ThemeSettingsGraphPreview(previewData: previewData)
-                                .padding(.horizontal, 16)
-                                .frame(height: geom.size.height * 0.33)
+        OrientationAdaptiveView {
+            GeometryReader { geom in
+                VStack(spacing: 16) {
+                    ThemeSettingsGraphPreview(previewData: previewData)
+                        .padding(.horizontal, 16)
+                        .frame(height: geom.size.height * 0.33)
 
-                            ThemeSettingsList(themes: themes)
-                        }
-                        .padding(.bottom, 16)
-                    }
-                case .landscape:
-                    HStack(spacing: 0) {
-                        ThemeSettingsGraphPreview(previewData: previewData)
-                            .padding(.leading, 16)
-
-                        ThemeSettingsList(themes: themes)
-                    }
-                    .padding(.top, 2)
-                    .padding(.bottom, 16)
+                    ThemeSettingsList(themes: themes)
+                }
+                .padding(.bottom, 16)
             }
+        } landscape: {
+            HStack(spacing: 0) {
+                ThemeSettingsGraphPreview(previewData: previewData)
+                    .padding(.leading, 16)
+
+                ThemeSettingsList(themes: themes)
+            }
+            .padding(.top, 2)
+            .padding(.bottom, 16)
         }
         .frame(maxHeight: .infinity)
         .onAppear {

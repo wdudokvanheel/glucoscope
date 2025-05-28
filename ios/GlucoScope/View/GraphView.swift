@@ -37,7 +37,7 @@ struct GraphView: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
-                        withAnimation{
+                        withAnimation {
                             showOverlay.toggle()
                         }
                         resetHideTimer()
@@ -52,7 +52,6 @@ struct GraphView: View {
 
                     resetHideTimer()
                 }
-//                .opacity(showOverlay ? 1 : 0)
                 .transition(.opacity)
             }
         }
