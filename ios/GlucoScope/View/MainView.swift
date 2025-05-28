@@ -14,7 +14,7 @@ struct MainView: View {
                             IndicatorView(realTimeDataSource)
                                 .frame(maxWidth: .infinity, maxHeight: geom.size.height * 0.3 - 12)
                             NavigationLink(destination: SettingsView()) {
-                                Image(systemName: "gear")
+                                Image(systemName: "line.3.horizontal")
                                     .foregroundStyle(prefs.theme.indicatorIconColor)
                                     .padding(.top, 8)
                                     .padding(.trailing, 8 + 8)
@@ -43,10 +43,10 @@ struct MainView: View {
                         }
                         Spacer()
                         NavigationLink(destination: SettingsView()) {
-                            Image(systemName: "gear")
+                            Image(systemName: "line.3.horizontal")
                                 .foregroundStyle(prefs.theme.accentColor)
-                                .padding(.top, 8)
-                                .padding(.trailing, 8 + 8)
+                                .padding(.top, 7)
+                                .padding(.trailing, 8 + 16)
                         }
                         .padding(0)
                     }
