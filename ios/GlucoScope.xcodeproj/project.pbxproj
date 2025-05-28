@@ -58,6 +58,8 @@
 		2B879D062DD34CFB00953CE8 /* LogoGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B879D052DD34CF900953CE8 /* LogoGraphic.swift */; };
 		2B8C01B92DCCAD1C0091BED2 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8C01B82DCCAD190091BED2 /* AboutView.swift */; };
 		2B8C01BD2DCCAE5D0091BED2 /* ProjectVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */; };
+		2B9766942DE6FEFD009305A4 /* RotatingConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */; };
+		2B9766A22DE704DE009305A4 /* GlucoseTargetValuesGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */; };
 		2BAA50F82DAE5FCA003981B0 /* GraphRangeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */; };
 		2BAA50FA2DAE703E003981B0 /* GraphOverlayMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */; };
 		2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */; };
@@ -118,6 +120,8 @@
 		2B879D052DD34CF900953CE8 /* LogoGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoGraphic.swift; sourceTree = "<group>"; };
 		2B8C01B82DCCAD190091BED2 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectVersion.swift; sourceTree = "<group>"; };
+		2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotatingConfigurationView.swift; sourceTree = "<group>"; };
+		2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseTargetValuesGraphic.swift; sourceTree = "<group>"; };
 		2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphRangeSelector.swift; sourceTree = "<group>"; };
 		2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphOverlayMenu.swift; sourceTree = "<group>"; };
 		2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
@@ -192,6 +196,7 @@
 		2B1C9E872D5A4F2D00CA7861 /* Configuration */ = {
 			isa = PBXGroup;
 			children = (
+				2B9766922DE6FEED009305A4 /* Components */,
 				2B8C01B82DCCAD190091BED2 /* AboutView.swift */,
 				2B7667532DB28605008A2009 /* ConnectionSettingsView.swift */,
 				2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */,
@@ -310,12 +315,21 @@
 		2B879CFC2DD34BC300953CE8 /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
+				2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */,
 				2B109BA62DD772EF0052D0E1 /* ConnectionTestGraphic.swift */,
 				2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */,
 				2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */,
 				2B879D052DD34CF900953CE8 /* LogoGraphic.swift */,
 			);
 			path = Graphics;
+			sourceTree = "<group>";
+		};
+		2B9766922DE6FEED009305A4 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -393,6 +407,7 @@
 				2B7CCCBD2DCA0EEF00A1AED5 /* ConnectionTypeView.swift in Sources */,
 				2B2854032D57A2CE009E86E9 /* ColoredLineGraph.swift in Sources */,
 				2B7CCCCE2DCB8C3A00A1AED5 /* ThemedTextField.swift in Sources */,
+				2B9766A22DE704DE009305A4 /* GlucoseTargetValuesGraphic.swift in Sources */,
 				2B7CCCC12DCA0F9300A1AED5 /* ConnectionTestView.swift in Sources */,
 				2B1C9E8B2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift in Sources */,
 				2B7CCCB72DCA0B5400A1AED5 /* AppView.swift in Sources */,
@@ -405,6 +420,7 @@
 				2BAA50FE2DAE9883003981B0 /* Theme.swift in Sources */,
 				2B2854142D57B4BC009E86E9 /* GlucoScopeDataSource.swift in Sources */,
 				2BAA50F82DAE5FCA003981B0 /* GraphRangeSelector.swift in Sources */,
+				2B9766942DE6FEFD009305A4 /* RotatingConfigurationView.swift in Sources */,
 				2B4BAB522DAAB71400D81158 /* PreferenceService.swift in Sources */,
 				2B4BAB542DAAB91E00D81158 /* PreferenceStorage.swift in Sources */,
 				2B7667562DB29877008A2009 /* RoundedCorner.swift in Sources */,

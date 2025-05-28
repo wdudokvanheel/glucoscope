@@ -4,7 +4,7 @@ struct GlucoseValuesSettingsView: View {
     @EnvironmentObject var prefs: PreferenceService
 
     var body: some View {
-        RotatingConfigurationView(title: "Glucose values", header: GlucoseTargetValuesGraphic.init) {
+        RotatingConfigurationView(title: "Glucose values", header: ThemedGlucoseTargetGraphic.init) {
             HStack {
                 Text("Low")
                 Spacer()
