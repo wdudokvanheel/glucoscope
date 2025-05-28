@@ -7,11 +7,17 @@ struct ThemedLogoGraphic: View {
         let light = prefs.theme.isLight ? prefs.theme.surfaceColor : prefs.theme.textColor
         let stroke = prefs.theme.isLight ? prefs.theme.textColor : prefs.theme.surfaceColor
 
-        LogoGraphic(fill: prefs.theme.lowColor, stroke: stroke, light: light, background: light)
+        LogoGraphic(
+            fill: prefs.theme.lowColor,
+            power: prefs.theme.accentColor,
+            stroke: stroke,
+            light: light
+        )
     }
 }
 
 struct LogoGraphic: View {
+    let powerLight: Color
     let background: Color
     let dropFill: Color
     let dropStroke: Color
@@ -27,14 +33,16 @@ struct LogoGraphic: View {
         self.dropStroke = Color(hex: "#323C4B")
         self.reflectionFill = .white
         self.graphNodesFill = .white
+        self.powerLight = .teal
     }
 
-    init(fill: Color, stroke: Color, light: Color, background: Color) {
-        self.background = background
+    init(fill: Color, power: Color, stroke: Color, light: Color) {
+        self.background = light
         self.dropFill = fill
         self.dropStroke = stroke
         self.reflectionFill = light
         self.graphNodesFill = light
+        self.powerLight = power
     }
 
     var body: some View {
@@ -52,7 +60,7 @@ struct LogoGraphic: View {
 
             BurgerMenu(foreground: dropStroke, background: background)
 
-            PowerLight(color: dropFill)
+            PowerLight(color: powerLight)
 
             ZStack {
                 // Drop fill

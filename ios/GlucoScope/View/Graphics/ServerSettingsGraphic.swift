@@ -4,28 +4,35 @@ struct ThemedServerSettingsGraphic: View {
     @EnvironmentObject var prefs: PreferenceService
 
     var body: some View {
-        ServerSettingsGraphic(iconFill: prefs.theme.textColor, dropFill: prefs.theme.lowColor)
+        ServerSettingsGraphic(
+            dropFill: prefs.theme.lowColor,
+            gearsFill: prefs.theme.accentColor,
+            cloudFill: prefs.theme.textColor
+        )
     }
 }
 
 struct ServerSettingsGraphic: View {
-    let iconFill: Color
+    let cloudFill: Color
+    let gearsFill: Color
     let dropFill: Color
 
-    init(iconFill: Color, dropFill: Color) {
-        self.iconFill = iconFill
+    init(dropFill: Color, gearsFill: Color, cloudFill: Color) {
+        self.cloudFill = cloudFill
         self.dropFill = dropFill
+        self.gearsFill = gearsFill
     }
 
     init() {
         self.dropFill = .red
-        self.iconFill = .white
+        self.cloudFill = .white
+        self.gearsFill = .teal
     }
 
     var body: some View {
         DynamicGraphic { gfx in
             Cloud()
-                .foregroundStyle(iconFill)
+                .foregroundStyle(cloudFill)
 
             Cloud()
                 .fill(
@@ -55,7 +62,7 @@ struct ServerSettingsGraphic: View {
                 )
 
             Gears()
-                .stroke(iconFill, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
+                .stroke(gearsFill, style: StrokeStyle(lineWidth: gfx.lineWidth * 0.5, lineCap: .round, lineJoin: .round))
         }
     }
 }
