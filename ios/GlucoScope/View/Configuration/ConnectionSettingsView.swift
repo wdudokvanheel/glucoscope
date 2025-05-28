@@ -5,28 +5,14 @@ struct ConnectionSettingsView: View {
     @EnvironmentObject var dataService: DataSourceService
 
     var body: some View {
-        VStack {
-            let configuration = dataService.configuration
+        let configuration = dataService.configuration
 
-            ThemedServerSettingsGraphic()
-
-            Spacer()
-
+        RotatingConfigurationView(title: "Connection", header: ThemedServerSettingsGraphic.init) {
             ConnectionConfigurationEditor(configuration: configuration) { conf in
                 self.dataService.saveConfiguration(conf)
             } onReset: {
                 dataService.clearConfiguration()
             }
-            .padding(.bottom, 16)
         }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Connection")
-                    .minimumScaleFactor(0.5)
-                    .font(.title)
-                    .foregroundStyle(prefs.theme.textColor)
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

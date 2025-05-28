@@ -25,60 +25,57 @@ struct ConnectionConfigurationEditor: View {
     }
 
     var body: some View {
-        ThemedSection {
-            VStack {
-                Text("Server type")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .foregroundStyle(prefs.theme.textColor)
+        VStack {
+            Text("Server type")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .foregroundStyle(prefs.theme.textColor)
 
-                Picker("Server type", selection: $selectedType) {
-                    Text("GlucoScope").tag(DataSourceType.glucoscope)
-                    Text("Nightscout").tag(DataSourceType.nightscout)
-                }
-                .onAppear {
-                    UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(prefs.theme.accentColor)
-                    UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(prefs.theme.indicatorLabelColor)], for: .selected)
-                    UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(prefs.theme.textColor)], for: .normal)
-                    UISegmentedControl.appearance().backgroundColor = UIColor(prefs.theme.surfaceColor)
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: selectedType) { newType in
-                    switch newType {
-                    case .glucoscope:
-                        if !(configuration is GlucoScopeDataSourceConfiguration) {
-                            configuration = GlucoScopeDataSourceConfiguration(url: "", apiToken: nil)
-                        }
-                    case .nightscout:
-                        if !(configuration is NightscoutDataSourceConfiguration) {
-                            configuration = NightscoutDataSourceConfiguration(url: "", apiToken: nil)
-                        }
-                    }
-                }
-
-                ThemedDivider()
-
-                switch selectedType {
+            Picker("Server type", selection: $selectedType) {
+                Text("GlucoScope").tag(DataSourceType.glucoscope)
+                Text("Nightscout").tag(DataSourceType.nightscout)
+            }
+            .onAppear {
+                UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(prefs.theme.accentColor)
+                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(prefs.theme.indicatorLabelColor)], for: .selected)
+                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(prefs.theme.textColor)], for: .normal)
+                UISegmentedControl.appearance().backgroundColor = UIColor(prefs.theme.surfaceColor)
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: selectedType) { newType in
+                switch newType {
                 case .glucoscope:
-                    GlucoScopeConfigurationView(configuration: $configuration)
+                    if !(configuration is GlucoScopeDataSourceConfiguration) {
+                        configuration = GlucoScopeDataSourceConfiguration(url: "", apiToken: nil)
+                    }
                 case .nightscout:
-                    NightscoutConfigurationView(configuration: $configuration)
-                }
-
-                ThemedDivider()
-
-                Button("Save connection settings") {
-                    if let config = configuration {
-                        onSave(config)
+                    if !(configuration is NightscoutDataSourceConfiguration) {
+                        configuration = NightscoutDataSourceConfiguration(url: "", apiToken: nil)
                     }
                 }
+            }
+
+            ThemedDivider()
+
+            switch selectedType {
+            case .glucoscope:
+                GlucoScopeConfigurationView(configuration: $configuration)
+            case .nightscout:
+                NightscoutConfigurationView(configuration: $configuration)
+            }
+
+            ThemedDivider()
+
+            Button("Save connection settings") {
+                if let config = configuration {
+                    onSave(config)
+                }
+            }
 
 //                Button("Reset connection settings") {
 //                    self.onReset()
 //                }
 
-                .disabled(configuration == nil)
-            }
-            .padding(8)
+            .disabled(configuration == nil)
         }
     }
 }
