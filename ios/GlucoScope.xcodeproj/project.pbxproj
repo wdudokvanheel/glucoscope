@@ -61,6 +61,7 @@
 		2B9766942DE6FEFD009305A4 /* RotatingConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */; };
 		2B9766A22DE704DE009305A4 /* GlucoseTargetValuesGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */; };
 		2BA6FCF12E1E80DA00B93FAF /* DemoDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA6FCF02E1E80DA00B93FAF /* DemoDataSource.swift */; };
+		2BA6FCF72E1EA69B00B93FAF /* NumberFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA6FCF62E1EA69800B93FAF /* NumberFormatter.swift */; };
 		2BAA50F82DAE5FCA003981B0 /* GraphRangeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */; };
 		2BAA50FA2DAE703E003981B0 /* GraphOverlayMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */; };
 		2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */; };
@@ -124,6 +125,7 @@
 		2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotatingConfigurationView.swift; sourceTree = "<group>"; };
 		2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseTargetValuesGraphic.swift; sourceTree = "<group>"; };
 		2BA6FCF02E1E80DA00B93FAF /* DemoDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDataSource.swift; sourceTree = "<group>"; };
+		2BA6FCF62E1EA69800B93FAF /* NumberFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberFormatter.swift; sourceTree = "<group>"; };
 		2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphRangeSelector.swift; sourceTree = "<group>"; };
 		2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphOverlayMenu.swift; sourceTree = "<group>"; };
 		2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
@@ -256,6 +258,7 @@
 		2B28540E2D57A3FF009E86E9 /* Extension */ = {
 			isa = PBXGroup;
 			children = (
+				2BA6FCF62E1EA69800B93FAF /* NumberFormatter.swift */,
 				2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */,
 				2B7667552DB29877008A2009 /* RoundedCorner.swift */,
 				2B1628272DAD002500652A69 /* ColorHex.swift */,
@@ -407,6 +410,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2B7CCCCC2DCB674200A1AED5 /* ThemedScreen.swift in Sources */,
+				2BA6FCF72E1EA69B00B93FAF /* NumberFormatter.swift in Sources */,
 				2B7CCCBD2DCA0EEF00A1AED5 /* ConnectionTypeView.swift in Sources */,
 				2B2854032D57A2CE009E86E9 /* ColoredLineGraph.swift in Sources */,
 				2B7CCCCE2DCB8C3A00A1AED5 /* ThemedTextField.swift in Sources */,
@@ -597,7 +601,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
@@ -632,7 +636,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
