@@ -68,21 +68,16 @@ class PreferenceService: ObservableObject {
         _ prefs: repeat Preference<each V>
     ) {
         var publishers: [AnyPublisher<Void, Never>] = []
-        let valuesTuple = (repeat (each prefs).publisher.map { _ in () }.eraseToAnyPublisher())
 
-        for publisher in repeat (each valuesTuple) {
-            publishers.append(publisher)
+        for pref in repeat each prefs {                             // ②
+            publishers.append(
+                pref.publisher.map { _ in () }.eraseToAnyPublisher()
+            )
         }
 
         Publishers.MergeMany(publishers)
-            .sink { _ in
-                self.objectWillChange.send()
-            }
-            .store(in: &self.cancellables)
-    }
-
-    var themePublisher: Published<Theme>.Publisher {
-        self._theme.publisher
+            .sink { _ in self.objectWillChange.send() }
+            .store(in: &cancellables)
     }
 }
 
