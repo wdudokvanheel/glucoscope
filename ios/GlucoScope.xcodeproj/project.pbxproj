@@ -60,6 +60,7 @@
 		2B8C01BD2DCCAE5D0091BED2 /* ProjectVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */; };
 		2B9766942DE6FEFD009305A4 /* RotatingConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */; };
 		2B9766A22DE704DE009305A4 /* GlucoseTargetValuesGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */; };
+		2BA6FCF12E1E80DA00B93FAF /* DemoDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA6FCF02E1E80DA00B93FAF /* DemoDataSource.swift */; };
 		2BAA50F82DAE5FCA003981B0 /* GraphRangeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */; };
 		2BAA50FA2DAE703E003981B0 /* GraphOverlayMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */; };
 		2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */; };
@@ -122,6 +123,7 @@
 		2B8C01BC2DCCAE520091BED2 /* ProjectVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectVersion.swift; sourceTree = "<group>"; };
 		2B9766932DE6FEF3009305A4 /* RotatingConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotatingConfigurationView.swift; sourceTree = "<group>"; };
 		2B9766A12DE704D2009305A4 /* GlucoseTargetValuesGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseTargetValuesGraphic.swift; sourceTree = "<group>"; };
+		2BA6FCF02E1E80DA00B93FAF /* DemoDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoDataSource.swift; sourceTree = "<group>"; };
 		2BAA50F72DAE5FBC003981B0 /* GraphRangeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphRangeSelector.swift; sourceTree = "<group>"; };
 		2BAA50F92DAE703E003981B0 /* GraphOverlayMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphOverlayMenu.swift; sourceTree = "<group>"; };
 		2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
@@ -187,6 +189,7 @@
 				2B1C9E7F2D5A170700CA7861 /* DataSource.swift */,
 				2B1C9E8C2D5A518C00CA7861 /* DataSourceConfiguration.swift */,
 				2B1C9E812D5A287100CA7861 /* DataSourceService.swift */,
+				2BA6FCF02E1E80DA00B93FAF /* DemoDataSource.swift */,
 				2B2854152D58AECF009E86E9 /* NightscoutDataSource.swift */,
 				2B2854132D57B4BC009E86E9 /* GlucoScopeDataSource.swift */,
 			);
@@ -411,6 +414,7 @@
 				2B7CCCC12DCA0F9300A1AED5 /* ConnectionTestView.swift in Sources */,
 				2B1C9E8B2D5A4F5800CA7861 /* GlucoScopeConfigurationView.swift in Sources */,
 				2B7CCCB72DCA0B5400A1AED5 /* AppView.swift in Sources */,
+				2BA6FCF12E1E80DA00B93FAF /* DemoDataSource.swift in Sources */,
 				2B64B97E2D7880FF00F0BC14 /* RealtimeDataService.swift in Sources */,
 				2B1C9E7A2D5A15CA00CA7861 /* MainView.swift in Sources */,
 				2B7CCCBF2DCA0F5D00A1AED5 /* ConnectionUrlView.swift in Sources */,
@@ -593,7 +597,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
@@ -612,7 +616,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.wdudokvanheel.glucoscope;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -628,7 +632,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = L23NTUN6KV;
 				ENABLE_PREVIEWS = YES;
@@ -647,7 +651,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.wdudokvanheel.glucoscope;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

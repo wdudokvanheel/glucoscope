@@ -2,6 +2,8 @@ import SwiftUI
 
 struct IntroView: View {
     @EnvironmentObject private var prefs: PreferenceService
+    @EnvironmentObject private var dataService: DataSourceService
+    @State private var showDemoAlert = false
 
     var body: some View {
         ThemedScreen {
@@ -16,7 +18,7 @@ struct IntroView: View {
                 ThemedSection {
                     VStack(alignment: .leading) {
                         Text("Welcome to \(GlucoScopeApp.APP_NAME)")
-                            .font(.title)
+                            .font(.title3)
                             .fontWeight(.semibold)
 
                         Text("Beautiful blood glucose visualization for diabetics")
@@ -33,21 +35,28 @@ struct IntroView: View {
                     }
                     .padding(16)
                 }
-                .padding(.vertical, 16)
+                .padding(.top, 16)
                 .padding(.horizontal, 16)
+                
+                VStack(alignment: .center) {
+                    Button("Demo mode") {
+                        showDemoAlert = true
+                    }
+                    .font(.footnote)
+                    .opacity(0.8)
+                }
+                .frame(maxWidth: .infinity)
             }
             .padding(.top, 8)
         }
         .foregroundStyle(prefs.theme.textColor)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(GlucoScopeApp.APP_NAME)
-                    .minimumScaleFactor(0.5)
-                    .font(.title)
-                    .foregroundStyle(prefs.theme.textColor)
-            }
-        }
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Start demo mode?", isPresented: $showDemoAlert) {
+            Button("Start") { dataService.startDemoMode() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Demo mode allows you to use the full app, but using fake data. You can setup a connection later in the settings menu. Start GlucoScope in demo mode?")
+        }
     }
 }
 

@@ -8,10 +8,25 @@ struct ConnectionSettingsView: View {
         let configuration = dataService.configuration
 
         RotatingConfigurationView(title: "Connection", header: ThemedServerSettingsGraphic.init) {
-            ConnectionConfigurationEditor(configuration: configuration) { conf in
-                self.dataService.saveConfiguration(conf)
-            } onReset: {
-                dataService.clearConfiguration()
+            if dataService.isDemoMode {
+                Text("Demo mode")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .foregroundStyle(prefs.theme.textColor)
+                    .font(.body)
+                
+                Text("Currently in demonstration mode. Please run the setup to connect to a server.")
+                    .font(.body)
+                VStack{
+                    ThemedButton("Setup GlucoScope") {
+                        dataService.stopDemoMode()
+                    }
+                }
+            } else {
+                ConnectionConfigurationEditor(configuration: configuration) { conf in
+                    self.dataService.saveConfiguration(conf)
+                } onReset: {
+                    dataService.clearConfiguration()
+                }
             }
         }
     }
