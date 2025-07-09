@@ -79,4 +79,23 @@ class DataSourceService: ObservableObject {
         datasource = nil
         prefences.connection = nil
     }
+
+    // MARK: - Demo mode
+
+    /// Returns `true` when the current datasource is a ``DemoDataSource``.
+    var isDemoMode: Bool {
+        datasource is DemoDataSource
+    }
+
+    /// Start the demo mode by using a ``DemoDataSource`` as datasource.
+    func startDemoMode() {
+        logger.debug("Starting demo mode")
+        datasource = DemoDataSource()
+    }
+
+    /// Stop demo mode and remove any datasource so onboarding restarts.
+    func stopDemoMode() {
+        logger.debug("Stopping demo mode")
+        datasource = nil
+    }
 }

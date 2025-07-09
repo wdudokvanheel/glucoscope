@@ -2,6 +2,8 @@ import SwiftUI
 
 struct IntroView: View {
     @EnvironmentObject private var prefs: PreferenceService
+    @EnvironmentObject private var dataService: DataSourceService
+    @State private var showDemoAlert = false
 
     var body: some View {
         ThemedScreen {
@@ -30,6 +32,10 @@ struct IntroView: View {
                         .padding(.vertical, 8)
 
                         ThemedNavigationButton("Get started", ConnectionTypeView())
+                        Button("Demo mode") {
+                            showDemoAlert = true
+                        }
+                        .font(.footnote)
                     }
                     .padding(16)
                 }
@@ -48,6 +54,12 @@ struct IntroView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Start demo mode?", isPresented: $showDemoAlert) {
+            Button("Start") { dataService.startDemoMode() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Demo mode uses fake data. You can setup GlucoScope later from Settings.")
+        }
     }
 }
 
