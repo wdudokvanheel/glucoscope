@@ -177,7 +177,7 @@
     "surface": "#121212",
     "text": "#ffffff",
     "accent": "#00b7ff",
-    "indicatorIcon": "#ffffff",
+    "indicatorIcon": "#000000",
     "indicatorLabel": "#000000",
     "low": "#ff0055",
     "upper": "#ff0055",
