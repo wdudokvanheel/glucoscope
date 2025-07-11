@@ -88,8 +88,10 @@ fun Graph(
     ).toSrgb()
 
     /* ---------- gradient that’s locked to the axis, not to today’s data -------- */
-    val gradient = remember(rangeLow, rangeHigh,
-        lowThreshold, highThreshold, upperThreshold) {
+    val gradient = remember(
+        rangeLow, rangeHigh,
+        lowThreshold, highThreshold, upperThreshold
+    ) {
 
         ShaderProvider { _, left, top, right, bottom ->
             fun frac(v: Double): Float {
@@ -98,17 +100,17 @@ fun Graph(
             }
 
 
-            val lowBand   = lowThreshold * 0.05
-            val highBand  = highThreshold * 0.0214
+            val lowBand = lowThreshold * 0.05
+            val highBand = highThreshold * 0.0214
 
             val pos = floatArrayOf(
                 0f,
                 frac(upperThreshold),
                 frac(highThreshold + highBand),
                 frac(highThreshold - highBand),
-                frac(lowThreshold  + lowBand),
+                frac(lowThreshold + lowBand),
                 frac(lowThreshold),                 // mid-amber
-                frac(lowThreshold  - lowBand),
+                frac(lowThreshold - lowBand),
                 1f
             )
 
@@ -136,6 +138,7 @@ fun Graph(
 
     val colouredLine = LineCartesianLayer.rememberLine(
         stroke = LineCartesianLayer.LineStroke.continuous(thickness = 4.dp),
+        pointConnector = LineCartesianLayer.PointConnector.cubic(curvature = 0.5f),
         fill = LineCartesianLayer.LineFill.single(fill(gradient))
     )
 
