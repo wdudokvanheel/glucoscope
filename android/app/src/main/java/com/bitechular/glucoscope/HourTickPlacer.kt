@@ -7,10 +7,9 @@ import com.patrykandpatrick.vico.core.cartesian.layer.CartesianLayerDimensions
 
 class HourTickPlacer(
     private val hourXs: List<Double>,   // x-indices whose minute == 0
-    private val labelStep: Int = 1,     // 2 = every other label
+    private val labelStep: Int = 1,
 ) : HorizontalAxis.ItemPlacer {
 
-    /* — helpers — */
     private fun ticksIn(r: ClosedFloatingPointRange<Double>) =
         hourXs.dropWhile { it < r.start }.takeWhile { it <= r.endInclusive }
 
@@ -20,16 +19,15 @@ class HourTickPlacer(
         else listOf(r.start)                    // fallback label
     }
 
-    /* — draw-time — */
     override fun getLineValues(
-        ctx: CartesianDrawingContext,
+        context: CartesianDrawingContext,
         visibleXRange: ClosedFloatingPointRange<Double>,
         fullXRange: ClosedFloatingPointRange<Double>,
         maxLabelWidth: Float,
     ) = ticksIn(visibleXRange)
 
     override fun getLabelValues(
-        ctx: CartesianDrawingContext,
+        context: CartesianDrawingContext,
         visibleXRange: ClosedFloatingPointRange<Double>,
         fullXRange: ClosedFloatingPointRange<Double>,
         maxLabelWidth: Float,
@@ -37,22 +35,22 @@ class HourTickPlacer(
 
     /* — measurement-time: ALWAYS return ≥1 label — */
     override fun getHeightMeasurementLabelValues(
-        ctx: CartesianMeasuringContext,
-        dims: CartesianLayerDimensions,
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
         fullXRange: ClosedFloatingPointRange<Double>,
         maxLabelWidth: Float,
     ) = labelsIn(fullXRange)                    // never empty
 
     override fun getWidthMeasurementLabelValues(
-        ctx: CartesianMeasuringContext,
-        dims: CartesianLayerDimensions,
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
         fullXRange: ClosedFloatingPointRange<Double>,
     ): List<Double> {
         val all = hourXs.filterIndexed { i, _ -> i % labelStep == 0 }
-        return if (all.isNotEmpty()) all else listOf(fullXRange.start)  // ≥1
+        return all.ifEmpty { listOf(fullXRange.start) }  // ≥1
     }
 
     /* margins & top-tick shift */
-    override fun getStartLayerMargin(ctx: CartesianMeasuringContext, dims: CartesianLayerDimensions, t: Float, m: Float) = 0f
-    override fun getEndLayerMargin  (ctx: CartesianMeasuringContext, dims: CartesianLayerDimensions, t: Float, m: Float) = 0f
+    override fun getStartLayerMargin(context: CartesianMeasuringContext, layerDimensions: CartesianLayerDimensions, tickThickness: Float, maxLabelWidth: Float) = 0f
+    override fun getEndLayerMargin  (context: CartesianMeasuringContext, layerDimensions: CartesianLayerDimensions, tickThickness: Float, maxLabelWidth: Float) = 0f
 }
