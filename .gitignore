@@ -5,3 +5,13 @@
 backend/target
 assets/test.toml
 **/xcuserdata/
+
+*.iml
+.gradle
+/android/local.properties
+/android/build
+/android/captures
+.externalNativeBuild
+.cxx
+local.properties
+
