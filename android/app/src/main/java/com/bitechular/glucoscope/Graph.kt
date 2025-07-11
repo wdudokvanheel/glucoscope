@@ -18,21 +18,20 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
+import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.Zoom
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 
 @Composable
 fun Graph(
@@ -152,20 +151,25 @@ fun Graph(
         return inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
     }
 
-    val ptsPerHour = remember(measurements) {
-        val firstHour = measurements.first().time.toLdt().truncatedTo(ChronoUnit.HOURS)
-        val idx =
-            measurements.indexOfFirst { it.time.toLdt().truncatedTo(ChronoUnit.HOURS) != firstHour }
-        if (idx <= 0) 1 else idx
+    val hourXs = remember(measurements) {
+        buildList {
+            var lastHour = -1
+            measurements.forEachIndexed { idx, m ->
+                val hour = m.time.toLdt().hour           // 0-23
+                if (hour != lastHour) {                  // first sample of a new hour
+                    add(idx.toDouble())                  // x-index in Vico’s space
+                    lastHour = hour
+                }
+            }
+        }
     }
 
-
     val bottomAxis = HorizontalAxis.rememberBottom(
-        valueFormatter = { _, value, _ ->
-            val i = value.roundToInt().coerceIn(0, measurements.lastIndex)
+        valueFormatter = { _, x, _ ->
+            val i = x.toInt().coerceIn(0, measurements.lastIndex)
             "%02d:00".format(measurements[i].time.toLdt().hour)
         },
-        itemPlacer = remember(ptsPerHour) { HourItemPlacer(ptsPerHour, labelStep = xAxisStep) },
+        itemPlacer = remember(hourXs) { HourTickPlacer(hourXs, labelStep = xAxisStep) }
     )
 
     val chart = rememberCartesianChart(
