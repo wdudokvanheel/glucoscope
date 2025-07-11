@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Graph(
                         data,
-                        Modifier
+                        modifier = Modifier
                             .padding(innerPadding)
                             .fillMaxHeight()
                     )

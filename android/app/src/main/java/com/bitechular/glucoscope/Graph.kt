@@ -14,7 +14,6 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLa
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.core.cartesian.Zoom
-import com.patrykandpatrick.vico.core.cartesian.axis.Axis
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
@@ -22,8 +21,9 @@ import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -31,6 +31,8 @@ import kotlin.math.roundToInt
 @Composable
 fun Graph(
     measurements: List<GlucoseMeasurement>,
+    rangeLow: Double = 2.5,
+    rangeHigh: Double = 20.0,
     modifier: Modifier = Modifier
 ) {
     if (measurements.isEmpty()) {
@@ -38,31 +40,36 @@ fun Graph(
         return
     }
 
+    require(rangeLow > 0 && rangeHigh > rangeLow) { "Both bounds must be > 0 and low < high." }
+
     /* -------- data into the model -------- */
     val producer = remember { CartesianChartModelProducer() }
     LaunchedEffect(measurements) {
         producer.runTransaction {
             lineSeries {
-                val xs = measurements.indices.map(Int::toDouble)          // 0,1,2…
-                val ysLog = measurements.map { log10(it.value) }
-                series(x = xs, y = ysLog)
+                val xs = measurements.indices.map(Int::toDouble)
+                val ys = measurements.map { log10(it.value) }   // LOG TRANSFORM
+                series(x = xs, y = ys)
             }
         }
     }
 
+    val minLog = log10(rangeLow)
+    val maxLog = log10(rangeHigh)
 
-    val minInt = 2
-    val maxInt = 20
-
-    val logPlacer = remember(minInt, maxInt) {
-        IntegerLogItemPlacer(minInt, maxInt)
+    val rangeProvider = remember(minLog, maxLog) {
+        FixedLogRangeProvider(minLog, maxLog)
     }
 
+    val lineLayer = rememberLineCartesianLayer(
+        rangeProvider = rangeProvider,
+    )
+
+    val tickInts = (ceil(rangeLow).toInt()..floor(rangeHigh).toInt())
+    val tickLogs = tickInts.map { log10(it.toDouble()) }
     val endAxis = VerticalAxis.rememberEnd(
-        itemPlacer = logPlacer,
-        valueFormatter = { _, v, _ ->
-            10.0.pow(v).roundToInt().toString()
-        }
+        itemPlacer     = remember(tickLogs) { WholeNumberLogPlacer(tickLogs) },
+        valueFormatter = { _, v, _ -> 10.0.pow(v).roundToInt().toString() },
     )
 
     fun Double.toLdt(): LocalDateTime {
@@ -95,9 +102,9 @@ fun Graph(
 
     /* -------- assemble chart -------- */
     val chart = rememberCartesianChart(
-        rememberLineCartesianLayer(),
-        endAxis   = endAxis,
-        bottomAxis = bottomAxis
+        lineLayer,                       // ← use the existing layer
+        endAxis    = endAxis,
+        bottomAxis = bottomAxis,
     )
 
     val zoomState = rememberVicoZoomState(
@@ -109,7 +116,7 @@ fun Graph(
     CartesianChartHost(
         chart = chart,
         modelProducer = producer,
-        zoomState = zoomState,
+        zoomState = zoomState,         // unchanged
         modifier = modifier.fillMaxSize()
     )
 }
