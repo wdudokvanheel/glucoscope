@@ -28,19 +28,11 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
-import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
-
-private val upperColor = Color(0xFFFF006E)
-private val lowColor = Color(0xFFFF006E)
-private val inRangeColor = Color(0xFF00C853)
-private val highColor = Color(0xFFFFD600)   // red (again)
-
 
 @Composable
 fun Graph(
@@ -50,6 +42,12 @@ fun Graph(
     lowThreshold: Double = 4.0,
     highThreshold: Double = 7.0,
     upperThreshold: Double = 10.0,
+    upperColor: Color = Color(0xFFFF006E),
+    lowColor: Color = Color(0xFFFF006E),
+    inRangeColor: Color = Color(0xFF00C853),
+    highColor: Color = Color(0xFFFFD600),
+    xAxisStep: Int = 1,
+    yAxisValues: List<Double> = listOf(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0),
     modifier: Modifier = Modifier,
 ) {
 
@@ -60,13 +58,12 @@ fun Graph(
 
     require(rangeLow > 0 && rangeHigh > rangeLow) { "Both bounds must be > 0 and low < high." }
 
-    /* -------- data into the model -------- */
     val producer = remember { CartesianChartModelProducer() }
     LaunchedEffect(measurements) {
         producer.runTransaction {
             lineSeries {
                 val xs = measurements.indices.map(Int::toDouble)
-                val ys = measurements.map { log10(it.value) }   // LOG TRANSFORM
+                val ys = measurements.map { log10(it.value) }
                 series(x = xs, y = ys)
             }
         }
@@ -81,13 +78,6 @@ fun Graph(
         0.50f
     ).toSrgb()
 
-    val midHigh = androidx.compose.ui.graphics.lerp(
-        highColor.linear(),
-        upperColor.linear(),
-        0.50f
-    ).toSrgb()
-
-    /* ---------- gradient that’s locked to the axis, not to today’s data -------- */
     val gradient = remember(
         rangeLow, rangeHigh,
         lowThreshold, highThreshold, upperThreshold
@@ -99,17 +89,16 @@ fun Graph(
                 return ((log10(rangeHigh) - log10(v)) / span).toFloat()
             }
 
-
-            val lowBand = lowThreshold * 0.05
+            val lowBand = lowThreshold * 0.04
             val highBand = highThreshold * 0.0214
 
             val pos = floatArrayOf(
                 0f,
                 frac(upperThreshold),
-                frac(highThreshold + highBand),
-                frac(highThreshold - highBand),
+                frac(highThreshold),
+                frac(highThreshold - highBand * 1.5),
                 frac(lowThreshold + lowBand),
-                frac(lowThreshold),                 // mid-amber
+                frac(lowThreshold),
                 frac(lowThreshold - lowBand),
                 1f
             )
@@ -117,11 +106,11 @@ fun Graph(
             val col = intArrayOf(
                 upperColor.toArgb(),
                 upperColor.toArgb(),
-                highColor.toArgb(),            // orange
-                inRangeColor.toArgb(),         // green
+                highColor.toArgb(),
                 inRangeColor.toArgb(),
-                midLow.toArgb(),               // amber (dynamic)
-                lowColor.toArgb(),             // red
+                inRangeColor.toArgb(),
+                midLow.toArgb(),
+                lowColor.toArgb(),
                 lowColor.toArgb()
             )
 
@@ -147,11 +136,14 @@ fun Graph(
         rangeProvider = rangeProvider
     )
 
-    val tickInts = (ceil(rangeLow).toInt()..floor(rangeHigh).toInt())
-    val tickLogs = tickInts.map { log10(it.toDouble()) }
+    val tickLogs = yAxisValues.map { log10(it) }
+    val yPlacer = remember { FixedLogTickPlacer(tickLogs) }
+
     val endAxis = VerticalAxis.rememberEnd(
-        itemPlacer = remember(tickLogs) { WholeNumberLogPlacer(tickLogs) },
-        valueFormatter = { _, v, _ -> 10.0.pow(v).roundToInt().toString() },
+        itemPlacer = yPlacer,
+        valueFormatter = { _, v, _ -> // v is log10(original)
+            10.0.pow(v).roundToInt().toString()
+        }
     )
 
     fun Double.toLdt(): LocalDateTime {
@@ -164,27 +156,20 @@ fun Graph(
         val firstHour = measurements.first().time.toLdt().truncatedTo(ChronoUnit.HOURS)
         val idx =
             measurements.indexOfFirst { it.time.toLdt().truncatedTo(ChronoUnit.HOURS) != firstHour }
-        if (idx <= 0) 1 else idx          // fallback if all samples in same hour
+        if (idx <= 0) 1 else idx
     }
 
 
     val bottomAxis = HorizontalAxis.rememberBottom(
         valueFormatter = { _, value, _ ->
             val i = value.roundToInt().coerceIn(0, measurements.lastIndex)
-            val hour = measurements[i].time.toLdt().hour
-            "%02d:00".format(hour)
+            "%02d:00".format(measurements[i].time.toLdt().hour)
         },
-        itemPlacer = remember {
-            HorizontalAxis.ItemPlacer.aligned(
-                spacing = { ptsPerHour * 2 },      // every other hour
-                addExtremeLabelPadding = false
-            )
-        }
+        itemPlacer = remember(ptsPerHour) { HourItemPlacer(ptsPerHour, labelStep = xAxisStep) },
     )
 
-    /* -------- assemble chart -------- */
     val chart = rememberCartesianChart(
-        lineLayer,                       // ← use the existing layer
+        lineLayer,
         endAxis = endAxis,
         bottomAxis = bottomAxis,
     )
@@ -198,7 +183,7 @@ fun Graph(
     CartesianChartHost(
         chart = chart,
         modelProducer = producer,
-        zoomState = zoomState,         // unchanged
+        zoomState = zoomState,
         modifier = modifier.fillMaxSize()
     )
 }
@@ -210,7 +195,6 @@ private fun Color.linear() = Color(
     alpha = alpha
 )
 
-// Back to sRGB for Canvas
 private fun Color.toSrgb() = Color(
     red = red.pow(1 / 2.2f),
     green = green.pow(1 / 2.2f),
