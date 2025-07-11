@@ -6,9 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.patrykandpatrick.vico.compose.common.shader.verticalGradient
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.GlucoseMeasurement
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -34,20 +33,24 @@ import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 
-private val RED = Color(0xFFFF006E)
-private val GREEN = Color(0xFF00C853)
-private val YELLOW = Color(0xFFFFD600)
+private val upperColor = Color(0xFFFF006E)
+private val lowColor = Color(0xFFFF006E)
+private val inRangeColor = Color(0xFF00C853)
+private val highColor = Color(0xFFFFD600)   // red (again)
+
 
 @Composable
 fun Graph(
     measurements: List<GlucoseMeasurement>,
     rangeLow: Double = 2.5,
     rangeHigh: Double = 20.0,
-    modifier: Modifier = Modifier
+    lowThreshold: Double = 4.0,
+    highThreshold: Double = 7.0,
+    upperThreshold: Double = 10.0,
+    modifier: Modifier = Modifier,
 ) {
 
     if (measurements.isEmpty()) {
@@ -72,27 +75,59 @@ fun Graph(
     val minLog = log10(rangeLow)
     val maxLog = log10(rangeHigh)
 
-    val diffLog = maxLog - minLog
-    fun stop(threshold: Double) =
-        ((log10(threshold) - minLog) / diffLog)
-            .toFloat()
-            .coerceIn(0f, 1f)
+    val midLow = androidx.compose.ui.graphics.lerp(
+        lowColor.linear(),
+        inRangeColor.linear(),
+        0.50f
+    ).toSrgb()
 
-    val gradient = remember(minLog, maxLog) {
-        ShaderProvider.Companion.verticalGradient(
-            colors = arrayOf(
-                RED, RED,          // < 4 mmol/L  → red
-                GREEN, GREEN,      // 4–7         → green
-                YELLOW,            // 7–10        → yellow → red
-                RED, RED           // > 10        → red
-            ),
-            positions = floatArrayOf(
+    val midHigh = androidx.compose.ui.graphics.lerp(
+        highColor.linear(),
+        upperColor.linear(),
+        0.50f
+    ).toSrgb()
+
+    /* ---------- gradient that’s locked to the axis, not to today’s data -------- */
+    val gradient = remember(rangeLow, rangeHigh,
+        lowThreshold, highThreshold, upperThreshold) {
+
+        ShaderProvider { _, left, top, right, bottom ->
+            fun frac(v: Double): Float {
+                val span = log10(rangeHigh) - log10(rangeLow)
+                return ((log10(rangeHigh) - log10(v)) / span).toFloat()
+            }
+
+
+            val lowBand   = lowThreshold * 0.05
+            val highBand  = highThreshold * 0.0214
+
+            val pos = floatArrayOf(
                 0f,
-                stop(4.0), stop(4.0),
-                stop(7.0), stop(7.0),
-                stop(10.0), 1f
+                frac(upperThreshold),
+                frac(highThreshold + highBand),
+                frac(highThreshold - highBand),
+                frac(lowThreshold  + lowBand),
+                frac(lowThreshold),                 // mid-amber
+                frac(lowThreshold  - lowBand),
+                1f
             )
-        )
+
+            val col = intArrayOf(
+                upperColor.toArgb(),
+                upperColor.toArgb(),
+                highColor.toArgb(),            // orange
+                inRangeColor.toArgb(),         // green
+                inRangeColor.toArgb(),
+                midLow.toArgb(),               // amber (dynamic)
+                lowColor.toArgb(),             // red
+                lowColor.toArgb()
+            )
+
+            android.graphics.LinearGradient(
+                left, top, left, bottom,
+                col, pos, android.graphics.Shader.TileMode.CLAMP
+            )
+        }
     }
 
     val rangeProvider = remember(minLog, maxLog) {
@@ -100,20 +135,14 @@ fun Graph(
     }
 
     val colouredLine = LineCartesianLayer.rememberLine(
-        // stroke thickness etc.
-        stroke = LineCartesianLayer.LineStroke.continuous(thickness = 2.dp),
-        // gradient fill – `fill()` converts the ShaderProvider for you
-        fill = LineCartesianLayer.LineFill.single(fill(gradient)),
+        stroke = LineCartesianLayer.LineStroke.continuous(thickness = 4.dp),
+        fill = LineCartesianLayer.LineFill.single(fill(gradient))
     )
 
-    val lineProvider = LineCartesianLayer.LineProvider.series(listOf(colouredLine))
-
-    /* keep your fixed range provider, nothing changes there */
     val lineLayer = rememberLineCartesianLayer(
-        lineProvider = lineProvider,
-        rangeProvider = rangeProvider          // ← your FixedLogRangeProvider
+        lineProvider = LineCartesianLayer.LineProvider.series(listOf(colouredLine)),
+        rangeProvider = rangeProvider
     )
-
 
     val tickInts = (ceil(rangeLow).toInt()..floor(rangeHigh).toInt())
     val tickLogs = tickInts.map { log10(it.toDouble()) }
@@ -170,3 +199,18 @@ fun Graph(
         modifier = modifier.fillMaxSize()
     )
 }
+
+private fun Color.linear() = Color(
+    red = red.pow(2.2f),
+    green = green.pow(2.2f),
+    blue = blue.pow(2.2f),
+    alpha = alpha
+)
+
+// Back to sRGB for Canvas
+private fun Color.toSrgb() = Color(
+    red = red.pow(1 / 2.2f),
+    green = green.pow(1 / 2.2f),
+    blue = blue.pow(1 / 2.2f),
+    alpha = alpha
+)
