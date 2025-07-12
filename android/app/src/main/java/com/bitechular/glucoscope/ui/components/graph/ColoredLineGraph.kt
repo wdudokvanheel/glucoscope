@@ -19,9 +19,9 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberEnd
 import com.patrykandpatrick.vico.compose.cartesian.layer.continuous
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.fill
+import com.patrykandpatrick.vico.core.cartesian.CartesianChart
 import com.patrykandpatrick.vico.core.cartesian.Zoom
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
@@ -41,10 +41,10 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun Graph(
+fun ColoredLineGraph(
     measurements: List<GlucoseMeasurement>,
-    rangeLow: Double = 2.5,
-    rangeHigh: Double = 20.0,
+    graphMin: Double = 2.5,
+    graphMax: Double = 20.0,
     lowThreshold: Double = 4.0,
     highThreshold: Double = 7.0,
     upperThreshold: Double = 10.0,
@@ -64,7 +64,7 @@ fun Graph(
         return
     }
 
-    require(rangeLow > 0 && rangeHigh > rangeLow) { "Both bounds must be > 0 and low < high." }
+    require(graphMin > 0 && graphMax > graphMin) { "Both bounds must be > 0 and low < high." }
 
     val producer = remember { CartesianChartModelProducer() }
     LaunchedEffect(measurements) {
@@ -77,8 +77,8 @@ fun Graph(
         }
     }
 
-    val minLog = log10(rangeLow)
-    val maxLog = log10(rangeHigh)
+    val minLog = log10(graphMin)
+    val maxLog = log10(graphMax)
 
     val rangeProvider = remember(minLog, maxLog) {
         FixedLogRangeProvider(minLog, maxLog)
@@ -92,14 +92,15 @@ fun Graph(
     ).toSrgb()
 
     val lineGradient = remember(
-        rangeLow, rangeHigh,
-        lowThreshold, highThreshold, upperThreshold
+        graphMin, graphMax,
+        lowThreshold, highThreshold, upperThreshold,
+        lowColor, highColor, upperColor, inRangeColor
     ) {
 
         ShaderProvider { _, left, top, right, bottom ->
             fun frac(v: Double): Float {
-                val span = log10(rangeHigh) - log10(rangeLow)
-                return ((log10(rangeHigh) - log10(v)) / span).toFloat()
+                val span = log10(graphMax) - log10(graphMin)
+                return ((log10(graphMax) - log10(v)) / span).toFloat()
             }
 
             val lowBand = lowThreshold * 0.04
@@ -147,7 +148,7 @@ fun Graph(
 
     val yPlacer = remember { FixedLogTickPlacer(yAxisValues.map { log10(it) }) }
 
-    val axisLabel = remember {
+    val axisLabel = remember(axisLabelColor) {
         TextComponent(
             textSizeSp = 12f,
             lineCount = 1,
@@ -156,14 +157,14 @@ fun Graph(
         )
     }
 
-    val endAxisLine = remember {
+    val endAxisLine = remember(axisLinesColor) {
         LineComponent(
             fill = Fill(axisLinesColor.toArgb()),
             thicknessDp = 1f,
         )
     }
 
-    val bottomAxisLine = remember {
+    val bottomAxisLine = remember(axisLinesColor) {
         LineComponent(
             fill = Fill(axisLinesColor.toArgb()),
             thicknessDp = 1f,
@@ -203,11 +204,13 @@ fun Graph(
         guideline = bottomAxisLine
     )
 
-    val chart = rememberCartesianChart(
-        lineLayer,
-        endAxis = endAxis,
-        bottomAxis = bottomAxis,
-    )
+    val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax) {
+        CartesianChart(
+            lineLayer,
+            endAxis = endAxis,
+            bottomAxis = bottomAxis,
+        )
+    }
 
     val zoomState = rememberVicoZoomState(
         initialZoom = Zoom.Content,
