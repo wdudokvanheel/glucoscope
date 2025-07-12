@@ -13,46 +13,46 @@ class WholeNumberLogPlacer(
     /* – label & guideline positions – */
     private fun all() = ticks
     override fun getLabelValues(
-        ctx: CartesianDrawingContext,
-        h: Float,
-        m: Float,
-        p: Axis.Position.Vertical
+        context: CartesianDrawingContext,
+        axisHeight: Float,
+        maxLabelHeight: Float,
+        position: Axis.Position.Vertical
     ) = all()
 
     override fun getLineValues(
-        ctx: CartesianDrawingContext,
-        h: Float,
-        m: Float,
-        p: Axis.Position.Vertical
+        context: CartesianDrawingContext,
+        axisHeight: Float,
+        maxLabelHeight: Float,
+        position: Axis.Position.Vertical
     ) = all()
 
     override fun getHeightMeasurementLabelValues(
-        ctx: CartesianMeasuringContext,
-        p: Axis.Position.Vertical
+        context: CartesianMeasuringContext,
+        position: Axis.Position.Vertical
     ) = all()
 
     override fun getWidthMeasurementLabelValues(
-        ctx: CartesianMeasuringContext,
-        h: Float,
-        m: Float,
-        p: Axis.Position.Vertical
+        context: CartesianMeasuringContext,
+        axisHeight: Float,
+        maxLabelHeight: Float,
+        position: Axis.Position.Vertical
     ) = all()
 
     /* – **DON’T** shift the top tick out of view – */
-    override fun getShiftTopLines(ctx: CartesianDrawingContext) = false
+    override fun getShiftTopLines(context: CartesianDrawingContext) = false
 
     /* – no extra margins – */
     override fun getBottomLayerMargin(
-        ctx: CartesianMeasuringContext,
-        vp: Position.Vertical,
-        m: Float,
-        t: Float
+        context: CartesianMeasuringContext,
+        verticalLabelPosition: Position.Vertical,
+        maxLabelHeight: Float,
+        maxLineThickness: Float
     ) = 0f
 
     override fun getTopLayerMargin(
-        ctx: CartesianMeasuringContext,
-        vp: Position.Vertical,
-        m: Float,
-        t: Float
+        context: CartesianMeasuringContext,
+        verticalLabelPosition: Position.Vertical,
+        maxLabelHeight: Float,
+        maxLineThickness: Float
     ) = 0f
 }
