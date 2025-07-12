@@ -54,7 +54,7 @@ fun ColoredLineGraph(
     axisLabelColor: Color = Color(0xFF000000),
     axisLinesColor: Color = Color(0xFF999999),
     xAxisStep: Int = 2,
-    yAxisValues: List<Double> = listOf(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0),
+    yAxisLabels: List<Double> = listOf(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0),
     modifier: Modifier = Modifier,
 ) {
 
@@ -145,7 +145,7 @@ fun ColoredLineGraph(
         rangeProvider = rangeProvider
     )
 
-    val yPlacer = remember(yAxisValues) { FixedLogTickPlacer(yAxisValues.map { log10(it) }) }
+    val yPlacer = remember(yAxisLabels) { FixedLogTickPlacer(yAxisLabels.map { log10(it) }) }
 
     val axisLabel = remember(axisLabelColor) {
         TextComponent(
@@ -205,7 +205,7 @@ fun ColoredLineGraph(
         line = null
     )
 
-    val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax, yAxisValues) {
+    val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax, yAxisLabels) {
         CartesianChart(
             lineLayer,
             endAxis = endAxis,
@@ -223,7 +223,8 @@ fun ColoredLineGraph(
         chart = chart,
         modelProducer = producer,
         zoomState = zoomState,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        animateIn = false,
     )
 }
 
