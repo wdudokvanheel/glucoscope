@@ -36,6 +36,7 @@ fun PrefTest() {
             prefs.graphMin = 2.5
             prefs.graphMax = 15.0
             prefs.xAxisSteps = 1
+            prefs.theme.background = Color(0xFF000000)
         }) {
             Text("CLICK ME")
         }

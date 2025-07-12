@@ -24,7 +24,7 @@ class GlucoScopePreferences @Inject constructor() : ViewModel() {
 }
 
 class GlucoScopeTheme() {
-    var background by mutableStateOf(Color(0xFF000000))
+    var background by mutableStateOf(Color(0xFF0000FF))
     var upperColor by mutableStateOf(Color(0xFFFF006E))
     var lowColor by mutableStateOf(Color(0xFFFF006E))
     var inRangeColor by mutableStateOf(Color(0xFF00C853))
