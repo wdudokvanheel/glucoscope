@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -202,7 +203,8 @@ fun ColoredLineGraph(
         itemPlacer = remember(hourXs, xAxisStep) { HourTickPlacer(hourXs, labelStep = xAxisStep) },
         label = axisLabel,
         guideline = bottomAxisLine,
-        line = null
+        line = null,
+        tickLength = Dp(0f)
     )
 
     val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax, yAxisLabels) {
