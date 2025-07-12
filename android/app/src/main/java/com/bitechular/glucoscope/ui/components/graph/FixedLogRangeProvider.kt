@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope
+package com.bitechular.glucoscope.ui.components.graph
 
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.core.common.data.ExtraStore

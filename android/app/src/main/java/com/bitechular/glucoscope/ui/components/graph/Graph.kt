@@ -1,5 +1,7 @@
-package com.bitechular.glucoscope
+package com.bitechular.glucoscope.ui.components.graph
 
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -7,9 +9,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import com.bitechular.glucoscope.data.GlucoseMeasurement
+import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberEnd
@@ -82,7 +85,7 @@ fun Graph(
     }
 
     // Blend between the two colors for a nice gradient
-    val midLowColor = androidx.compose.ui.graphics.lerp(
+    val midLowColor = lerp(
         lowColor.linear(),
         inRangeColor.linear(),
         0.50f
@@ -124,9 +127,9 @@ fun Graph(
                 lowColor.toArgb()
             )
 
-            android.graphics.LinearGradient(
+            LinearGradient(
                 left, top, left, bottom,
-                col, pos, android.graphics.Shader.TileMode.CLAMP
+                col, pos, Shader.TileMode.CLAMP
             )
         }
     }

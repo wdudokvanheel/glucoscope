@@ -8,14 +8,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
-import com.bitechular.glucoscope.data.DataSource
-import com.bitechular.glucoscope.data.DemoDataSource
-import com.bitechular.glucoscope.data.GlucoseMeasurement
+import com.bitechular.glucoscope.data.model.GlucoseMeasurement
+import com.bitechular.glucoscope.data.repository.DataSource
+import com.bitechular.glucoscope.data.repository.DemoDataSource
+import com.bitechular.glucoscope.ui.components.graph.Graph
 import com.bitechular.glucoscope.ui.theme.GlucoScopeTheme
 import kotlinx.coroutines.launch
 
@@ -36,10 +34,10 @@ class MainActivity : ComponentActivity() {
     private fun setContentUi(data: List<GlucoseMeasurement>) {
         setContent {
             GlucoScopeTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.Companion.fillMaxSize()) { innerPadding ->
                     Graph(
                         data,
-                        modifier = Modifier
+                        modifier = Modifier.Companion
                             .padding(innerPadding)
                             .fillMaxHeight()
                     )

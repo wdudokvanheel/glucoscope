@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.data
+package com.bitechular.glucoscope.data.model
 
 data class GlucoseMeasurement(
     val time: Double,

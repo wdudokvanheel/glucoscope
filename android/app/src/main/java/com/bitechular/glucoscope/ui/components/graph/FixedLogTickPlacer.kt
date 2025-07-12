@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope
+package com.bitechular.glucoscope.ui.components.graph
 
 import com.patrykandpatrick.vico.core.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.core.cartesian.CartesianMeasuringContext

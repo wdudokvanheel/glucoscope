@@ -1,5 +1,6 @@
-package com.bitechular.glucoscope.data
+package com.bitechular.glucoscope.data.repository
 
+import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
