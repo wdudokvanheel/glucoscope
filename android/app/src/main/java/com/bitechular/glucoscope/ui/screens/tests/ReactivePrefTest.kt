@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.screens
+package com.bitechular.glucoscope.ui.screens.tests
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.preference.PreferenceModel
 
 @Composable
-fun PrefTest() {
+fun ReactivePrefTest() {
     val prefs = PreferenceModel.current
 
     Column(

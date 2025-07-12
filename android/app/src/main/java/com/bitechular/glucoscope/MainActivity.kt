@@ -8,7 +8,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bitechular.glucoscope.preference.GlucoScopePreferences
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.GlucoScopeApp
+import com.bitechular.glucoscope.ui.screens.main.GlucoScopeApp
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

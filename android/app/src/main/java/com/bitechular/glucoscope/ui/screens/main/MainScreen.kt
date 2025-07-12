@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui
+package com.bitechular.glucoscope.ui.screens.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,7 @@ import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.data.repository.DemoDataSource
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
-import com.bitechular.glucoscope.ui.screens.PrefTest
+import com.bitechular.glucoscope.ui.screens.tests.ReactivePrefTest
 
 
 @Composable
@@ -37,7 +37,7 @@ fun GlucoScopeApp() {
                     .background(prefs.theme.background)
                     .padding(innerPadding)
             ) {
-                PrefTest()
+                ReactivePrefTest()
                 ThemedGraph(measurements, Modifier.fillMaxSize())
             }
         }
