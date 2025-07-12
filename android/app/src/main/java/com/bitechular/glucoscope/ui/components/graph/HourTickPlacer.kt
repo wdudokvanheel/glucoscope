@@ -24,7 +24,7 @@ class HourTickPlacer(
         visibleXRange: ClosedFloatingPointRange<Double>,
         fullXRange: ClosedFloatingPointRange<Double>,
         maxLabelWidth: Float,
-    ) = ticksIn(visibleXRange)
+    ) = labelsIn(visibleXRange)
 
     override fun getLabelValues(
         context: CartesianDrawingContext,
