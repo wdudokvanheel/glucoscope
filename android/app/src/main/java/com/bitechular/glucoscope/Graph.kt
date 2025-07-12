@@ -25,7 +25,11 @@ import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.core.common.Fill
+import com.patrykandpatrick.vico.core.common.component.LineComponent
+import com.patrykandpatrick.vico.core.common.component.TextComponent
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
+import com.patrykandpatrick.vico.core.common.shape.DashedShape
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -45,7 +49,9 @@ fun Graph(
     lowColor: Color = Color(0xFFFF006E),
     inRangeColor: Color = Color(0xFF00C853),
     highColor: Color = Color(0xFFFFD600),
-    xAxisStep: Int = 1,
+    axisLabelColor: Color = Color(0xFF000000),
+    axisLinesColor: Color = Color(0xFF999999),
+    xAxisStep: Int = 2,
     yAxisValues: List<Double> = listOf(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0),
     modifier: Modifier = Modifier,
 ) {
@@ -138,18 +144,38 @@ fun Graph(
     val tickLogs = yAxisValues.map { log10(it) }
     val yPlacer = remember { FixedLogTickPlacer(tickLogs) }
 
+    val axisLabel = remember {
+        TextComponent(
+            textSizeSp = 12f,
+            lineCount = 1,
+            truncateAt = null,
+            color = axisLabelColor.toArgb(),
+        )
+    }
+
+    val yGuideLine = remember {
+        LineComponent(
+            fill = Fill(axisLinesColor.toArgb()),
+            thicknessDp = 1f,
+        )
+    }
+
+    val xGuideLine = remember {
+        LineComponent(
+            fill = Fill(axisLinesColor.toArgb()),
+            thicknessDp = 1f,
+            shape = DashedShape()
+        )
+    }
+
     val endAxis = VerticalAxis.rememberEnd(
         itemPlacer = yPlacer,
         valueFormatter = { _, v, _ -> // v is log10(original)
             10.0.pow(v).roundToInt().toString()
-        }
+        },
+        label = axisLabel,
+        guideline = yGuideLine
     )
-
-    fun Double.toLdt(): LocalDateTime {
-        val inst = if (this > 1E11) Instant.ofEpochMilli(this.toLong())
-        else Instant.ofEpochSecond(this.toLong())
-        return inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
-    }
 
     val hourXs = remember(measurements) {
         buildList {
@@ -167,9 +193,11 @@ fun Graph(
     val bottomAxis = HorizontalAxis.rememberBottom(
         valueFormatter = { _, x, _ ->
             val i = x.toInt().coerceIn(0, measurements.lastIndex)
-            "%02d:00".format(measurements[i].time.toLdt().hour)
+            "%02d".format(measurements[i].time.toLdt().hour)
         },
-        itemPlacer = remember(hourXs) { HourTickPlacer(hourXs, labelStep = xAxisStep) }
+        itemPlacer = remember(hourXs) { HourTickPlacer(hourXs, labelStep = xAxisStep) },
+        label = axisLabel,
+        guideline = xGuideLine
     )
 
     val chart = rememberCartesianChart(
@@ -190,6 +218,12 @@ fun Graph(
         zoomState = zoomState,
         modifier = modifier.fillMaxSize()
     )
+}
+
+private fun Double.toLdt(): LocalDateTime {
+    val inst = if (this > 1E11) Instant.ofEpochMilli(this.toLong())
+    else Instant.ofEpochSecond(this.toLong())
+    return inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
 }
 
 private fun Color.linear() = Color(
