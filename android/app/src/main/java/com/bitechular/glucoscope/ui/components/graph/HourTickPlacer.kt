@@ -6,18 +6,18 @@ import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.layer.CartesianLayerDimensions
 
 class HourTickPlacer(
-    private val hourXs: List<Double>,   // x-indices whose minute == 0
+    private val hourXs: List<Double>,
     private val labelStep: Int = 1,
 ) : HorizontalAxis.ItemPlacer {
+    private val firstTick = hourXs.firstOrNull()
 
     private fun ticksIn(r: ClosedFloatingPointRange<Double>) =
         hourXs.dropWhile { it < r.start }.takeWhile { it <= r.endInclusive }
 
-    private fun labelsIn(r: ClosedFloatingPointRange<Double>): List<Double> {
-        val t = ticksIn(r)
-        return if (t.isNotEmpty()) t.filterIndexed { i, _ -> i % labelStep == 0 }
-        else listOf(r.start)                    // fallback label
-    }
+    private fun labelsIn(r: ClosedFloatingPointRange<Double>) =
+        ticksIn(r)
+            .filterIndexed { i, _ -> i % labelStep == 0 }
+            .filterNot { it == firstTick }
 
     override fun getLineValues(
         context: CartesianDrawingContext,
@@ -33,13 +33,12 @@ class HourTickPlacer(
         maxLabelWidth: Float,
     ) = labelsIn(visibleXRange)
 
-    /* — measurement-time: ALWAYS return ≥1 label — */
     override fun getHeightMeasurementLabelValues(
         context: CartesianMeasuringContext,
         layerDimensions: CartesianLayerDimensions,
         fullXRange: ClosedFloatingPointRange<Double>,
         maxLabelWidth: Float,
-    ) = labelsIn(fullXRange)                    // never empty
+    ) = labelsIn(fullXRange)
 
     override fun getWidthMeasurementLabelValues(
         context: CartesianMeasuringContext,
@@ -47,10 +46,9 @@ class HourTickPlacer(
         fullXRange: ClosedFloatingPointRange<Double>,
     ): List<Double> {
         val all = hourXs.filterIndexed { i, _ -> i % labelStep == 0 }
-        return all.ifEmpty { listOf(fullXRange.start) }  // ≥1
+        return all.ifEmpty { listOf(fullXRange.start) }
     }
 
-    /* margins & top-tick shift */
     override fun getStartLayerMargin(context: CartesianMeasuringContext, layerDimensions: CartesianLayerDimensions, tickThickness: Float, maxLabelWidth: Float) = 0f
     override fun getEndLayerMargin  (context: CartesianMeasuringContext, layerDimensions: CartesianLayerDimensions, tickThickness: Float, maxLabelWidth: Float) = 0f
 }

@@ -200,7 +200,9 @@ fun ColoredLineGraph(
             val i = x.toInt().coerceIn(0, measurements.lastIndex)
             "%02d".format(measurements[i].time.toLdt().hour)
         },
-        itemPlacer = remember(hourXs, xAxisStep) { HourTickPlacer(hourXs, labelStep = xAxisStep) },
+        itemPlacer = remember(hourXs, xAxisStep) {
+            HourTickPlacer(hourXs, labelStep = xAxisStep)
+        },
         label = axisLabel,
         guideline = bottomAxisLine,
         line = null,
