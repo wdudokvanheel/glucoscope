@@ -12,11 +12,11 @@ import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.preference.PreferenceModel
 
 @Composable
-fun PrefTest(modifier: Modifier) {
+fun PrefTest() {
     val prefs = PreferenceModel.current
 
     Column(
-        modifier = modifier
+        Modifier
             .background(prefs.theme.background)
     ) {
         Text(
@@ -26,7 +26,16 @@ fun PrefTest(modifier: Modifier) {
 
         Button(onClick = {
             prefs.username = "Zola"
-            prefs.theme.background = Color(0xFF006600)
+            prefs.theme.lowColor = Color(0xFFFF00FF)
+            prefs.theme.upperColor = Color(0xFFFF00FF)
+            prefs.theme.highColor = Color(0xFFFF00FF)
+            prefs.theme.inRangeColor = Color(0xFFFF00FF)
+            prefs.theme.axisLinesColor = Color(0xFFFF00FF)
+            prefs.theme.axisLegendColor = Color(0xFFFF00FF)
+            prefs.yAxisLabels = listOf<Double>(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0)
+            prefs.graphMin = 2.5
+            prefs.graphMax = 15.0
+            prefs.xAxisSteps = 1
         }) {
             Text("CLICK ME")
         }
