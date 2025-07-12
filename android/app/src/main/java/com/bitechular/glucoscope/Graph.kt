@@ -77,13 +77,18 @@ fun Graph(
     val minLog = log10(rangeLow)
     val maxLog = log10(rangeHigh)
 
-    val midLow = androidx.compose.ui.graphics.lerp(
+    val rangeProvider = remember(minLog, maxLog) {
+        FixedLogRangeProvider(minLog, maxLog)
+    }
+
+    // Blend between the two colors for a nice gradient
+    val midLowColor = androidx.compose.ui.graphics.lerp(
         lowColor.linear(),
         inRangeColor.linear(),
         0.50f
     ).toSrgb()
 
-    val gradient = remember(
+    val lineGradient = remember(
         rangeLow, rangeHigh,
         lowThreshold, highThreshold, upperThreshold
     ) {
@@ -114,7 +119,7 @@ fun Graph(
                 highColor.toArgb(),
                 inRangeColor.toArgb(),
                 inRangeColor.toArgb(),
-                midLow.toArgb(),
+                midLowColor.toArgb(),
                 lowColor.toArgb(),
                 lowColor.toArgb()
             )
@@ -126,14 +131,10 @@ fun Graph(
         }
     }
 
-    val rangeProvider = remember(minLog, maxLog) {
-        FixedLogRangeProvider(minLog, maxLog)
-    }
-
     val colouredLine = LineCartesianLayer.rememberLine(
         stroke = LineCartesianLayer.LineStroke.continuous(thickness = 4.dp),
         pointConnector = LineCartesianLayer.PointConnector.cubic(curvature = 0.5f),
-        fill = LineCartesianLayer.LineFill.single(fill(gradient))
+        fill = LineCartesianLayer.LineFill.single(fill(lineGradient))
     )
 
     val lineLayer = rememberLineCartesianLayer(
@@ -141,8 +142,7 @@ fun Graph(
         rangeProvider = rangeProvider
     )
 
-    val tickLogs = yAxisValues.map { log10(it) }
-    val yPlacer = remember { FixedLogTickPlacer(tickLogs) }
+    val yPlacer = remember { FixedLogTickPlacer(yAxisValues.map { log10(it) }) }
 
     val axisLabel = remember {
         TextComponent(
@@ -153,14 +153,14 @@ fun Graph(
         )
     }
 
-    val yGuideLine = remember {
+    val endAxisLine = remember {
         LineComponent(
             fill = Fill(axisLinesColor.toArgb()),
             thicknessDp = 1f,
         )
     }
 
-    val xGuideLine = remember {
+    val bottomAxisLine = remember {
         LineComponent(
             fill = Fill(axisLinesColor.toArgb()),
             thicknessDp = 1f,
@@ -174,7 +174,7 @@ fun Graph(
             10.0.pow(v).roundToInt().toString()
         },
         label = axisLabel,
-        guideline = yGuideLine
+        guideline = endAxisLine
     )
 
     val hourXs = remember(measurements) {
@@ -197,7 +197,7 @@ fun Graph(
         },
         itemPlacer = remember(hourXs) { HourTickPlacer(hourXs, labelStep = xAxisStep) },
         label = axisLabel,
-        guideline = xGuideLine
+        guideline = bottomAxisLine
     )
 
     val chart = rememberCartesianChart(
