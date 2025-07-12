@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberEnd
 import com.patrykandpatrick.vico.compose.cartesian.layer.continuous
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
@@ -146,7 +145,7 @@ fun ColoredLineGraph(
         rangeProvider = rangeProvider
     )
 
-    val yPlacer = remember { FixedLogTickPlacer(yAxisValues.map { log10(it) }) }
+    val yPlacer = remember(yAxisValues) { FixedLogTickPlacer(yAxisValues.map { log10(it) }) }
 
     val axisLabel = remember(axisLabelColor) {
         TextComponent(
@@ -168,17 +167,18 @@ fun ColoredLineGraph(
         LineComponent(
             fill = Fill(axisLinesColor.toArgb()),
             thicknessDp = 1f,
-            shape = DashedShape()
+            shape = DashedShape(),
         )
     }
 
-    val endAxis = VerticalAxis.rememberEnd(
+    val endAxis = VerticalAxis.end(
         itemPlacer = yPlacer,
         valueFormatter = { _, v, _ -> // v is log10(original)
             10.0.pow(v).roundToInt().toString()
         },
         label = axisLabel,
-        guideline = endAxisLine
+        guideline = endAxisLine,
+        line = null
     )
 
     val hourXs = remember(measurements) {
@@ -201,10 +201,11 @@ fun ColoredLineGraph(
         },
         itemPlacer = remember(hourXs) { HourTickPlacer(hourXs, labelStep = xAxisStep) },
         label = axisLabel,
-        guideline = bottomAxisLine
+        guideline = bottomAxisLine,
+        line = null
     )
 
-    val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax) {
+    val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax, yAxisValues) {
         CartesianChart(
             lineLayer,
             endAxis = endAxis,
