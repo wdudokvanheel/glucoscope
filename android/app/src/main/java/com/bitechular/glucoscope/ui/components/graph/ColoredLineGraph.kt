@@ -209,7 +209,20 @@ fun ColoredLineGraph(
         tickLength = Dp(0f)
     )
 
-    val chart = remember(axisLinesColor, axisLabelColor, graphMin, graphMax, yAxisLabels) {
+    val chart = remember(
+        axisLinesColor,
+        axisLabelColor,
+        graphMin,
+        graphMax,
+        yAxisLabels,
+        lowColor,
+        highColor,
+        upperColor,
+        inRangeColor,
+        lowThreshold,
+        highThreshold,
+        upperThreshold,
+    ) {
         CartesianChart(
             lineLayer,
             endAxis = endAxis,
