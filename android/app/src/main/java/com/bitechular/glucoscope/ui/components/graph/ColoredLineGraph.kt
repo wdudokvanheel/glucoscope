@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
+import com.bitechular.glucoscope.extensions.linear
+import com.bitechular.glucoscope.extensions.toSrgb
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.layer.continuous
@@ -250,17 +252,3 @@ private fun Double.toLdt(): LocalDateTime {
     else Instant.ofEpochSecond(this.toLong())
     return inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
 }
-
-private fun Color.linear() = Color(
-    red = red.pow(2.2f),
-    green = green.pow(2.2f),
-    blue = blue.pow(2.2f),
-    alpha = alpha
-)
-
-private fun Color.toSrgb() = Color(
-    red = red.pow(1 / 2.2f),
-    green = green.pow(1 / 2.2f),
-    blue = blue.pow(1 / 2.2f),
-    alpha = alpha
-)
