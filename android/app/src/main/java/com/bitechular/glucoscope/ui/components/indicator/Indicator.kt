@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,11 +22,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.screens.Navigator
+import com.bitechular.glucoscope.ui.screens.Screen
 import java.util.Locale
 
 @Composable
 fun Indicator(currentValue: Double?) {
     val prefs = PreferenceModel.current
+    val navigator = Navigator.current
+
     val background = currentValue?.let {
         valueToColor(
             currentValue,
@@ -65,14 +70,20 @@ fun Indicator(currentValue: Double?) {
                 modifier = Modifier.align(Alignment.Center)
             )
 
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Menu",
-                tint = prefs.theme.indicatorIcon,
+            IconButton(
+                onClick = {
+                    navigator.navigate(Screen.Config.route)
+                },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = prefs.theme.indicatorIcon
+                )
+            }
 
             Text(
                 text = "Last update: 15:00",

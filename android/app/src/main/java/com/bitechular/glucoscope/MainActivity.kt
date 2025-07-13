@@ -8,7 +8,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bitechular.glucoscope.preference.GlucoScopePreferences
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.screens.main.GlucoScopeApp
+import com.bitechular.glucoscope.ui.screens.NavigationContainer
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             val preferences: GlucoScopePreferences = hiltViewModel()
 
             CompositionLocalProvider(PreferenceModel provides preferences) {
-                GlucoScopeApp()
+                NavigationContainer()
             }
         }
     }
