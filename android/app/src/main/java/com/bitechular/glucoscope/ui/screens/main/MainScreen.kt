@@ -13,21 +13,24 @@ import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.data.repository.DemoDataSource
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
-import com.bitechular.glucoscope.ui.screens.tests.ReactivePrefTest
-
+import com.bitechular.glucoscope.ui.components.indicator.Indicator
 
 @Composable
 fun GlucoScopeApp() {
+    // TODO Move this to RealTimeDataService
     val dataSource = DemoDataSource()
 
     val measurements by produceState(initialValue = emptyList<GlucoseMeasurement>(), key1 = Unit) {
         value = dataSource.getLatestEntries(9, 5)
     }
+
+    val currentValue: Double? by produceState(initialValue = null, key1 = Unit) {
+        value = dataSource.getCurrentValue()
+    }
+
     val prefs = PreferenceModel.current
 
-    Column(
-        Modifier.background(prefs.theme.background)
-    ) {
+    Column {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -37,7 +40,8 @@ fun GlucoScopeApp() {
                     .background(prefs.theme.background)
                     .padding(innerPadding)
             ) {
-                ReactivePrefTest()
+//                ReactivePrefTest()
+                Indicator(currentValue)
                 ThemedGraph(measurements, Modifier.fillMaxSize())
             }
         }

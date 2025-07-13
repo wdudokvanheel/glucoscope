@@ -26,6 +26,20 @@ import java.util.Locale
 @Composable
 fun Indicator(currentValue: Double?) {
     val prefs = PreferenceModel.current
+    val background = currentValue?.let {
+        valueToColor(
+            currentValue,
+            graphMin = prefs.graphMin,
+            graphMax = prefs.graphMax,
+            lowThreshold = prefs.lowThreshold,
+            highThreshold = prefs.highThreshold,
+            upperThreshold = prefs.upperThreshold,
+            lowColor = prefs.theme.lowColor,
+            inRangeColor = prefs.theme.inRangeColor,
+            highColor = prefs.theme.highColor,
+            upperColor = prefs.theme.upperColor,
+        )
+    } ?: prefs.theme.inRangeColor
 
     Column(
         modifier = Modifier
@@ -33,7 +47,7 @@ fun Indicator(currentValue: Double?) {
             .fillMaxWidth()
             .fillMaxHeight(0.33f)
             .background(
-                color = prefs.theme.inRangeColor,
+                color = background,
                 shape = RoundedCornerShape(16.dp)
             )
     ) {
