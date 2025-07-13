@@ -6,6 +6,8 @@ plugins {
     // Hilt + annotation processing
     alias(libs.plugins.hilt)
     alias(libs.plugins.kapt)
+
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
@@ -44,7 +46,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -67,4 +68,7 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.core)
 }
