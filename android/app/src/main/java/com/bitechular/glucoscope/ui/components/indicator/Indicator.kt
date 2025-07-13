@@ -22,14 +22,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.screens.Navigator
+import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.Screen
 import java.util.Locale
 
 @Composable
 fun Indicator(currentValue: Double?) {
     val prefs = PreferenceModel.current
-    val navigator = Navigator.current
+    val navigator = AppNavigator.current
 
     val background = currentValue?.let {
         valueToColor(

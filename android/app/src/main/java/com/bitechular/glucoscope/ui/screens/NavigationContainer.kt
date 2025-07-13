@@ -15,7 +15,7 @@ sealed class Screen(val route: String) {
     object Config : Screen("config")
 }
 
-val Navigator = staticCompositionLocalOf<NavHostController> {
+val AppNavigator = staticCompositionLocalOf<NavHostController> {
     error("No NavController provided")
 }
 
@@ -23,7 +23,7 @@ val Navigator = staticCompositionLocalOf<NavHostController> {
 fun NavigationContainer() {
     val navController = rememberNavController()
 
-    CompositionLocalProvider(Navigator provides navController) {
+    CompositionLocalProvider(AppNavigator provides navController) {
         NavHost(
             navController = navController,
             startDestination = Screen.Main.route
