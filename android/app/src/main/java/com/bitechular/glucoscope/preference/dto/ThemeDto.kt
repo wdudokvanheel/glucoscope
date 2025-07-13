@@ -5,11 +5,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ThemeDto(
     val name: String = "Default Theme",
-    val background: String = "#FF000000",
-    val upperColor: String = "#FFFF006E",
-    val lowColor: String = "#FFFF006E",
-    val inRangeColor: String = "#FF00C853",
-    val highColor: String = "#FFFFD600",
-    val axisLegendColor: String = "#FF555555",
-    val axisLinesColor: String = "#FF555555",
+    val background: String = "#000000",
+    val text: String = "#FFFFFF",
+    val upperColor: String = "#FF006E",
+    val lowColor: String = "#FF006E",
+    val inRangeColor: String = "#00C853",
+    val highColor: String = "#FFD600",
+    val axisLegendColor: String = "#555555",
+    val axisLinesColor: String = "#555555",
+    val surface: String = "#1A1A1C",
+    val indicatorIcon: String = "#000000",
+    val indicatorLabel: String = "#000000",
 )

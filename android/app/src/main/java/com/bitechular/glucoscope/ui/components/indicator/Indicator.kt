@@ -61,14 +61,14 @@ fun Indicator(currentValue: Double?) {
                     ?: "??",
                 fontSize = 72.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = prefs.theme.indicatorLabel,
                 modifier = Modifier.align(Alignment.Center)
             )
 
             Icon(
                 imageVector = Icons.Default.Menu,
                 contentDescription = "Menu",
-                tint = Color.Black,
+                tint = prefs.theme.indicatorIcon,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
