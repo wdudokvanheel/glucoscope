@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 class GlucoScopeTheme() {
     var name by mutableStateOf("Default Theme")
     var background by mutableStateOf(Color(0xFF000000))
+    var accent by mutableStateOf(Color(0xFF40C8E0))
     var text by mutableStateOf(Color(0xFFFFFFFF))
     var upperColor by mutableStateOf(Color(0xFFFF006E))
     var lowColor by mutableStateOf(Color(0xFFFF006E))

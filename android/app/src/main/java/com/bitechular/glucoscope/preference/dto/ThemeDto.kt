@@ -7,6 +7,7 @@ data class ThemeDto(
     val name: String = "Default Theme",
     val background: String = "#000000",
     val text: String = "#FFFFFF",
+    val accent: String = "#40C8E0",
     val upperColor: String = "#FF006E",
     val lowColor: String = "#FF006E",
     val inRangeColor: String = "#00C853",
