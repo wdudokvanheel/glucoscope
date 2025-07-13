@@ -1,12 +1,11 @@
 package com.bitechular.glucoscope.ui.screens.configuration.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.InvertColors
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,15 +28,43 @@ data class ConfigurationTab(
     val icon: ImageVector
 )
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GlucoScopeBottomBar(navController: NavHostController) {
-    val items = listOf(
-        ConfigurationTab("themes", "Themes", Icons.Outlined.Palette),
-        ConfigurationTab("glucose", "Glucose values", Icons.Filled.InvertColors),
-        ConfigurationTab("connection", "Connection", Icons.Outlined.Language),
-        ConfigurationTab("about", "About", Icons.Outlined.Info)
+fun ConfigurationTopBar(
+    title: String,
+    onBackClick: () -> Unit
+) {
+    val prefs = PreferenceModel.current
+
+    CenterAlignedTopAppBar(
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = prefs.theme.accent
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                color = prefs.theme.text
+            )
+        },
+        colors = androidx.compose.material3.TopAppBarDefaults
+            .centerAlignedTopAppBarColors(
+                containerColor = prefs.theme.background,
+                navigationIconContentColor = prefs.theme.accent,
+                titleContentColor = prefs.theme.text
+            )
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConfigurationBottomBar(navController: NavHostController, items: List<ConfigurationTab>) {
     val prefs = PreferenceModel.current
     CompositionLocalProvider(LocalRippleConfiguration provides null) {
 
@@ -45,8 +72,8 @@ fun GlucoScopeBottomBar(navController: NavHostController) {
             containerColor = prefs.theme.surface,
         ) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
-
             val currentRoute = navBackStackEntry?.destination?.route
+
             items.forEach { screen ->
                 val selected = currentRoute == screen.route
                 NavigationBarItem(
