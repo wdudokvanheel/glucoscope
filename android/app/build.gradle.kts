@@ -71,4 +71,6 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.serialization.core)
+
+    implementation(libs.androidx.material.icons.extended.android)
 }
