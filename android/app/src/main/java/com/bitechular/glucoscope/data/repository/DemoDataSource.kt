@@ -1,11 +1,11 @@
 package com.bitechular.glucoscope.data.repository
 
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.PI
 import kotlin.random.Random
 
 class DemoDataSource : DataSource {
@@ -28,6 +28,10 @@ class DemoDataSource : DataSource {
     }
 
     override suspend fun testConnection() = true
+
+    override suspend fun getCurrentValue(): Double {
+        return lastValue
+    }
 
     override suspend fun getLatestEntries(hours: Int, window: Int): List<GlucoseMeasurement> {
         update()
