@@ -143,7 +143,7 @@ fun ColoredLineGraph(
     }
 
     val colouredLine = LineCartesianLayer.rememberLine(
-        stroke = LineCartesianLayer.LineStroke.continuous(thickness = 4.dp),
+        stroke = LineCartesianLayer.LineStroke.continuous(thickness = 3.dp),
         pointConnector = LineCartesianLayer.PointConnector.cubic(curvature = 0.5f),
         fill = LineCartesianLayer.LineFill.single(fill(lineGradient))
     )
@@ -261,6 +261,7 @@ fun ColoredLineGraph(
         zoomState = zoomState,
         modifier = modifier.fillMaxSize(),
         animateIn = false,
+        animationSpec = null
     )
 }
 
