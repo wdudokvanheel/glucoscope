@@ -62,13 +62,21 @@ class GlucoScopePreferences @Inject constructor(
         yAxisLabels = s.yAxisLabels
         theme.apply {
             name = s.theme.name
+            url = s.theme.url
+            variant = s.theme.variant
             background = s.theme.background.toColor()
-            upperColor = s.theme.upperColor.toColor()
-            lowColor = s.theme.lowColor.toColor()
+            surface = s.theme.surface.toColor()
+            accent = s.theme.accent.toColor()
             inRangeColor = s.theme.inRangeColor.toColor()
+            lowColor = s.theme.lowColor.toColor()
             highColor = s.theme.highColor.toColor()
-            axisLegendColor = s.theme.axisLegendColor.toColor()
-            axisLinesColor = s.theme.axisLinesColor.toColor()
+            upperColor = s.theme.upperColor.toColor()
+            indicatorIcon = s.theme.indicatorIcon.toColor()
+            indicatorLabel = s.theme.indicatorLabel.toColor()
+            axisXLegendColor = s.theme.axisXLegendColor.toColor()
+            axisYLegendColor = s.theme.axisYLegendColor.toColor()
+            axisXGridLineColor = s.theme.axisXGridLineColor.toColor()
+            axisYGridLineColor = s.theme.axisYGridLineColor.toColor()
         }
     }
 
@@ -87,8 +95,8 @@ class GlucoScopePreferences @Inject constructor(
             lowColor = theme.lowColor.toHex(),
             inRangeColor = theme.inRangeColor.toHex(),
             highColor = theme.highColor.toHex(),
-            axisLegendColor = theme.axisLegendColor.toHex(),
-            axisLinesColor = theme.axisLinesColor.toHex(),
+            axisXLegendColor = theme.axisXLegendColor.toHex(),
+            axisXGridLineColor = theme.axisXGridLineColor.toHex(),
         )
     )
 

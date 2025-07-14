@@ -46,17 +46,23 @@ fun ColoredLineGraph(
     measurements: List<GlucoseMeasurement>,
     graphMin: Double = 2.5,
     graphMax: Double = 20.0,
+
     lowThreshold: Double = 4.0,
     highThreshold: Double = 7.0,
     upperThreshold: Double = 10.0,
-    upperColor: Color = Color(0xFFFF006E),
-    lowColor: Color = Color(0xFFFF006E),
-    inRangeColor: Color = Color(0xFF00C853),
-    highColor: Color = Color(0xFFFFD600),
-    axisLabelColor: Color = Color(0xFF000000),
-    axisLinesColor: Color = Color(0xFF999999),
+
     xAxisStep: Int = 2,
     yAxisLabels: List<Double> = listOf(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0),
+
+    inRangeColor: Color = Color(0xFF00C853),
+    lowColor: Color = Color(0xFFFF006E),
+    highColor: Color = Color(0xFFFFD600),
+    upperColor: Color = Color(0xFFFF006E),
+    axisXLegendColor: Color = Color(0xFF000000),
+    axisYLegendColor: Color = Color(0xFF999999),
+    axisXGridLineColor: Color = Color(0xFF999999),
+    axisYGridLineColor: Color = Color(0xFF999999),
+
     modifier: Modifier = Modifier,
 ) {
 
@@ -149,41 +155,50 @@ fun ColoredLineGraph(
 
     val yPlacer = remember(yAxisLabels) { FixedLogTickPlacer(yAxisLabels.map { log10(it) }) }
 
-    val axisLabel = remember(axisLabelColor) {
+    val xAxisLegend = remember(axisXLegendColor) {
         TextComponent(
             textSizeSp = 12f,
             lineCount = 1,
             truncateAt = null,
-            color = axisLabelColor.toArgb(),
+            color = axisXLegendColor.toArgb(),
         )
     }
 
-    val endAxisLine = remember(axisLinesColor) {
+    val yAxisLegend = remember(axisYLegendColor) {
+        TextComponent(
+            textSizeSp = 12f,
+            lineCount = 1,
+            truncateAt = null,
+            color = axisYLegendColor.toArgb(),
+        )
+    }
+
+    val yAxisLine = remember(axisYGridLineColor) {
         LineComponent(
-            fill = Fill(axisLinesColor.toArgb()),
+            fill = Fill(axisYGridLineColor.toArgb()),
             thicknessDp = 1f,
         )
     }
 
-    val bottomAxisLine = remember(axisLinesColor) {
+    val xAxisLine = remember(axisXGridLineColor) {
         LineComponent(
-            fill = Fill(axisLinesColor.toArgb()),
+            fill = Fill(axisXGridLineColor.toArgb()),
             thicknessDp = 1f,
             shape = DashedShape(),
         )
     }
 
-    val endAxis = VerticalAxis.end(
+    val yAxis = VerticalAxis.end(
         itemPlacer = yPlacer,
         valueFormatter = { _, v, _ -> // v is log10(original)
             10.0.pow(v).roundToInt().toString()
         },
-        label = axisLabel,
-        guideline = endAxisLine,
+        label = yAxisLegend,
+        guideline = yAxisLine,
         line = null
     )
 
-    val hourXs = remember(measurements) {
+    val xAxisLabelList = remember(measurements) {
         buildList {
             var lastHour = -1
             measurements.forEachIndexed { idx, m ->
@@ -201,18 +216,21 @@ fun ColoredLineGraph(
             val i = x.toInt().coerceIn(0, measurements.lastIndex)
             "%02d".format(measurements[i].time.toLdt().hour)
         },
-        itemPlacer = remember(hourXs, xAxisStep) {
-            HourTickPlacer(hourXs, labelStep = xAxisStep)
+        itemPlacer = remember(xAxisLabelList, xAxisStep) {
+            HourTickPlacer(xAxisLabelList, labelStep = xAxisStep)
         },
-        label = axisLabel,
-        guideline = bottomAxisLine,
+        label = xAxisLegend,
+        guideline = xAxisLine,
         line = null,
         tickLength = 0.dp
     )
 
     val chart = remember(
-        axisLinesColor,
-        axisLabelColor,
+        axisXGridLineColor,
+        axisYGridLineColor,
+        axisXLegendColor,
+        axisYLegendColor,
+        xAxisLabelList,
         graphMin,
         graphMax,
         yAxisLabels,
@@ -226,7 +244,7 @@ fun ColoredLineGraph(
     ) {
         CartesianChart(
             lineLayer,
-            endAxis = endAxis,
+            endAxis = yAxis,
             bottomAxis = bottomAxis,
         )
     }

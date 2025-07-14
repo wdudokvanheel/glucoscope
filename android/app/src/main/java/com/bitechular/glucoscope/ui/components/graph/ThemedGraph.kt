@@ -14,19 +14,27 @@ fun ThemedGraph(
 
     ColoredLineGraph(
         measurements = measurements,
+
         graphMin = prefs.graphMin,
         graphMax = prefs.graphMax,
-        upperColor = prefs.theme.upperColor,
-        lowColor = prefs.theme.lowColor,
-        inRangeColor = prefs.theme.inRangeColor,
-        highColor = prefs.theme.highColor,
-        axisLabelColor = prefs.theme.axisLegendColor,
-        axisLinesColor = prefs.theme.axisLinesColor,
+
         lowThreshold = prefs.lowThreshold,
         highThreshold = prefs.highThreshold,
         upperThreshold = prefs.upperThreshold,
+
         xAxisStep = prefs.xAxisSteps,
         yAxisLabels = prefs.yAxisLabels,
+
+        inRangeColor = prefs.theme.inRangeColor,
+        lowColor = prefs.theme.lowColor,
+        highColor = prefs.theme.highColor,
+        upperColor = prefs.theme.upperColor,
+
+        axisXLegendColor = prefs.theme.axisXLegendColor,
+        axisYLegendColor = prefs.theme.axisXLegendColor,
+        axisXGridLineColor = prefs.theme.axisXGridLineColor,
+        axisYGridLineColor = prefs.theme.axisXGridLineColor,
+
         modifier = modifier
     )
 }
