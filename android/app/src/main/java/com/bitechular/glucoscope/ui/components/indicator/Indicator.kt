@@ -52,6 +52,7 @@ fun Indicator(currentValue: Double?, lastUpdate: Date? = null) {
             .padding(8.dp)
             .fillMaxWidth()
             .fillMaxHeight(0.33f)
+            .padding(bottom = 24.dp)
             .background(
                 color = background,
                 shape = RoundedCornerShape(8.dp)
