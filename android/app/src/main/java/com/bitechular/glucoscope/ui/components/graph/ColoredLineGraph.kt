@@ -176,14 +176,14 @@ fun ColoredLineGraph(
     val yAxisLine = remember(axisYGridLineColor) {
         LineComponent(
             fill = Fill(axisYGridLineColor.toArgb()),
-            thicknessDp = 1f,
+            thicknessDp = 0.25f,
         )
     }
 
     val xAxisLine = remember(axisXGridLineColor) {
         LineComponent(
             fill = Fill(axisXGridLineColor.toArgb()),
-            thicknessDp = 1f,
+            thicknessDp = 0.25f,
             shape = DashedShape(),
         )
     }
