@@ -10,6 +10,7 @@ object SettingsSerializer : Serializer<GlucoScopePreferencesDto> {
     override val defaultValue = GlucoScopePreferencesDto()
 
     private val json = Json {
+        classDiscriminator = "type"
         encodeDefaults = true
         ignoreUnknownKeys = true
     }
@@ -17,6 +18,7 @@ object SettingsSerializer : Serializer<GlucoScopePreferencesDto> {
     override suspend fun readFrom(input: InputStream): GlucoScopePreferencesDto =
         try {
             val txt = input.readBytes().decodeToString()
+            println("Loaded settings: $txt")
             Json.decodeFromString(
                 GlucoScopePreferencesDto.serializer(),
                 txt
@@ -28,6 +30,7 @@ object SettingsSerializer : Serializer<GlucoScopePreferencesDto> {
 
     override suspend fun writeTo(t: GlucoScopePreferencesDto, output: OutputStream) {
         val serialized = json.encodeToString(GlucoScopePreferencesDto.serializer(), t)
+        println("Writing settings: $serialized")
         output.write(serialized.encodeToByteArray())
     }
 }

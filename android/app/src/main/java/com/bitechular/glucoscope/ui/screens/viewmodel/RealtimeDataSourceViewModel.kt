@@ -3,11 +3,7 @@ package com.bitechular.glucoscope.ui.screens.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bitechular.glucoscope.data.datasource.RealtimeDataRepository
-import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
-import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
-import com.bitechular.glucoscope.data.repository.GlucoScopeRepository
-import com.bitechular.glucoscope.data.repository.NightscoutRepository
 import com.bitechular.glucoscope.ui.components.DataSourceService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -52,18 +48,5 @@ class RealtimeDataSourceViewModel @Inject constructor(
 
     fun setWindow(w: Int) {
         repo.window.value = w
-    }
-
-    // TODO: Move to settings
-    fun chooseGlucoscope(url: String, token: String?) {
-        dataService.use(
-            GlucoScopeRepository(GlucoScopeRepositoryConfiguration(url, token))
-        )
-    }
-
-    fun chooseNightscout(url: String, token: String?) {
-        dataService.use(
-            NightscoutRepository(NightscoutRepositoryConfiguration(url, token))
-        )
     }
 }

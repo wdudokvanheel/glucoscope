@@ -23,10 +23,11 @@ import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.Screen
+import java.util.Date
 import java.util.Locale
 
 @Composable
-fun Indicator(currentValue: Double?) {
+fun Indicator(currentValue: Double?, lastUpdate: Date?) {
     val prefs = PreferenceModel.current
     val navigator = AppNavigator.current
 

@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bitechular.glucoscope.data.model.RepositoryConfiguration
 import com.bitechular.glucoscope.preference.dto.GlucoScopePreferencesDto
 import com.bitechular.glucoscope.preference.dto.ThemeDto
 import com.bitechular.glucoscope.preference.dto.fromTheme
@@ -25,7 +26,9 @@ import kotlinx.coroutines.launch
 class GlucoScopePreferences @Inject constructor(
     @ApplicationContext context: Context
 ) : ViewModel() {
+    var repositoryConfiguration: RepositoryConfiguration? by mutableStateOf(null)
     var theme by mutableStateOf(GlucoScopeTheme())
+
     var graphMin by mutableDoubleStateOf(2.5)
     var graphMax by mutableDoubleStateOf(20.0)
     var lowThreshold by mutableDoubleStateOf(4.0)
@@ -51,25 +54,28 @@ class GlucoScopePreferences @Inject constructor(
         }
     }
 
-    private fun applySettings(s: GlucoScopePreferencesDto) {
-        graphMin = s.graphMin
-        graphMax = s.graphMax
-        lowThreshold = s.lowThreshold
-        highThreshold = s.highThreshold
-        upperThreshold = s.upperThreshold
-        xAxisSteps = s.xAxisSteps
-        yAxisLabels = s.yAxisLabels
-        theme = s.theme.toTheme()
+    private fun applySettings(dto: GlucoScopePreferencesDto) {
+        println("APPLYING " + dto.repositoryConfiguration)
+        theme = dto.theme.toTheme()
+        repositoryConfiguration = dto.repositoryConfiguration
+        graphMin = dto.graphMin
+        graphMax = dto.graphMax
+        lowThreshold = dto.lowThreshold
+        highThreshold = dto.highThreshold
+        upperThreshold = dto.upperThreshold
+        xAxisSteps = dto.xAxisSteps
+        yAxisLabels = dto.yAxisLabels
     }
 
     private fun toSettings() = GlucoScopePreferencesDto(
+        repositoryConfiguration = repositoryConfiguration,
+        theme = ThemeDto.fromTheme(theme),
         graphMin = graphMin,
         graphMax = graphMax,
         lowThreshold = lowThreshold,
         highThreshold = highThreshold,
         upperThreshold = upperThreshold,
         xAxisSteps = xAxisSteps,
-        yAxisLabels = yAxisLabels,
-        theme = ThemeDto.fromTheme(theme)
+        yAxisLabels = yAxisLabels
     )
 }
