@@ -9,10 +9,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bitechular.glucoscope.extensions.toColor
-import com.bitechular.glucoscope.extensions.toHex
 import com.bitechular.glucoscope.preference.dto.GlucoScopePreferencesDto
 import com.bitechular.glucoscope.preference.dto.ThemeDto
+import com.bitechular.glucoscope.preference.dto.fromTheme
+import com.bitechular.glucoscope.preference.dto.toTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
@@ -41,7 +41,6 @@ class GlucoScopePreferences @Inject constructor(
             dataStore.data.firstOrNull()?.let(::applySettings)
         }
 
-        // Persist automatically whenever ANY mutableState changes
         viewModelScope.launch {
             snapshotFlow { toSettings() }
                 .distinctUntilChanged()
@@ -60,24 +59,7 @@ class GlucoScopePreferences @Inject constructor(
         upperThreshold = s.upperThreshold
         xAxisSteps = s.xAxisSteps
         yAxisLabels = s.yAxisLabels
-        theme.apply {
-            name = s.theme.name
-            url = s.theme.url
-            variant = s.theme.variant
-            background = s.theme.background.toColor()
-            surface = s.theme.surface.toColor()
-            accent = s.theme.accent.toColor()
-            inRangeColor = s.theme.inRangeColor.toColor()
-            lowColor = s.theme.lowColor.toColor()
-            highColor = s.theme.highColor.toColor()
-            upperColor = s.theme.upperColor.toColor()
-            indicatorIcon = s.theme.indicatorIcon.toColor()
-            indicatorLabel = s.theme.indicatorLabel.toColor()
-            axisXLegendColor = s.theme.axisXLegendColor.toColor()
-            axisYLegendColor = s.theme.axisYLegendColor.toColor()
-            axisXGridLineColor = s.theme.axisXGridLineColor.toColor()
-            axisYGridLineColor = s.theme.axisYGridLineColor.toColor()
-        }
+        theme = s.theme.toTheme()
     }
 
     private fun toSettings() = GlucoScopePreferencesDto(
@@ -88,16 +70,6 @@ class GlucoScopePreferences @Inject constructor(
         upperThreshold = upperThreshold,
         xAxisSteps = xAxisSteps,
         yAxisLabels = yAxisLabels,
-        theme = ThemeDto(
-            name = theme.name,
-            background = theme.background.toHex(),
-            upperColor = theme.upperColor.toHex(),
-            lowColor = theme.lowColor.toHex(),
-            inRangeColor = theme.inRangeColor.toHex(),
-            highColor = theme.highColor.toHex(),
-            axisXLegendColor = theme.axisXLegendColor.toHex(),
-            axisXGridLineColor = theme.axisXGridLineColor.toHex(),
-        )
+        theme = ThemeDto.fromTheme(theme)
     )
-
 }
