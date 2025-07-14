@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.preference.PreferenceModel
@@ -48,7 +47,7 @@ fun Indicator(currentValue: Double?) {
 
     Column(
         modifier = Modifier
-            .padding(Dp(8f))
+            .padding(8.dp)
             .fillMaxWidth()
             .fillMaxHeight(0.33f)
             .background(
