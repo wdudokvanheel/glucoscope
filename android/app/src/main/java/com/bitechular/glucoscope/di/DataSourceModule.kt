@@ -1,7 +1,7 @@
 package com.bitechular.glucoscope.di
 
+import com.bitechular.glucoscope.data.datasource.DataSourceService
 import com.bitechular.glucoscope.data.datasource.RealtimeDataRepository
-import com.bitechular.glucoscope.ui.components.DataSourceService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

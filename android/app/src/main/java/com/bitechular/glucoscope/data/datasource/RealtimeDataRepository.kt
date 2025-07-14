@@ -1,7 +1,6 @@
 package com.bitechular.glucoscope.data.datasource
 
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
-import com.bitechular.glucoscope.ui.components.DataSourceService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +28,7 @@ class RealtimeDataRepository(
     val hours = MutableStateFlow(12)
     val window = MutableStateFlow(5)
 
-    val measurements: Flow<List<GlucoseMeasurement>> =
+    val measurements: Flow<Result<List<GlucoseMeasurement>>> =
         combine(
             dataSourceService.datasource,
             hours,
@@ -40,7 +39,9 @@ class RealtimeDataRepository(
             .flatMapLatest { (ds, h, w) ->
                 tickerFlow(5_000) // emits Unit every 5 s
                     .mapLatest { // restart on every tick
-                        ds!!.getLatestEntries(h, w)
+                        runCatching {        // <─ catch *all* exceptions here
+                            ds!!.getLatestEntries(h, w)
+                        }
                     }
             }
             .flowOn(dispatcher) // network & JSON off main

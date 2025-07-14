@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.components
+package com.bitechular.glucoscope.data.datasource
 
 import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
@@ -8,7 +8,6 @@ import com.bitechular.glucoscope.data.repository.GlucoScopeRepository
 import com.bitechular.glucoscope.data.repository.NightscoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
 
 class DataSourceService {
     private val _datasource = MutableStateFlow<DataSourceRepository?>(null)

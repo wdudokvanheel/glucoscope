@@ -2,6 +2,7 @@ package com.bitechular.glucoscope.data.repository
 
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
+import com.bitechular.glucoscope.data.model.ServerError
 import com.bitechular.glucoscope.data.model.toMmol
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,9 +74,13 @@ class NightscoutRepository(
             val request = makeRequest(httpUrlBuilder.build().toString())
 
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    throw IOException("Unexpected HTTP ${response.code}")
+                when (response.code) {
+                    200 -> Unit
+                    401, 403 -> throw ServerError.Unauthorized
+                    404 -> throw ServerError.NotFound
+                    else -> throw ServerError.Server(response.code)
                 }
+
                 val body = response.body?.string() ?: throw IOException("Empty body")
                 val entries: List<NightscoutEntryDto> = json.decodeFromString(body)
 

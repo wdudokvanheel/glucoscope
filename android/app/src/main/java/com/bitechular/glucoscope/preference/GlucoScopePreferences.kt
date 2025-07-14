@@ -9,12 +9,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bitechular.glucoscope.data.datasource.DataSourceService
 import com.bitechular.glucoscope.data.model.RepositoryConfiguration
 import com.bitechular.glucoscope.preference.dto.GlucoScopePreferencesDto
 import com.bitechular.glucoscope.preference.dto.ThemeDto
 import com.bitechular.glucoscope.preference.dto.fromTheme
 import com.bitechular.glucoscope.preference.dto.toTheme
-import com.bitechular.glucoscope.ui.components.DataSourceService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject

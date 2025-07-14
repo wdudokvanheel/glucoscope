@@ -2,9 +2,9 @@ package com.bitechular.glucoscope.ui.screens.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bitechular.glucoscope.data.datasource.DataSourceService
+import com.bitechular.glucoscope.data.datasource.DataSourceState
 import com.bitechular.glucoscope.data.datasource.RealtimeDataRepository
-import com.bitechular.glucoscope.data.model.GlucoseMeasurement
-import com.bitechular.glucoscope.ui.components.DataSourceService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,25 +21,23 @@ class RealtimeDataSourceViewModel @Inject constructor(
     private val dataService: DataSourceService
 
 ) : ViewModel() {
-
-    data class UiState(
-        val measurements: List<GlucoseMeasurement> = emptyList(),
-        val currentValue: Double? = null,
-        val lastUpdate: Date? = null
-    )
-
-    val uiState: StateFlow<UiState> = repo.measurements
-        .map { list ->
-            UiState(
-                measurements = list,
-                currentValue = list.lastOrNull()?.value,
-                lastUpdate = Date()
+    val dataSourceState: StateFlow<DataSourceState> = repo.measurements
+        .map { result ->
+            result.fold(
+                onSuccess = { list ->
+                    DataSourceState.Data(
+                        measurements = list,
+                        currentValue = list.lastOrNull()?.value,
+                        lastUpdate = Date()
+                    )
+                },
+                onFailure = { err -> DataSourceState.Error(err) }
             )
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Companion.WhileSubscribed(5_000),
-            initialValue = UiState()
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = DataSourceState.Loading
         )
 
     fun setHours(h: Int) {

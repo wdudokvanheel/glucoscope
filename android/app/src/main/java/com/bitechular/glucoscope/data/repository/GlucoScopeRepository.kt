@@ -2,6 +2,7 @@ package com.bitechular.glucoscope.data.repository
 
 import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
+import com.bitechular.glucoscope.data.model.ServerError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -46,7 +47,13 @@ class GlucoScopeRepository(
                 .build()
             val request = makeRequest(httpUrl.toString())
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IOException("Unexpected code ${response.code}")
+                when (response.code) {
+                    200 -> Unit
+                    401, 403 -> throw ServerError.Unauthorized
+                    404 -> throw ServerError.NotFound
+                    else -> throw ServerError.Server(response.code)
+                }
+
                 val body = response.body?.string() ?: throw IOException("Empty body")
                 json.decodeFromString(body)
             }
