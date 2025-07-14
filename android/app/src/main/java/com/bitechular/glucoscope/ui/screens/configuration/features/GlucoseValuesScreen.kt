@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,27 +31,31 @@ fun GlucoseValuesScreen() {
     ) {
         ThemedGlucoseTargetGraphic()
         ThemedSection {
-            GlucoseValueRow(
-                label = "Low",
-                value = prefs.lowThreshold,
-                onValueChange = { prefs.lowThreshold = it },
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GlucoseValueRow(
+                    label = "Low",
+                    value = prefs.lowThreshold,
+                    onValueChange = { prefs.lowThreshold = it },
+                )
 
-            HorizontalDivider(thickness = 1.dp, color = prefs.theme.text.copy(alpha = 0.5f))
+                HorizontalDivider(thickness = 1.dp, color = prefs.theme.text.copy(alpha = 0.5f))
 
-            GlucoseValueRow(
-                label = "High",
-                value = prefs.highThreshold,
-                onValueChange = { prefs.highThreshold = it },
-            )
+                GlucoseValueRow(
+                    label = "High",
+                    value = prefs.highThreshold,
+                    onValueChange = { prefs.highThreshold = it },
+                )
 
-            HorizontalDivider(thickness = 1.dp, color = prefs.theme.text.copy(alpha = 0.5f))
+                HorizontalDivider(thickness = 1.dp, color = prefs.theme.text.copy(alpha = 0.5f))
 
-            GlucoseValueRow(
-                label = "Very high",
-                value = prefs.upperThreshold,
-                onValueChange = { prefs.upperThreshold = it },
-            )
+                GlucoseValueRow(
+                    label = "Very high",
+                    value = prefs.upperThreshold,
+                    onValueChange = { prefs.upperThreshold = it },
+                )
+            }
         }
     }
 }
@@ -73,10 +76,10 @@ private fun GlucoseValueRow(
 
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .fillMaxWidth(),
+//            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = label,

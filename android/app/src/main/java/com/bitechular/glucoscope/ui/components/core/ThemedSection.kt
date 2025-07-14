@@ -14,6 +14,7 @@ import com.bitechular.glucoscope.preference.PreferenceModel
 @Composable
 fun ThemedSection(
     modifier: Modifier = Modifier,
+    innerPadding: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val prefs = PreferenceModel.current
@@ -27,7 +28,7 @@ fun ThemedSection(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp),                // inner padding
+                .padding(if (innerPadding) 16.dp else 0.dp),
             content = content
         )
     }
