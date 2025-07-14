@@ -184,7 +184,7 @@ fun ColoredLineGraph(
         LineComponent(
             fill = Fill(axisXGridLineColor.toArgb()),
             thicknessDp = 0.25f,
-            shape = DashedShape(),
+            shape = DashedShape(dashLengthDp = 2f),
         )
     }
 
