@@ -1,6 +1,11 @@
 package com.bitechular.glucoscope.ui.components
 
+import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
+import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
+import com.bitechular.glucoscope.data.model.RepositoryConfiguration
 import com.bitechular.glucoscope.data.repository.DataSourceRepository
+import com.bitechular.glucoscope.data.repository.GlucoScopeRepository
+import com.bitechular.glucoscope.data.repository.NightscoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -15,5 +20,19 @@ class DataSourceService {
 
     fun clear() {
         _datasource.value = null
+    }
+
+    fun setConfiguration(configuration: RepositoryConfiguration) {
+        when (configuration) {
+            is GlucoScopeRepositoryConfiguration -> _datasource.value =
+                GlucoScopeRepository(
+                    configuration
+                )
+
+            is NightscoutRepositoryConfiguration -> _datasource.value =
+                NightscoutRepository(
+                    configuration
+                )
+        }
     }
 }

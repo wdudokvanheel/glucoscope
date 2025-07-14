@@ -14,6 +14,7 @@ import com.bitechular.glucoscope.preference.dto.GlucoScopePreferencesDto
 import com.bitechular.glucoscope.preference.dto.ThemeDto
 import com.bitechular.glucoscope.preference.dto.fromTheme
 import com.bitechular.glucoscope.preference.dto.toTheme
+import com.bitechular.glucoscope.ui.components.DataSourceService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
@@ -24,7 +25,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class GlucoScopePreferences @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val dataSourceService: DataSourceService
 ) : ViewModel() {
     var repositoryConfiguration: RepositoryConfiguration? by mutableStateOf(null)
     var theme by mutableStateOf(GlucoScopeTheme())
@@ -54,8 +56,20 @@ class GlucoScopePreferences @Inject constructor(
         }
     }
 
+    fun setRepositoryConfiguration(
+        configuration: RepositoryConfiguration
+    ) = viewModelScope.launch {
+        dataStore.updateData { dto ->
+            dto.copy(
+                repositoryConfiguration =
+                    configuration
+            )
+        }
+        dataSourceService.setConfiguration(configuration)
+        repositoryConfiguration = configuration
+    }
+
     private fun applySettings(dto: GlucoScopePreferencesDto) {
-        println("APPLYING " + dto.repositoryConfiguration)
         theme = dto.theme.toTheme()
         repositoryConfiguration = dto.repositoryConfiguration
         graphMin = dto.graphMin
@@ -65,6 +79,9 @@ class GlucoScopePreferences @Inject constructor(
         upperThreshold = dto.upperThreshold
         xAxisSteps = dto.xAxisSteps
         yAxisLabels = dto.yAxisLabels
+
+        // Update datasource service with configuration (if available)
+        repositoryConfiguration?.let { setRepositoryConfiguration(it) }
     }
 
     private fun toSettings() = GlucoScopePreferencesDto(
