@@ -73,4 +73,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.core)
 
     implementation(libs.androidx.material.icons.extended.android)
+
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
 }

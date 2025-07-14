@@ -29,10 +29,6 @@ class DemoDataSource : DataSource {
 
     override suspend fun testConnection() = true
 
-    override suspend fun getCurrentValue(): Double {
-        return lastValue
-    }
-
     override suspend fun getLatestEntries(hours: Int, window: Int): List<GlucoseMeasurement> {
         update()
         val cutoff = (System.currentTimeMillis() / 1000.0) - hours * 3600
