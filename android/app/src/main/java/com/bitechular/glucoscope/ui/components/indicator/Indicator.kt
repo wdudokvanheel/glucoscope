@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.Screen
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
@@ -53,7 +54,7 @@ fun Indicator(currentValue: Double?, lastUpdate: Date? = null) {
             .fillMaxHeight(0.33f)
             .background(
                 color = background,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(8.dp)
             )
     ) {
         Box(
@@ -85,14 +86,17 @@ fun Indicator(currentValue: Double?, lastUpdate: Date? = null) {
                 )
             }
 
-            Text(
-                text = "Last update: 15:00",
-                fontSize = 12.sp,
-                color = Color.Black,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(8.dp)
-            )
+            lastUpdate?.let { date ->
+                val formatted = SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+                Text(
+                    text = "Last updated $formatted",
+                    fontSize = 12.sp,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                )
+            }
         }
     }
 }
