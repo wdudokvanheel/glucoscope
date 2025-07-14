@@ -87,7 +87,9 @@ private fun GlucoseValueRow(
         )
         ThemedTextbox(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { new ->
+                new.toDoubleOrNull()?.let(onValueChange)
+            },
             modifier = Modifier.width(64.dp)
         )
     }

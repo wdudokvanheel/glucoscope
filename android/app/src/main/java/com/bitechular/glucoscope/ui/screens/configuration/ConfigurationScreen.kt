@@ -23,6 +23,7 @@ import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationBottomBar
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTab
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTopBar
+import com.bitechular.glucoscope.ui.screens.configuration.features.ConnectionSettingsScreen
 import com.bitechular.glucoscope.ui.screens.configuration.features.GlucoseValuesScreen
 import com.bitechular.glucoscope.ui.screens.configuration.features.ThemeSelectorScreen
 
@@ -63,12 +64,12 @@ fun ConfigurationScreen() {
         ) {
             NavHost(
                 navController = configNavigation,
-                startDestination = "themes",
+                startDestination = "connection",
                 modifier = Modifier.padding(padding)
             ) {
                 composable("themes") { ThemeSelectorScreen() }
                 composable("glucose") { GlucoseValuesScreen() }
-                composable("connection") { Text("Connection") }
+                composable("connection") { ConnectionSettingsScreen() }
                 composable("about") { Text("About") }
             }
         }
