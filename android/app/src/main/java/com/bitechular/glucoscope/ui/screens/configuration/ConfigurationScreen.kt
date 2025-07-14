@@ -24,6 +24,7 @@ import com.bitechular.glucoscope.ui.screens.configuration.components.Configurati
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTab
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTopBar
 import com.bitechular.glucoscope.ui.screens.configuration.features.GlucoseValuesScreen
+import com.bitechular.glucoscope.ui.screens.configuration.features.ThemeSelectorScreen
 
 
 @Composable
@@ -62,10 +63,10 @@ fun ConfigurationScreen() {
         ) {
             NavHost(
                 navController = configNavigation,
-                startDestination = "glucose",
+                startDestination = "themes",
                 modifier = Modifier.padding(padding)
             ) {
-                composable("themes") { Text("Themes") }
+                composable("themes") { ThemeSelectorScreen() }
                 composable("glucose") { GlucoseValuesScreen() }
                 composable("connection") { Text("Connection") }
                 composable("about") { Text("About") }
