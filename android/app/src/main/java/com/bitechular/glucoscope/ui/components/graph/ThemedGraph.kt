@@ -8,7 +8,7 @@ import com.bitechular.glucoscope.preference.PreferenceModel
 @Composable
 fun ThemedGraph(
     measurements: List<GlucoseMeasurement>,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) {
     val prefs = PreferenceModel.current
 

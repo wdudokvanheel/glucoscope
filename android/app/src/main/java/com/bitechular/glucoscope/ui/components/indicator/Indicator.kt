@@ -27,7 +27,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun Indicator(currentValue: Double?, lastUpdate: Date?) {
+fun Indicator(currentValue: Double?, lastUpdate: Date? = null) {
     val prefs = PreferenceModel.current
     val navigator = AppNavigator.current
 
