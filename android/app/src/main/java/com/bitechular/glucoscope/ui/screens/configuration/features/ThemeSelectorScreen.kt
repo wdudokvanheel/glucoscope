@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
-import com.bitechular.glucoscope.data.repository.DemoDataSource
+import com.bitechular.glucoscope.data.repository.DemoDataRepository
 import com.bitechular.glucoscope.preference.GlucoScopeTheme
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.preference.dto.ThemeDto
@@ -39,7 +39,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun ThemeSelectorScreen() {
     val prefs = PreferenceModel.current
-    val demoDataSource = DemoDataSource()
+    val demoDataSource = DemoDataRepository()
     val themes = loadThemesFromAssets()
 
     val testData by produceState(initialValue = emptyList<GlucoseMeasurement>(), key1 = Unit) {

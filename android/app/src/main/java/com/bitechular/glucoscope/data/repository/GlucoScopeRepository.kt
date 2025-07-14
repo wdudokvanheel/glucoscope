@@ -1,5 +1,6 @@
 package com.bitechular.glucoscope.data.repository
 
+import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,9 +12,9 @@ import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class GlucoScopeDataSource(
-    private val configuration: GlucoScopeDataSourceConfiguration
-) : DataSource {
+class GlucoScopeRepository(
+    private val configuration: GlucoScopeRepositoryConfiguration
+) : DataSourceRepository {
 
     private val client = OkHttpClient.Builder()
         .callTimeout(15, TimeUnit.SECONDS)

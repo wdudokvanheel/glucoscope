@@ -8,7 +8,7 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 
-class DemoDataSource : DataSource {
+class DemoDataRepository : DataSourceRepository {
     private object C {
         const val historyHours = 24
         const val baseInterval = 90.0

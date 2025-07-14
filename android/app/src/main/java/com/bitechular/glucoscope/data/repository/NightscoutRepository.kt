@@ -1,6 +1,7 @@
 package com.bitechular.glucoscope.data.repository
 
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
+import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.toMmol
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,9 +14,9 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
 
-class NightscoutDataSource(
-    private val configuration: NightscoutDataSourceConfiguration
-) : DataSource {
+class NightscoutRepository(
+    private val configuration: NightscoutRepositoryConfiguration
+) : DataSourceRepository {
 
     /* ---------- shared infra ---------- */
 
