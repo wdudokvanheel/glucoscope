@@ -16,7 +16,7 @@ class HourTickPlacer(
 
     private fun labelsIn(r: ClosedFloatingPointRange<Double>) =
         ticksIn(r)
-            .filterIndexed { i, _ -> i % labelStep == 0 }
+            .filterIndexed { i, _ -> (i - 1).let { if (it < 0) false else it % labelStep == 0 } }
             .filterNot { it == firstTick }
 
     override fun getLineValues(
@@ -45,10 +45,23 @@ class HourTickPlacer(
         layerDimensions: CartesianLayerDimensions,
         fullXRange: ClosedFloatingPointRange<Double>,
     ): List<Double> {
-        val all = hourXs.filterIndexed { i, _ -> i % labelStep == 0 }
+        val all = hourXs.filterIndexed { i, _ ->
+            (i - 1).let { if (it < 0) false else it % labelStep == 0 }
+        }
         return all.ifEmpty { listOf(fullXRange.start) }
     }
 
-    override fun getStartLayerMargin(context: CartesianMeasuringContext, layerDimensions: CartesianLayerDimensions, tickThickness: Float, maxLabelWidth: Float) = 0f
-    override fun getEndLayerMargin  (context: CartesianMeasuringContext, layerDimensions: CartesianLayerDimensions, tickThickness: Float, maxLabelWidth: Float) = 0f
+    override fun getStartLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ) = 0f
+
+    override fun getEndLayerMargin(
+        context: CartesianMeasuringContext,
+        layerDimensions: CartesianLayerDimensions,
+        tickThickness: Float,
+        maxLabelWidth: Float,
+    ) = 0f
 }

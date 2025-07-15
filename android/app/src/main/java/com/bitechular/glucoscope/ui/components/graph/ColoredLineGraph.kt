@@ -23,13 +23,16 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLa
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.CartesianChart
+import com.patrykandpatrick.vico.core.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.core.cartesian.Zoom
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.core.cartesian.decoration.Decoration
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.common.Fill
+import com.patrykandpatrick.vico.core.common.Position
 import com.patrykandpatrick.vico.core.common.component.LineComponent
 import com.patrykandpatrick.vico.core.common.component.TextComponent
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
@@ -176,14 +179,14 @@ fun ColoredLineGraph(
     val yAxisLine = remember(axisYGridLineColor) {
         LineComponent(
             fill = Fill(axisYGridLineColor.toArgb()),
-            thicknessDp = 0.25f,
+            thicknessDp = 0.5f,
         )
     }
 
     val xAxisLine = remember(axisXGridLineColor) {
         LineComponent(
             fill = Fill(axisXGridLineColor.toArgb()),
-            thicknessDp = 0.25f,
+            thicknessDp = 0.5f,
             shape = DashedShape(dashLengthDp = 2f),
         )
     }
@@ -211,6 +214,15 @@ fun ColoredLineGraph(
         }
     }
 
+    val hourDecoration = rememberHourLabelsDecoration(
+        xIndices = xAxisLabelList,
+        labelStep = xAxisStep,
+        color = axisXLegendColor,
+        hours = xAxisLabelList.map { idx ->
+            measurements[idx.toInt()].time.toLdt().hour
+        }
+    )
+
     val bottomAxis = HorizontalAxis.rememberBottom(
         valueFormatter = { _, x, _ ->
             val i = x.toInt().coerceIn(0, measurements.lastIndex)
@@ -219,7 +231,7 @@ fun ColoredLineGraph(
         itemPlacer = remember(xAxisLabelList, xAxisStep) {
             HourTickPlacer(xAxisLabelList, labelStep = xAxisStep)
         },
-        label = xAxisLegend,
+        label = null,
         guideline = xAxisLine,
         line = null,
         tickLength = 0.dp
@@ -246,6 +258,7 @@ fun ColoredLineGraph(
             lineLayer,
             endAxis = yAxis,
             bottomAxis = bottomAxis,
+            decorations = listOf(hourDecoration)
         )
     }
 
@@ -261,7 +274,7 @@ fun ColoredLineGraph(
         zoomState = zoomState,
         modifier = modifier.fillMaxSize(),
         animateIn = false,
-        animationSpec = null
+        animationSpec = null,
     )
 }
 
@@ -269,4 +282,63 @@ private fun Double.toLdt(): LocalDateTime {
     val inst = if (this > 1E11) Instant.ofEpochMilli(this.toLong())
     else Instant.ofEpochSecond(this.toLong())
     return inst.atZone(ZoneId.systemDefault()).toLocalDateTime()
+}
+
+@Composable
+fun rememberHourLabelsDecoration(
+    xIndices: List<Double>,
+    hours: List<Int>,
+    labelStep: Int = 2,
+    color: Color = Color.White,
+    textSizeSp: Float = 12f,
+    gapDp: Float = 4f,
+): Decoration = remember(xIndices, hours, labelStep, color, textSizeSp, gapDp) {
+
+    val label = TextComponent(
+        textSizeSp = textSizeSp,
+        color = color.toArgb(),
+        lineCount = 1,
+    )
+
+    object : Decoration {
+        override fun drawOverLayers(context: CartesianDrawingContext) {
+            val gapPx = gapDp * context.density
+            val y = context.layerBounds.bottom - label.getHeight(context)
+            val stepPx = context.layerDimensions.xSpacing
+            val minX = context.ranges.minX
+            val xStep = context.ranges.xStep
+            val leftPx = context.layerBounds.left
+            val rightPx = context.layerBounds.right
+            val scroll = context.scroll
+
+            hours.forEachIndexed { i, hr ->
+                // Same filtering HourTickPlacer applies
+                if (i == 0 || (i - 1) % labelStep != 0) {
+                    return@forEachIndexed
+                }
+
+                val domainΔ = (xIndices[i] - minX) / xStep
+                val gridPx = leftPx + domainΔ * stepPx - scroll
+
+                // Bounding check (skip if the label would clip)
+                val text = "%02d".format(hr)
+                val width = label.getWidth(context, text)
+                val xEnd = gridPx + gapPx
+                val xStart = xEnd - width
+
+                if (xStart < leftPx || xEnd > rightPx) {
+                    return@forEachIndexed
+                }
+
+                label.draw(
+                    context = context,
+                    text = text,
+                    x = xEnd.toFloat(),
+                    y = y,
+                    horizontalPosition = Position.Horizontal.End,
+                    verticalPosition = Position.Vertical.Bottom,
+                )
+            }
+        }
+    }
 }
