@@ -48,7 +48,7 @@ fun ThemedSegmentedSelector(
     Surface(
         color          = containerColor,
         tonalElevation = tonalElevation,
-        shape          = RoundedCornerShape(12.dp),
+        shape          = RoundedCornerShape(8.dp),
         modifier       = modifier
     ) {
         BoxWithConstraints(Modifier.height(32.dp)) {
@@ -69,7 +69,7 @@ fun ThemedSegmentedSelector(
                     .width(segmentWidthDp)
                     .fillMaxHeight()
                     .padding(2.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(prefs.theme.accent)
             )
 
@@ -84,7 +84,7 @@ fun ThemedSegmentedSelector(
                             .weight(1f)
                             .fillMaxHeight()
                             .padding(2.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .clickable(
                                 interactionSource = interaction,
                                 indication = null

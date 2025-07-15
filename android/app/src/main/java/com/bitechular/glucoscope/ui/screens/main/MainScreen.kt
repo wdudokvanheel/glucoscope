@@ -13,42 +13,59 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bitechular.glucoscope.data.datasource.DataSourceState
+import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
 import com.bitechular.glucoscope.ui.components.indicator.Indicator
+import com.bitechular.glucoscope.ui.screens.main.components.GraphOverlayMenu
 import com.bitechular.glucoscope.ui.screens.viewmodel.RealtimeDataSourceViewModel
+import java.util.Date
 
 @Composable
 fun MainScreen(
     datasource: RealtimeDataSourceViewModel = hiltViewModel()
 ) {
+    when (val state = datasource.dataSourceState.collectAsStateWithLifecycle().value) {
+        DataSourceState.Loading -> LoadingScreen()
+        is DataSourceState.Error -> {
+            IndicatorAndGraph()
+        }
+
+        is DataSourceState.Data -> {
+            IndicatorAndGraph(state.measurements, state.currentValue, state.lastUpdate)
+        }
+    }
+}
+
+@Composable
+private fun IndicatorAndGraph(
+    measurements: List<GlucoseMeasurement> = emptyList(),
+    currentValue: Double? = null,
+    lastUpdate: Date? = null,
+) {
     val prefs = PreferenceModel.current
-
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-    ) { innerPadding ->
-        Column(
+        Modifier.fillMaxSize()
+    ) { inner ->
+        Box(
             Modifier
-                .background(prefs.theme.background)
-                .padding(innerPadding)
                 .fillMaxSize()
+                .background(prefs.theme.background)
         ) {
-            when (val state = datasource.dataSourceState.collectAsStateWithLifecycle().value) {
-                DataSourceState.Loading -> LoadingScreen()
-                is DataSourceState.Error -> {
-                    Indicator(null)
-                    ThemedGraph(emptyList())
-                }
-
-                is DataSourceState.Data -> {
-                    Indicator(state.currentValue, lastUpdate = state.lastUpdate)
-                    ThemedGraph(state.measurements)
+            GraphOverlayMenu(
+                modifier = Modifier
+                    .padding(inner),
+                datasource = hiltViewModel()
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    Indicator(currentValue, lastUpdate)
+                    ThemedGraph(measurements)
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun LoadingScreen() {
