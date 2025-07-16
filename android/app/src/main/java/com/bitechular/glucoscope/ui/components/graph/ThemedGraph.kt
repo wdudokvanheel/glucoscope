@@ -5,14 +5,17 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
 
 @Composable
 fun ThemedGraph(
     measurements: List<GlucoseMeasurement>,
     modifier: Modifier = Modifier,
+    graphRange: GraphRange? = null
 ) {
     val prefs = PreferenceModel.current
 
+    val range = graphRange ?: prefs.graphRange
     key(prefs.graphRange) {
         ColoredLineGraph(
             measurements = measurements,
@@ -24,7 +27,7 @@ fun ThemedGraph(
             highThreshold = prefs.highThreshold,
             upperThreshold = prefs.upperThreshold,
 
-            xAxisStep = prefs.graphRange.axisStep,
+            xAxisStep = range.axisStep,
             yAxisLabels = prefs.yAxisLabels,
 
             inRangeColor = prefs.theme.inRangeColor,
