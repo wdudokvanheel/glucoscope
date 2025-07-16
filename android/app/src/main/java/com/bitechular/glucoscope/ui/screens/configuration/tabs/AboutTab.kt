@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,6 +64,7 @@ fun AboutContent(
         pkg.versionName to pkg.versionCode
     }
 
+    val interaction = remember { MutableInteractionSource() }
     var showEraseDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -85,27 +87,33 @@ fun AboutContent(
             )
         }
 
-
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            LinkText("Source code", GlucoScopeApplication.URL_SOURCE + "tree/android-v" + versionName, context)
+            LinkText(
+                "Source code",
+                GlucoScopeApplication.URL_SOURCE + "tree/android-v" + versionName,
+                context
+            )
             LinkText("License", GlucoScopeApplication.URL_LICENSE, context)
             LinkText("Privacy Policy", GlucoScopeApplication.URL_PRIVACY, context)
         }
+
 
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TextButton(onClick = { showEraseDialog = true }) {
-                Text(
-                    text = "Erase all data",
-                    color = prefs.theme.text,
-                    modifier = Modifier
-                        .alpha(0.75f)
-                        .padding(0.dp),
-                    fontSize = 12.sp
-                )
-            }
+            Text(
+                text = "Erase all data",
+                color = prefs.theme.text,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .alpha(0.75f)
+                    .padding(0.dp)
+                    .clickable(
+                        interactionSource = interaction,
+                        indication = null
+                    ) { showEraseDialog = true }
+            )
         }
     }
 
@@ -139,16 +147,16 @@ fun AboutContent(
     }
 }
 
-/* Helper to make link-like text ------------------------------------------------ */
 @Composable
 fun LinkText(label: String, url: String, context: Context) {
     val prefs = PreferenceModel.current
+    val interaction = remember { MutableInteractionSource() }
 
     Text(
         text = label,
         color = prefs.theme.text,
         fontSize = 16.sp,
-        modifier = Modifier.clickable {
+        modifier = Modifier.clickable(interactionSource = interaction, indication = null) {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         }
     )
