@@ -27,7 +27,7 @@ fun GlucoseValuesScreen() {
     ConfigurationTabView(
         graphic = { ThemedGlucoseTargetGraphic() },
     ) {
-        ThemedSection {
+        ThemedSection(innerPadding = 8.dp) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {

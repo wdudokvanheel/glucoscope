@@ -65,7 +65,7 @@ fun ThemeSelectorScreen() {
             )
         }
 
-        ThemedSection(innerPadding = false) {
+        ThemedSection(innerPadding = 0.dp) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(vertical = 0.dp),

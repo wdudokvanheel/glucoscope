@@ -2,6 +2,7 @@ package com.bitechular.glucoscope.ui.graphics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -13,16 +14,19 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.components.SquareContainer
 
 @Composable
-fun ThemedServerSettingsGraphic(modifier: Modifier = Modifier){
+fun ThemedServerSettingsGraphic(modifier: Modifier = Modifier) {
     val prefs = PreferenceModel.current
-    ServerSettingsGraphic(
-        modifier = modifier,
-        dropFill = prefs.theme.lowColor,
-        gearsFill = prefs.theme.accent,
-        cloudFill = prefs.theme.text
-    )
+    SquareContainer() {
+        ServerSettingsGraphic(
+            dropFill = prefs.theme.lowColor,
+            gearsFill = prefs.theme.accent,
+            cloudFill = prefs.theme.text,
+            modifier = modifier.fillMaxSize(),
+        )
+    }
 }
 
 @Composable
@@ -67,8 +71,15 @@ fun ServerSettingsGraphic(
     }
 }
 
-private object Cloud { const val TOP = 0.51442f; const val BOTTOM = 0.87011f }
-private object Drop { const val TOP = 0.13767f; const val BOTTOM = 0.51172f }
+private object Cloud {
+    const val TOP = 0.51442f;
+    const val BOTTOM = 0.87011f
+}
+
+private object Drop {
+    const val TOP = 0.13767f;
+    const val BOTTOM = 0.51172f
+}
 
 private fun cloudPath(w: Float, h: Float) = Path().apply {
     moveTo(0.82144f * w, Cloud.BOTTOM * h)
@@ -99,7 +110,14 @@ private fun dropPath(w: Float, h: Float) = Path().apply {
     cubicTo(0.65039f * w, 0.31057f * h, 0.75337f * w, 0.17194f * h, 0.77962f * w, Drop.TOP * h)
     cubicTo(0.78268f * w, 0.13367f * h, 0.78861f * w, 0.13367f * h, 0.79168f * w, Drop.TOP * h)
     cubicTo(0.81793f * w, 0.17194f * h, 0.92090f * w, 0.31057f * h, 0.92090f * w, 0.37598f * h)
-    cubicTo(0.92090f * w, 0.45095f * h, 0.86034f * w, Drop.BOTTOM * h, 0.78565f * w, Drop.BOTTOM * h)
+    cubicTo(
+        0.92090f * w,
+        0.45095f * h,
+        0.86034f * w,
+        Drop.BOTTOM * h,
+        0.78565f * w,
+        Drop.BOTTOM * h
+    )
     cubicTo(0.71095f * w, Drop.BOTTOM * h, 0.65039f * w, 0.45095f * h, 0.65039f * w, 0.37598f * h)
     close()
 }

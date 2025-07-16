@@ -2,9 +2,7 @@ package com.bitechular.glucoscope.ui.screens.configuration.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +22,7 @@ import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.components.themed.ThemedSegmentedSelector
 import com.bitechular.glucoscope.ui.components.themed.ThemedTextbox
 import com.bitechular.glucoscope.ui.graphics.ThemedServerSettingsGraphic
+import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTabView
 
 enum class ServerType { GLUCOSCOPE, NIGHTSCOUT }
 
@@ -62,22 +61,15 @@ fun ConnectionSettingsScreen() {
         prefs.setRepositoryConfiguration(config)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
+    ConfigurationTabView(
+        graphic = { ThemedServerSettingsGraphic() },
     ) {
-        ThemedServerSettingsGraphic()
-
-        ThemedSection {
+        ThemedSection(innerPadding = 8.dp) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = "Server type")
-
                 ThemedSegmentedSelector(
                     options = listOf("GlucoScope", "Nightscout"),
                     selected = serverType.ordinal,
