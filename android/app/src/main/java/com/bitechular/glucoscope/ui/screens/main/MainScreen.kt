@@ -19,7 +19,7 @@ import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.OrientationAdaptiveView
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
-import com.bitechular.glucoscope.ui.components.indicator.Indicator
+import com.bitechular.glucoscope.ui.components.indicator.LargeIndicator
 import com.bitechular.glucoscope.ui.components.indicator.SettingsButton
 import com.bitechular.glucoscope.ui.components.indicator.SmallIndicator
 import com.bitechular.glucoscope.ui.screens.main.components.GraphOverlayMenu
@@ -59,7 +59,8 @@ private fun MainScreenContent(
         OrientationAdaptiveView(
             portrait = {
                 Column(Modifier.fillMaxSize()) {
-                    Indicator(currentValue, lastUpdate)
+                    LargeIndicator(currentValue, lastUpdate)
+
                     GraphOverlayMenu {
                         ThemedGraph(measurements)
                     }
@@ -73,6 +74,7 @@ private fun MainScreenContent(
                     GraphOverlayMenu {
                         ThemedGraph(measurements)
                     }
+
                     SmallIndicator(currentValue)
 
                     SettingsButton(
