@@ -23,9 +23,9 @@ import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationBottomBar
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTab
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTopBar
-import com.bitechular.glucoscope.ui.screens.configuration.features.ConnectionSettingsScreen
-import com.bitechular.glucoscope.ui.screens.configuration.features.GlucoseValuesScreen
-import com.bitechular.glucoscope.ui.screens.configuration.features.ThemeSelectorScreen
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.ConnectionSettingsScreen
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.GlucoseValuesScreen
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.ThemeSelectorScreen
 
 
 @Composable

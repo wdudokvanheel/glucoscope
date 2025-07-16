@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.screens.configuration.features
+package com.bitechular.glucoscope.ui.screens.configuration.tabs
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

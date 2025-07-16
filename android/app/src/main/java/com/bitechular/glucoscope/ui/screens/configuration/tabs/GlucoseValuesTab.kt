@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.screens.configuration.features
+package com.bitechular.glucoscope.ui.screens.configuration.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
