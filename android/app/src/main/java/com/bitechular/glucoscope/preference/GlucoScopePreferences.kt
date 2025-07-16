@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlin.math.max
 
 @HiltViewModel
 class GlucoScopePreferences @Inject constructor(
@@ -41,7 +40,7 @@ class GlucoScopePreferences @Inject constructor(
     var upperThreshold by mutableDoubleStateOf(10.0)
     var xAxisSteps by mutableIntStateOf(2)
     var yAxisLabels by mutableStateOf(listOf<Double>(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0))
-    var graphRangeIdx by mutableIntStateOf(3)
+    var graphRange: GraphRange by mutableStateOf(DefaultGraphRanges[3])
 
     private val dataStore = context.settingsDataStore
 
@@ -60,8 +59,8 @@ class GlucoScopePreferences @Inject constructor(
         }
     }
 
-    fun setGraphRange(range: GraphRange) {
-        graphRangeIdx = max(0, DefaultGraphRanges.indexOf(range))
+    fun setRange(range: GraphRange) {
+        graphRange = range
     }
 
     fun setRepositoryConfiguration(

@@ -13,7 +13,7 @@ fun ThemedGraph(
 ) {
     val prefs = PreferenceModel.current
 
-    key(prefs.graphRangeIdx) {
+    key(prefs.graphRange) {
         ColoredLineGraph(
             measurements = measurements,
 

@@ -3,8 +3,6 @@ package com.bitechular.glucoscope.ui.screens.main.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -109,7 +107,7 @@ fun GraphOverlayMenu(
                 onSelect = { idx ->
                     selectedIdx = idx
                     val range = ranges[idx]
-                    prefs.setGraphRange(range)
+                    prefs.setRange(range)
                     datasource.setRange(range)
                     revealOverlay()
                 }
