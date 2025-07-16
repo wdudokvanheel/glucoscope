@@ -93,8 +93,8 @@ fun GraphOverlayMenu(
 
         AnimatedVisibility(
             visible = showOverlay,
-            enter = fadeIn() + slideInVertically { it / 2 },
-            exit = fadeOut() + slideOutVertically { it / 2 },
+            enter = fadeIn(),
+            exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 8.dp)
