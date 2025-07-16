@@ -33,17 +33,17 @@ fun MainScreen(
     when (val state = datasource.dataSourceState.collectAsStateWithLifecycle().value) {
         DataSourceState.Loading -> LoadingScreen()
         is DataSourceState.Error -> {
-            IndicatorAndGraph()
+            MainScreenContent()
         }
 
         is DataSourceState.Data -> {
-            IndicatorAndGraph(state.measurements, state.currentValue, state.lastUpdate)
+            MainScreenContent(state.measurements, state.currentValue, state.lastUpdate)
         }
     }
 }
 
 @Composable
-private fun IndicatorAndGraph(
+private fun MainScreenContent(
     measurements: List<GlucoseMeasurement> = emptyList(),
     currentValue: Double? = null,
     lastUpdate: Date? = null,
@@ -84,13 +84,14 @@ private fun IndicatorAndGraph(
     }
 }
 
-
 @Composable
 fun LoadingScreen() {
     val prefs = PreferenceModel.current
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(prefs.theme.background),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(color = prefs.theme.accent)
