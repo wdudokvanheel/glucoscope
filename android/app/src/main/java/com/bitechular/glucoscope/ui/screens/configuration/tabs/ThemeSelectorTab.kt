@@ -1,8 +1,10 @@
 package com.bitechular.glucoscope.ui.screens.configuration.tabs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.data.repository.DemoDataRepository
 import com.bitechular.glucoscope.preference.GlucoScopePreferences
@@ -36,6 +39,7 @@ import com.bitechular.glucoscope.ui.components.OrientationAdaptiveView
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
 import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.screens.configuration.components.ThemeSwatch
+import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
 import kotlinx.serialization.json.Json
 
 @Composable
@@ -60,7 +64,7 @@ fun ThemeSelectorTab() {
                         .weight(1f)
                         .padding(horizontal = 16.dp)
                 )
-                ThemeList(themes, prefs, modifier = Modifier.weight(1f))
+                ThemeList(themes, prefs, modifier = Modifier.weight(2f))
             }
         },
         landscape = {
@@ -89,18 +93,39 @@ private fun PreviewGraph(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp))
             .border(
-                width = 1.dp,
+                width = 2.dp,
                 color = prefs.theme.surface,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
     ) {
-        ThemedGraph(
-            testData, modifier = Modifier
-                .padding(8.dp)
-                .fillMaxSize()
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            ThemedGraph(
+                testData, modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxSize(),
+                graphRange = GraphRange(9, 5, 2)
+            )
+
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = prefs.theme.surface,
+                        shape = RoundedCornerShape(
+                            topStart = 0.dp, topEnd = 0.dp,
+                            bottomEnd = 8.dp, bottomStart = 8.dp
+                        )
+                    )
+                    .padding(vertical = 2.dp, horizontal = 8.dp)
+            ) {
+                Text("Theme Preview", color = prefs.theme.text.copy(alpha = 0.8f))
+            }
+        }
     }
 }
 
@@ -112,7 +137,7 @@ private fun ThemeList(
 ) {
     ThemedSection(innerPadding = 0.dp, modifier = modifier) {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
             contentPadding = PaddingValues(vertical = 0.dp),
             modifier = Modifier.padding(horizontal = 8.dp)
         ) {
@@ -131,6 +156,7 @@ private fun ThemeList(
                     ) {
                         Text(
                             text = theme.name,
+                            fontSize = 16.sp,
                             color = if (prefs.theme == theme) theme.accent else prefs.theme.text,
                             fontWeight = if (prefs.theme == theme) FontWeight.SemiBold else FontWeight.Normal,
                         )
@@ -138,6 +164,7 @@ private fun ThemeList(
                         if (theme.variant.isNotEmpty()) {
                             Text(
                                 text = "– ${theme.variant}",
+                                fontSize = 16.sp,
                                 modifier = Modifier.padding(start = 4.dp),
                                 color = (if (prefs.theme == theme) theme.accent else prefs.theme.text)
                                     .copy(alpha = 0.75f),
