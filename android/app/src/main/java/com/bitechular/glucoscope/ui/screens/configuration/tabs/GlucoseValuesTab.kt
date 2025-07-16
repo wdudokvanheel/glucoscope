@@ -21,7 +21,7 @@ import com.bitechular.glucoscope.ui.screens.configuration.components.Configurati
 
 
 @Composable
-fun GlucoseValuesScreen() {
+fun GlucoseValuesTab() {
     val prefs = PreferenceModel.current
 
     ConfigurationTabView(

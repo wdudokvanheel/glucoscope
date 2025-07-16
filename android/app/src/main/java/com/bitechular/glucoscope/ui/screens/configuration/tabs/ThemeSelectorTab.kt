@@ -39,7 +39,7 @@ import com.bitechular.glucoscope.ui.screens.configuration.components.ThemeSwatch
 import kotlinx.serialization.json.Json
 
 @Composable
-fun ThemeSelectorScreen() {
+fun ThemeSelectorTab() {
     val prefs = PreferenceModel.current
     val demoDataSource = DemoDataRepository()
     val themes = loadThemesFromAssets()

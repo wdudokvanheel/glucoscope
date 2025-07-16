@@ -27,7 +27,7 @@ import com.bitechular.glucoscope.ui.screens.configuration.components.Configurati
 enum class ServerType { GLUCOSCOPE, NIGHTSCOUT }
 
 @Composable
-fun ConnectionSettingsScreen() {
+fun ConnectionSettingsTab() {
     val prefs = PreferenceModel.current
 
     val currentConfig = prefs.repositoryConfiguration

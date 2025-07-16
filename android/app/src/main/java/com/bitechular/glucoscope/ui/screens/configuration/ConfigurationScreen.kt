@@ -28,9 +28,9 @@ import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationBottomBar
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTab
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTopBar
-import com.bitechular.glucoscope.ui.screens.configuration.tabs.ConnectionSettingsScreen
-import com.bitechular.glucoscope.ui.screens.configuration.tabs.GlucoseValuesScreen
-import com.bitechular.glucoscope.ui.screens.configuration.tabs.ThemeSelectorScreen
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.ConnectionSettingsTab
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.GlucoseValuesTab
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.ThemeSelectorTab
 
 
 @Composable
@@ -75,9 +75,9 @@ fun ConfigurationScreen() {
                 startDestination = "connection",
                 modifier = Modifier.fillMaxSize()
             ) {
-                composable("themes") { ThemeSelectorScreen() }
-                composable("glucose") { GlucoseValuesScreen() }
-                composable("connection") { ConnectionSettingsScreen() }
+                composable("themes") { ThemeSelectorTab() }
+                composable("glucose") { GlucoseValuesTab() }
+                composable("connection") { ConnectionSettingsTab() }
                 composable("about") { Text("About") }
             }
         }
