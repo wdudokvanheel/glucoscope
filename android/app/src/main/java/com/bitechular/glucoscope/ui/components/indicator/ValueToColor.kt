@@ -10,7 +10,7 @@ import kotlin.math.log10
  * Maps a glucose *value* to the colour that the vertical line-gradient
  * in [ColoredLineGraph] would have at that height.
  */
-fun valueToColor(
+fun glucoseValueToColor(
     value: Double,
     graphMin: Double = 2.5,
     graphMax: Double = 20.0,

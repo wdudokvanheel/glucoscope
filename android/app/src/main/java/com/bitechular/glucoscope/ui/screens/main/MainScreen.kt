@@ -3,10 +3,12 @@ package com.bitechular.glucoscope.ui.screens.main
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,8 +17,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bitechular.glucoscope.data.datasource.DataSourceState
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.components.OrientationAdaptiveView
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
 import com.bitechular.glucoscope.ui.components.indicator.Indicator
+import com.bitechular.glucoscope.ui.components.indicator.SettingsButton
+import com.bitechular.glucoscope.ui.components.indicator.SmallIndicator
 import com.bitechular.glucoscope.ui.screens.main.components.GraphOverlayMenu
 import com.bitechular.glucoscope.ui.screens.viewmodel.RealtimeDataSourceViewModel
 import java.util.Date
@@ -44,24 +49,38 @@ private fun IndicatorAndGraph(
     lastUpdate: Date? = null,
 ) {
     val prefs = PreferenceModel.current
-    Scaffold(
-        Modifier.fillMaxSize()
-    ) { inner ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(prefs.theme.background)
-        ) {
-            GraphOverlayMenu(
-                modifier = Modifier
-                    .padding(inner)
-            ) {
+
+    Box(
+        Modifier
+            .background(prefs.theme.background)
+            .fillMaxSize()
+            .padding(WindowInsets.safeDrawing.asPaddingValues())
+    ) {
+        OrientationAdaptiveView(
+            portrait = {
                 Column(Modifier.fillMaxSize()) {
                     Indicator(currentValue, lastUpdate)
-                    ThemedGraph(measurements)
+                    GraphOverlayMenu {
+                        ThemedGraph(measurements)
+                    }
                 }
-            }
-        }
+            },
+            landscape = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    GraphOverlayMenu {
+                        ThemedGraph(measurements)
+                    }
+                    SmallIndicator(currentValue)
+
+                    SettingsButton(
+                        modifier = Modifier.align(Alignment.TopEnd),
+                        color = prefs.theme.accent,
+                    )
+                }
+            })
     }
 }
 
