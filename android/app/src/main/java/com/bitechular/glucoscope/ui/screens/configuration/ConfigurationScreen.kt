@@ -2,8 +2,13 @@ package com.bitechular.glucoscope.ui.screens.configuration
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.outlined.Info
@@ -39,9 +44,9 @@ fun ConfigurationScreen() {
 
     val prefs = PreferenceModel.current
     val appNavigator = AppNavigator.current
-    val configNavigation = rememberNavController()
+    val navController = rememberNavController()
 
-    val navBackStackEntry by configNavigation.currentBackStackEntryAsState()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val currentTitle = tabs.firstOrNull { it.route == currentRoute }?.label.orEmpty()
 
@@ -49,23 +54,26 @@ fun ConfigurationScreen() {
         topBar = {
             ConfigurationTopBar(
                 title = currentTitle,
-                onBackClick = {
-                    appNavigator.popBackStack()
-                }
+                onBackClick = { appNavigator.popBackStack() }
             )
         },
-        bottomBar = { ConfigurationBottomBar(configNavigation, tabs) }
-
-    ) { padding ->
+        bottomBar = {
+            ConfigurationBottomBar(navController, tabs)
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
+                .padding(innerPadding)
                 .fillMaxSize()
                 .background(prefs.theme.background)
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                )
         ) {
             NavHost(
-                navController = configNavigation,
+                navController = navController,
                 startDestination = "connection",
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.fillMaxSize()
             ) {
                 composable("themes") { ThemeSelectorScreen() }
                 composable("glucose") { GlucoseValuesScreen() }
@@ -75,4 +83,3 @@ fun ConfigurationScreen() {
         }
     }
 }
-
