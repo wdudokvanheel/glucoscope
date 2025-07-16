@@ -3,7 +3,6 @@ package com.bitechular.glucoscope.preference
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -38,7 +37,6 @@ class GlucoScopePreferences @Inject constructor(
     var lowThreshold by mutableDoubleStateOf(4.0)
     var highThreshold by mutableDoubleStateOf(7.0)
     var upperThreshold by mutableDoubleStateOf(10.0)
-    var xAxisSteps by mutableIntStateOf(2)
     var yAxisLabels by mutableStateOf(listOf<Double>(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0))
     var graphRange: GraphRange by mutableStateOf(DefaultGraphRanges[3])
 
@@ -84,7 +82,6 @@ class GlucoScopePreferences @Inject constructor(
         lowThreshold = dto.lowThreshold
         highThreshold = dto.highThreshold
         upperThreshold = dto.upperThreshold
-        xAxisSteps = dto.xAxisSteps
         yAxisLabels = dto.yAxisLabels
 
         // Update datasource service with configuration (if available)
@@ -99,7 +96,6 @@ class GlucoScopePreferences @Inject constructor(
         lowThreshold = lowThreshold,
         highThreshold = highThreshold,
         upperThreshold = upperThreshold,
-        xAxisSteps = xAxisSteps,
         yAxisLabels = yAxisLabels
     )
 }

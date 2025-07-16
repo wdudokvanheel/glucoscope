@@ -13,6 +13,5 @@ data class GlucoScopePreferencesDto(
     val lowThreshold: Double = 4.0,
     val highThreshold: Double = 7.0,
     val upperThreshold: Double = 10.0,
-    val xAxisSteps: Int = 2,
     val yAxisLabels: List<Double> = listOf(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0),
 )

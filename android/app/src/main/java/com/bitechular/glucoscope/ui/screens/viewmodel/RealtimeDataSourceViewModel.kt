@@ -2,7 +2,6 @@ package com.bitechular.glucoscope.ui.screens.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bitechular.glucoscope.data.datasource.DataSourceService
 import com.bitechular.glucoscope.data.datasource.DataSourceState
 import com.bitechular.glucoscope.data.datasource.RealtimeDataRepository
 import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
@@ -18,9 +17,7 @@ import kotlin.time.ExperimentalTime
 @HiltViewModel
 @OptIn(ExperimentalTime::class)
 class RealtimeDataSourceViewModel @Inject constructor(
-    private val repo: RealtimeDataRepository,
-    private val dataService: DataSourceService
-
+    private val repo: RealtimeDataRepository
 ) : ViewModel() {
     val dataSourceState: StateFlow<DataSourceState> = repo.measurements
         .map { result ->
@@ -41,7 +38,7 @@ class RealtimeDataSourceViewModel @Inject constructor(
             initialValue = DataSourceState.Loading
         )
 
-    fun setRange(range: GraphRange){
+    fun setRange(range: GraphRange) {
         repo.hours.value = range.hours
         repo.window.value = range.window
     }

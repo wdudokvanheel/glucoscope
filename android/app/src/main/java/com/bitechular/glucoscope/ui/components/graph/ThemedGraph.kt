@@ -24,7 +24,7 @@ fun ThemedGraph(
             highThreshold = prefs.highThreshold,
             upperThreshold = prefs.upperThreshold,
 
-            xAxisStep = prefs.xAxisSteps,
+            xAxisStep = prefs.graphRange.axisStep,
             yAxisLabels = prefs.yAxisLabels,
 
             inRangeColor = prefs.theme.inRangeColor,
