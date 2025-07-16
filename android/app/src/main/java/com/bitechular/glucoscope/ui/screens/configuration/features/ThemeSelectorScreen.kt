@@ -31,8 +31,8 @@ import com.bitechular.glucoscope.preference.GlucoScopeTheme
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.preference.dto.ThemeDto
 import com.bitechular.glucoscope.preference.dto.toTheme
-import com.bitechular.glucoscope.ui.components.core.ThemedSection
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
+import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.screens.configuration.components.ThemeSwatch
 import kotlinx.serialization.json.Json
 

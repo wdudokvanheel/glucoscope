@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.components.core
+package com.bitechular.glucoscope.ui.components.themed
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope

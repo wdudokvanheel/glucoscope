@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.components.core
+package com.bitechular.glucoscope.ui.components.themed
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.FastOutSlowInEasing

@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.components.core.ThemedSegmentedSelector
+import com.bitechular.glucoscope.ui.components.themed.ThemedSegmentedSelector
 import com.bitechular.glucoscope.ui.screens.main.model.DefaultGraphRanges
 import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
 import com.bitechular.glucoscope.ui.screens.viewmodel.RealtimeDataSourceViewModel

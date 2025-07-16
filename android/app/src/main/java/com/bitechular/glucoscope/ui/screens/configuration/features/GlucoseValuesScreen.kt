@@ -15,8 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.components.core.ThemedSection
-import com.bitechular.glucoscope.ui.components.core.ThemedTextbox
+import com.bitechular.glucoscope.ui.components.themed.ThemedSection
+import com.bitechular.glucoscope.ui.components.themed.ThemedTextbox
 import com.bitechular.glucoscope.ui.graphics.ThemedGlucoseTargetGraphic
 
 

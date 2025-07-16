@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.components.core.ThemedSection
-import com.bitechular.glucoscope.ui.components.core.ThemedSegmentedSelector
-import com.bitechular.glucoscope.ui.components.core.ThemedTextbox
+import com.bitechular.glucoscope.ui.components.themed.ThemedSection
+import com.bitechular.glucoscope.ui.components.themed.ThemedSegmentedSelector
+import com.bitechular.glucoscope.ui.components.themed.ThemedTextbox
 import com.bitechular.glucoscope.ui.graphics.ThemedServerSettingsGraphic
 
 enum class ServerType { GLUCOSCOPE, NIGHTSCOUT }
