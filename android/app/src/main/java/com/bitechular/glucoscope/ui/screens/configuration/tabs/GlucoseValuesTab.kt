@@ -3,7 +3,6 @@ package com.bitechular.glucoscope.ui.screens.configuration.tabs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -18,18 +17,16 @@ import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.components.themed.ThemedTextbox
 import com.bitechular.glucoscope.ui.graphics.ThemedGlucoseTargetGraphic
+import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTabView
 
 
 @Composable
 fun GlucoseValuesScreen() {
     val prefs = PreferenceModel.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
+    ConfigurationTabView(
+        graphic = { ThemedGlucoseTargetGraphic() },
     ) {
-        ThemedGlucoseTargetGraphic()
         ThemedSection {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -70,27 +67,22 @@ private fun GlucoseValueRow(
     val prefs = PreferenceModel.current
 
     val customSelectionColors = TextSelectionColors(
-        handleColor = prefs.theme.accent,
-        backgroundColor = prefs.theme.accent.copy(alpha = 0.4f)
+        handleColor = prefs.theme.accent, backgroundColor = prefs.theme.accent.copy(alpha = 0.4f)
     )
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
 //            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = label,
-            color = prefs.theme.text
+            text = label, color = prefs.theme.text
         )
         ThemedTextbox(
-            value = value,
-            onValueChange = { new ->
+            value = value, onValueChange = { new ->
                 new.toDoubleOrNull()?.let(onValueChange)
-            },
-            modifier = Modifier.width(64.dp)
+            }, modifier = Modifier.width(64.dp)
         )
     }
 }

@@ -2,6 +2,7 @@ package com.bitechular.glucoscope.ui.graphics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,11 +15,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.components.SquareContainer
 
 @Composable
 fun ThemedGlucoseTargetGraphic(modifier: Modifier = Modifier) {
     val prefs = PreferenceModel.current
-    GlucoseTargetValuesGraphic(prefs.theme.lowColor, prefs.theme.accent, modifier)
+    SquareContainer() {
+        GlucoseTargetValuesGraphic(prefs.theme.lowColor, prefs.theme.accent, modifier.fillMaxSize())
+    }
 }
 
 @Composable
