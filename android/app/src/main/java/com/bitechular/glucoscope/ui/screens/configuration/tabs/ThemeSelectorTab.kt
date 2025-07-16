@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,10 +27,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.data.repository.DemoDataRepository
+import com.bitechular.glucoscope.preference.GlucoScopePreferences
 import com.bitechular.glucoscope.preference.GlucoScopeTheme
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.preference.dto.ThemeDto
 import com.bitechular.glucoscope.preference.dto.toTheme
+import com.bitechular.glucoscope.ui.components.OrientationAdaptiveView
 import com.bitechular.glucoscope.ui.components.graph.ThemedGraph
 import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.screens.configuration.components.ThemeSwatch
@@ -45,77 +47,118 @@ fun ThemeSelectorScreen() {
     val testData by produceState(initialValue = emptyList<GlucoseMeasurement>(), key1 = Unit) {
         value = demoDataSource.getLatestEntries(9, 5)
     }
-    Column(
-    ) {
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .padding(horizontal = 16.dp)
-                .border(
-                    width = 1.dp,
-                    color = prefs.theme.surface,
-                    shape = RoundedCornerShape(8.dp)
-                )
-        ) {
-            ThemedGraph(
-                testData, modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-                    .fillMaxHeight(1 / 3f)
-            )
-        }
 
-        ThemedSection(innerPadding = 0.dp) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                contentPadding = PaddingValues(vertical = 0.dp),
-                modifier = Modifier.padding(horizontal = 8.dp)
+    OrientationAdaptiveView(
+        portrait = {
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                itemsIndexed(
-                    themes,
-                    key = { _, theme -> theme.name + theme.variant }) { index, theme ->
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    prefs.theme = theme
-                                }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = theme.name,
-                                color = if (prefs.theme == theme) theme.accent else prefs.theme.text,
-                                fontWeight = if (prefs.theme == theme) FontWeight.SemiBold else FontWeight.Normal,
-                            )
+                PreviewGraph(
+                    prefs,
+                    testData,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                )
+                ThemeList(themes, prefs, modifier = Modifier.weight(1f))
+            }
+        },
+        landscape = {
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                PreviewGraph(
+                    prefs,
+                    testData,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp)
+                        .padding(vertical = 16.dp)
+                )
+                ThemeList(themes, prefs, modifier = Modifier.weight(1f))
+            }
+        }
+    )
+}
 
-                            if (theme.variant.isNotEmpty()) {
-                                Text(
-                                    text = "– ${theme.variant}",
-                                    modifier = Modifier.padding(start = 4.dp),
-                                    color = (if (prefs.theme == theme) theme.accent else prefs.theme.text)
-                                        .copy(alpha = 0.75f),
-                                    fontWeight = if (prefs.theme == theme) FontWeight.Normal else FontWeight.Light,
-                                )
+@Composable
+private fun PreviewGraph(
+    prefs: GlucoScopePreferences,
+    testData: List<GlucoseMeasurement>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .border(
+                width = 1.dp,
+                color = prefs.theme.surface,
+                shape = RoundedCornerShape(8.dp)
+            )
+    ) {
+        ThemedGraph(
+            testData, modifier = Modifier
+                .padding(8.dp)
+                .fillMaxSize()
+        )
+    }
+}
+
+@Composable
+private fun ThemeList(
+    themes: List<GlucoScopeTheme>,
+    prefs: GlucoScopePreferences,
+    modifier: Modifier = Modifier
+) {
+    ThemedSection(innerPadding = 0.dp, modifier = modifier) {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(vertical = 0.dp),
+            modifier = Modifier.padding(horizontal = 8.dp)
+        ) {
+            itemsIndexed(
+                themes,
+                key = { _, theme -> theme.name + theme.variant }) { index, theme ->
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                prefs.theme = theme
                             }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = theme.name,
+                            color = if (prefs.theme == theme) theme.accent else prefs.theme.text,
+                            fontWeight = if (prefs.theme == theme) FontWeight.SemiBold else FontWeight.Normal,
+                        )
 
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            ThemeSwatch(theme = theme)
-                        }
-
-                        if (index < themes.lastIndex) {
-                            HorizontalDivider(
-                                color = prefs.theme.text.copy(alpha = 0.5f),
-                                thickness = 1.dp,
-                                modifier = Modifier.padding(top = 2.dp)
+                        if (theme.variant.isNotEmpty()) {
+                            Text(
+                                text = "– ${theme.variant}",
+                                modifier = Modifier.padding(start = 4.dp),
+                                color = (if (prefs.theme == theme) theme.accent else prefs.theme.text)
+                                    .copy(alpha = 0.75f),
+                                fontWeight = if (prefs.theme == theme) FontWeight.Normal else FontWeight.Light,
                             )
                         }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        ThemeSwatch(theme = theme)
+                    }
+
+                    if (index < themes.lastIndex) {
+                        HorizontalDivider(
+                            color = prefs.theme.text.copy(alpha = 0.5f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
                     }
                 }
             }
-
         }
 
     }
