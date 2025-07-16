@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,25 +60,25 @@ fun AboutContent(
     val (versionName, versionCode) = remember {
         val pm = context.packageManager
         val pkg = pm.getPackageInfo(context.packageName, 0)
-        pkg.versionName to pkg.longVersionCode
+        pkg.versionName to pkg.versionCode
     }
 
     var showEraseDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Column {
             Text(
                 text = GlucoScopeApplication.APP_NAME,
-                style = MaterialTheme.typography.titleLarge,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = prefs.theme.text
             )
             Text(
                 text = "Android client v$versionName",
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Light,
                 modifier = Modifier.alpha(0.9f),
                 color = prefs.theme.text
@@ -87,8 +86,8 @@ fun AboutContent(
         }
 
 
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            LinkText("Source code", GlucoScopeApplication.URL_SOURCE, context)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LinkText("Source code", GlucoScopeApplication.URL_SOURCE + "tree/android-v" + versionName, context)
             LinkText("License", GlucoScopeApplication.URL_LICENSE, context)
             LinkText("Privacy Policy", GlucoScopeApplication.URL_PRIVACY, context)
         }
@@ -101,14 +100,15 @@ fun AboutContent(
                 Text(
                     text = "Erase all data",
                     color = prefs.theme.text,
-                    modifier = Modifier.alpha(0.75f).padding(0.dp),
-                    fontSize = 10.sp
+                    modifier = Modifier
+                        .alpha(0.75f)
+                        .padding(0.dp),
+                    fontSize = 12.sp
                 )
             }
         }
     }
 
-    /* ── Confirmation dialog ──────────────────────────────────────────────── */
     if (showEraseDialog) {
         AlertDialog(
             onDismissRequest = { showEraseDialog = false },
@@ -120,15 +120,21 @@ fun AboutContent(
                         showEraseDialog = false
                         onEraseAll()
                     }
-                ) { Text(
-                    "Erase", color = prefs.theme.text.copy(alpha = 0.65f),
-                ) }
+                ) {
+                    Text(
+                        "Erase", color = prefs.theme.lowColor,
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showEraseDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = prefs.theme.text)
                 }
-            }
+            },
+            containerColor = prefs.theme.surface,
+            titleContentColor = prefs.theme.text,
+            textContentColor = prefs.theme.text,
+            iconContentColor = prefs.theme.accent,
         )
     }
 }
@@ -141,6 +147,7 @@ fun LinkText(label: String, url: String, context: Context) {
     Text(
         text = label,
         color = prefs.theme.text,
+        fontSize = 16.sp,
         modifier = Modifier.clickable {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         }
