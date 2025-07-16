@@ -24,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.core.ThemedSegmentedSelector
 import com.bitechular.glucoscope.ui.screens.main.model.DefaultGraphRanges
 import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
@@ -41,6 +42,8 @@ fun GraphOverlayMenu(
     datasource: RealtimeDataSourceViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
+    val prefs = PreferenceModel.current
+
     var showOverlay by remember { mutableStateOf(false) }
     var hideJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
@@ -106,8 +109,8 @@ fun GraphOverlayMenu(
                 onSelect = { idx ->
                     selectedIdx = idx
                     val range = ranges[idx]
-                    datasource.setWindow(range.window)
-                    datasource.setHours(range.hours)
+                    prefs.setGraphRange(range)
+                    datasource.setRange(range)
                     revealOverlay()
                 }
             )

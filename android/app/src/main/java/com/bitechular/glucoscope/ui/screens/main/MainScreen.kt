@@ -54,8 +54,7 @@ private fun IndicatorAndGraph(
         ) {
             GraphOverlayMenu(
                 modifier = Modifier
-                    .padding(inner),
-                datasource = hiltViewModel()
+                    .padding(inner)
             ) {
                 Column(Modifier.fillMaxSize()) {
                     Indicator(currentValue, lastUpdate)

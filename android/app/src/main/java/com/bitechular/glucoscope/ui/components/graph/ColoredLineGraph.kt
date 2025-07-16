@@ -37,6 +37,7 @@ import com.patrykandpatrick.vico.core.common.component.LineComponent
 import com.patrykandpatrick.vico.core.common.component.TextComponent
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.DashedShape
+import kotlinx.coroutines.FlowPreview
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -44,6 +45,7 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+@OptIn(FlowPreview::class)
 @Composable
 fun ColoredLineGraph(
     measurements: List<GlucoseMeasurement>,
@@ -157,15 +159,6 @@ fun ColoredLineGraph(
     )
 
     val yPlacer = remember(yAxisLabels) { FixedLogTickPlacer(yAxisLabels.map { log10(it) }) }
-
-    val xAxisLegend = remember(axisXLegendColor) {
-        TextComponent(
-            textSizeSp = 12f,
-            lineCount = 1,
-            truncateAt = null,
-            color = axisXLegendColor.toArgb(),
-        )
-    }
 
     val yAxisLegend = remember(axisYLegendColor) {
         TextComponent(

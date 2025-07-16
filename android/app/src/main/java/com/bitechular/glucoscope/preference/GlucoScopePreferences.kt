@@ -15,6 +15,8 @@ import com.bitechular.glucoscope.preference.dto.GlucoScopePreferencesDto
 import com.bitechular.glucoscope.preference.dto.ThemeDto
 import com.bitechular.glucoscope.preference.dto.fromTheme
 import com.bitechular.glucoscope.preference.dto.toTheme
+import com.bitechular.glucoscope.ui.screens.main.model.DefaultGraphRanges
+import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
@@ -22,11 +24,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 @HiltViewModel
 class GlucoScopePreferences @Inject constructor(
     @ApplicationContext context: Context,
-    private val dataSourceService: DataSourceService
+    private val dataSourceService: DataSourceService,
 ) : ViewModel() {
     var repositoryConfiguration: RepositoryConfiguration? by mutableStateOf(null)
     var theme by mutableStateOf(GlucoScopeTheme())
@@ -38,6 +41,7 @@ class GlucoScopePreferences @Inject constructor(
     var upperThreshold by mutableDoubleStateOf(10.0)
     var xAxisSteps by mutableIntStateOf(2)
     var yAxisLabels by mutableStateOf(listOf<Double>(3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 15.0, 20.0))
+    var graphRangeIdx by mutableIntStateOf(3)
 
     private val dataStore = context.settingsDataStore
 
@@ -54,6 +58,10 @@ class GlucoScopePreferences @Inject constructor(
                     dataStore.updateData { new }
                 }
         }
+    }
+
+    fun setGraphRange(range: GraphRange) {
+        graphRangeIdx = max(0, DefaultGraphRanges.indexOf(range))
     }
 
     fun setRepositoryConfiguration(

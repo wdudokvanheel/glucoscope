@@ -1,6 +1,7 @@
 package com.bitechular.glucoscope.ui.components.graph
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.bitechular.glucoscope.data.model.GlucoseMeasurement
 import com.bitechular.glucoscope.preference.PreferenceModel
@@ -8,33 +9,35 @@ import com.bitechular.glucoscope.preference.PreferenceModel
 @Composable
 fun ThemedGraph(
     measurements: List<GlucoseMeasurement>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val prefs = PreferenceModel.current
 
-    ColoredLineGraph(
-        measurements = measurements,
+    key(prefs.graphRangeIdx) {
+        ColoredLineGraph(
+            measurements = measurements,
 
-        graphMin = prefs.graphMin,
-        graphMax = prefs.graphMax,
+            graphMin = prefs.graphMin,
+            graphMax = prefs.graphMax,
 
-        lowThreshold = prefs.lowThreshold,
-        highThreshold = prefs.highThreshold,
-        upperThreshold = prefs.upperThreshold,
+            lowThreshold = prefs.lowThreshold,
+            highThreshold = prefs.highThreshold,
+            upperThreshold = prefs.upperThreshold,
 
-        xAxisStep = prefs.xAxisSteps,
-        yAxisLabels = prefs.yAxisLabels,
+            xAxisStep = prefs.xAxisSteps,
+            yAxisLabels = prefs.yAxisLabels,
 
-        inRangeColor = prefs.theme.inRangeColor,
-        lowColor = prefs.theme.lowColor,
-        highColor = prefs.theme.highColor,
-        upperColor = prefs.theme.upperColor,
+            inRangeColor = prefs.theme.inRangeColor,
+            lowColor = prefs.theme.lowColor,
+            highColor = prefs.theme.highColor,
+            upperColor = prefs.theme.upperColor,
 
-        axisXLegendColor = prefs.theme.axisXLegendColor,
-        axisYLegendColor = prefs.theme.axisXLegendColor,
-        axisXGridLineColor = prefs.theme.axisXGridLineColor,
-        axisYGridLineColor = prefs.theme.axisXGridLineColor,
+            axisXLegendColor = prefs.theme.axisXLegendColor,
+            axisYLegendColor = prefs.theme.axisXLegendColor,
+            axisXGridLineColor = prefs.theme.axisXGridLineColor,
+            axisYGridLineColor = prefs.theme.axisXGridLineColor,
 
-        modifier = modifier
-    )
+            modifier = modifier
+        )
+    }
 }

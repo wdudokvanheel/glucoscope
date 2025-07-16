@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.bitechular.glucoscope.data.datasource.DataSourceService
 import com.bitechular.glucoscope.data.datasource.DataSourceState
 import com.bitechular.glucoscope.data.datasource.RealtimeDataRepository
+import com.bitechular.glucoscope.ui.screens.main.model.GraphRange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,11 +41,8 @@ class RealtimeDataSourceViewModel @Inject constructor(
             initialValue = DataSourceState.Loading
         )
 
-    fun setHours(h: Int) {
-        repo.hours.value = h
-    }
-
-    fun setWindow(w: Int) {
-        repo.window.value = w
+    fun setRange(range: GraphRange){
+        repo.hours.value = range.hours
+        repo.window.value = range.window
     }
 }
