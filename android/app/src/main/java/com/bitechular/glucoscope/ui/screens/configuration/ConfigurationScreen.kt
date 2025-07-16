@@ -54,7 +54,7 @@ fun ConfigurationScreen() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = "connection",
+            startDestination = "themes",
             modifier = Modifier.fillMaxSize()
         ) {
             composable("themes") { ThemeSelectorTab() }
