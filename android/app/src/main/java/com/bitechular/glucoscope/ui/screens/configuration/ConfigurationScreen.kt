@@ -1,21 +1,11 @@
 package com.bitechular.glucoscope.ui.screens.configuration
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,10 +14,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.components.MinimalScaffold
 import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationBottomBar
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTab
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTopBar
+import com.bitechular.glucoscope.ui.screens.configuration.tabs.AboutTab
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.ConnectionSettingsTab
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.GlucoseValuesTab
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.ThemeSelectorTab
@@ -50,36 +42,25 @@ fun ConfigurationScreen() {
     val currentRoute = navBackStackEntry?.destination?.route
     val currentTitle = tabs.firstOrNull { it.route == currentRoute }?.label.orEmpty()
 
-    Scaffold(
+    MinimalScaffold(
+        background = prefs.theme.background,
         topBar = {
             ConfigurationTopBar(
                 title = currentTitle,
                 onBackClick = { appNavigator.popBackStack() }
             )
         },
-        bottomBar = {
-            ConfigurationBottomBar(navController, tabs)
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .background(prefs.theme.background)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                )
+        bottomBar = { ConfigurationBottomBar(navController, tabs) }
+    ) {
+        NavHost(
+            navController = navController,
+            startDestination = "connection",
+            modifier = Modifier.fillMaxSize()
         ) {
-            NavHost(
-                navController = navController,
-                startDestination = "connection",
-                modifier = Modifier.fillMaxSize()
-            ) {
-                composable("themes") { ThemeSelectorTab() }
-                composable("glucose") { GlucoseValuesTab() }
-                composable("connection") { ConnectionSettingsTab() }
-                composable("about") { Text("About") }
-            }
+            composable("themes") { ThemeSelectorTab() }
+            composable("glucose") { GlucoseValuesTab() }
+            composable("connection") { ConnectionSettingsTab() }
+            composable("about") { AboutTab() }
         }
     }
 }
