@@ -18,10 +18,10 @@ import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.components.themed.ThemedTextbox
 import com.bitechular.glucoscope.ui.graphics.ThemedConnectionTypeGraphic
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTabView
-import com.bitechular.glucoscope.ui.screens.onboarding.OnboardingViewModel
+import com.bitechular.glucoscope.ui.screens.onboarding.model.OnboardingViewModel
 
 @Composable
-fun ConnectionSettings(viewModel: OnboardingViewModel, navigator: NavHostController) {
+fun StepConnectionSettings(viewModel: OnboardingViewModel, navigator: NavHostController) {
     val prefs = PreferenceModel.current
 
     ConfigurationTabView(
@@ -67,6 +67,7 @@ fun ConnectionSettings(viewModel: OnboardingViewModel, navigator: NavHostControl
                         placeholder = "API Token",
                         textAlign = TextAlign.Start,
                         onValueChange = { viewModel.apiToken = it },
+                        isPassword =  true
                     )
 
                     ThemedAccentButton("Test connection") {

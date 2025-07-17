@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.screens.onboarding
+package com.bitechular.glucoscope.ui.screens.onboarding.model
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

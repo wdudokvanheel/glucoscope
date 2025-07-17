@@ -40,7 +40,7 @@ import com.bitechular.glucoscope.ui.graphics.ThemedLogoGraphic
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTabView
 
 @Composable
-fun Intro(navigator: NavHostController) {
+fun StepIntro(navigator: NavHostController) {
     val prefs = PreferenceModel.current
     var showDemoDialog by remember { mutableStateOf(false) }
 

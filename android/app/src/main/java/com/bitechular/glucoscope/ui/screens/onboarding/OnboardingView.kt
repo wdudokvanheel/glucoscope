@@ -13,10 +13,11 @@ import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffold
 import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffoldTopBar
 import com.bitechular.glucoscope.ui.screens.AppNavigator
-import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionSettings
-import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionTest
-import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionType
-import com.bitechular.glucoscope.ui.screens.onboarding.steps.Intro
+import com.bitechular.glucoscope.ui.screens.onboarding.model.OnboardingViewModel
+import com.bitechular.glucoscope.ui.screens.onboarding.steps.StepConnectionSettings
+import com.bitechular.glucoscope.ui.screens.onboarding.steps.StepConnectionTest
+import com.bitechular.glucoscope.ui.screens.onboarding.steps.StepConnectionType
+import com.bitechular.glucoscope.ui.screens.onboarding.steps.StepIntro
 
 @Composable
 fun OnboardingView() {
@@ -44,11 +45,11 @@ fun OnboardingView() {
             startDestination = "intro",
             modifier = Modifier.fillMaxSize()
         ) {
-            composable("intro") { Intro(navController) }
-            composable("connectiontype") { ConnectionType(viewModel, navController) }
-            composable("connectionsettings") { ConnectionSettings(viewModel, navController) }
+            composable("intro") { StepIntro(navController) }
+            composable("connectiontype") { StepConnectionType(viewModel, navController) }
+            composable("connectionsettings") { StepConnectionSettings(viewModel, navController) }
             composable("connectiontest") {
-                ConnectionTest(viewModel) { config ->
+                StepConnectionTest(viewModel) { config ->
                     prefs.setRepositoryConfiguration(config)
                 }
             }

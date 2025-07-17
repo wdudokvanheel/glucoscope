@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.screens.onboarding
+package com.bitechular.glucoscope.ui.screens.onboarding.model
 
 sealed interface ConnectionTestState {
     object Pending : ConnectionTestState

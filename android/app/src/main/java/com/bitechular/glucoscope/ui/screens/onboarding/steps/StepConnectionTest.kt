@@ -16,11 +16,11 @@ import com.bitechular.glucoscope.ui.components.themed.ThemedAccentButton
 import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.graphics.ThemedConnectionTestGraphic
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTabView
-import com.bitechular.glucoscope.ui.screens.onboarding.ConnectionTestState
-import com.bitechular.glucoscope.ui.screens.onboarding.OnboardingViewModel
+import com.bitechular.glucoscope.ui.screens.onboarding.model.ConnectionTestState
+import com.bitechular.glucoscope.ui.screens.onboarding.model.OnboardingViewModel
 
 @Composable
-fun ConnectionTest(viewModel: OnboardingViewModel, completeOnboarding: (RepositoryConfiguration) -> Unit ) {
+fun StepConnectionTest(viewModel: OnboardingViewModel, completeOnboarding: (RepositoryConfiguration) -> Unit ) {
     val prefs = PreferenceModel.current
     viewModel.connectionTestState = null
 

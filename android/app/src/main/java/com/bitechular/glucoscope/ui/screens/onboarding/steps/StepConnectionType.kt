@@ -19,10 +19,10 @@ import com.bitechular.glucoscope.ui.components.themed.ThemedSegmentedSelector
 import com.bitechular.glucoscope.ui.graphics.ThemedConnectionTypeGraphic
 import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTabView
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.ServerType
-import com.bitechular.glucoscope.ui.screens.onboarding.OnboardingViewModel
+import com.bitechular.glucoscope.ui.screens.onboarding.model.OnboardingViewModel
 
 @Composable
-fun ConnectionType(viewModel: OnboardingViewModel, navigator: NavHostController) {
+fun StepConnectionType(viewModel: OnboardingViewModel, navigator: NavHostController) {
     val prefs = PreferenceModel.current
 
     ConfigurationTabView(
