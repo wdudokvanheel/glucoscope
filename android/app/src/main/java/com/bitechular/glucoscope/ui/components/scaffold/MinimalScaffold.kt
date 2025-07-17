@@ -1,4 +1,4 @@
-package com.bitechular.glucoscope.ui.components
+package com.bitechular.glucoscope.ui.components.scaffold
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

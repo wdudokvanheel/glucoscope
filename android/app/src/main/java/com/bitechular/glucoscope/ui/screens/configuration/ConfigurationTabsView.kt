@@ -9,24 +9,30 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.bitechular.glucoscope.preference.PreferenceModel
-import com.bitechular.glucoscope.ui.components.MinimalScaffold
+import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffold
+import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffoldTopBar
 import com.bitechular.glucoscope.ui.screens.AppNavigator
-import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationBottomBar
-import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTab
-import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationTopBar
+import com.bitechular.glucoscope.ui.screens.configuration.components.ConfigurationNavigationBar
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.AboutTab
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.ConnectionSettingsTab
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.GlucoseValuesTab
 import com.bitechular.glucoscope.ui.screens.configuration.tabs.ThemeSelectorTab
 
 
+data class ConfigurationTab(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
+)
+
 @Composable
-fun ConfigurationScreen() {
+fun ConfigurationTabsView() {
     val tabs = listOf(
         ConfigurationTab("themes", "Themes", Icons.Outlined.Palette),
         ConfigurationTab("glucose", "Glucose values", Icons.Filled.InvertColors),
@@ -45,12 +51,12 @@ fun ConfigurationScreen() {
     MinimalScaffold(
         background = prefs.theme.background,
         topBar = {
-            ConfigurationTopBar(
+            MinimalScaffoldTopBar(
                 title = currentTitle,
                 onBackClick = { appNavigator.popBackStack() }
             )
         },
-        bottomBar = { ConfigurationBottomBar(navController, tabs) }
+        bottomBar = { ConfigurationNavigationBar(navController, tabs) }
     ) {
         NavHost(
             navController = navController,
