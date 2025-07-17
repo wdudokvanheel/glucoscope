@@ -35,9 +35,8 @@ import com.bitechular.glucoscope.ui.components.SquareContainer
 @Composable
 fun ThemedLogoGraphic(modifier: Modifier = Modifier) {
     val prefs = PreferenceModel.current
-    SquareContainer() {
+    SquareContainer(modifier) {
         LogoGraphic(
-            modifier = modifier,
             powerLight = prefs.theme.lowColor,
             background = prefs.theme.text,
             dropFill = prefs.theme.lowColor,
