@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Timer
@@ -101,8 +102,6 @@ fun Intro(navigator: NavHostController) {
         }
     )
 
-
-
     if (showDemoDialog) {
         AlertDialog(
             onDismissRequest = { showDemoDialog = false },
@@ -130,6 +129,7 @@ fun Intro(navigator: NavHostController) {
             titleContentColor = prefs.theme.text,
             textContentColor = prefs.theme.text,
             iconContentColor = prefs.theme.accent,
+            shape = RoundedCornerShape(8.dp),
         )
     }
 }
@@ -141,17 +141,17 @@ private data class FeatureItem(
 )
 
 private val onboardFeatures = listOf(
-    _root_ide_package_.com.bitechular.glucoscope.ui.screens.onboarding.steps.FeatureItem(
+    FeatureItem(
         icon = Icons.Default.Visibility,
         title = "Instant insight",
         description = "Quickly see your current and past levels without thinking"
     ),
-    _root_ide_package_.com.bitechular.glucoscope.ui.screens.onboarding.steps.FeatureItem(
+    FeatureItem(
         icon = Icons.AutoMirrored.Filled.ShowChart,
         title = "Beautiful graphs",
         description = "Select one of the many themes to customize your experience"
     ),
-    _root_ide_package_.com.bitechular.glucoscope.ui.screens.onboarding.steps.FeatureItem(
+    FeatureItem(
         icon = Icons.Default.Timer,
         title = "Real time updates",
         description = "Values are updated often so you never miss a high or low"

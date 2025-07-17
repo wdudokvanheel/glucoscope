@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -143,6 +144,7 @@ fun AboutContent(
             titleContentColor = prefs.theme.text,
             textContentColor = prefs.theme.text,
             iconContentColor = prefs.theme.accent,
+            shape = RoundedCornerShape(8.dp)
         )
     }
 }
