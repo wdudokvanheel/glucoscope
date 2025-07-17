@@ -1,5 +1,7 @@
 package com.bitechular.glucoscope.ui.screens.onboarding.steps
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.bitechular.glucoscope.GlucoScopeApplication
+import com.bitechular.glucoscope.data.model.DemoRepositoryConfiguration
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.themed.ThemedAccentButton
 import com.bitechular.glucoscope.ui.components.themed.ThemedSection
@@ -56,14 +59,14 @@ fun StepIntro(navigator: NavHostController) {
                     items(1) {
                         Text(
                             text = "Welcome to ${GlucoScopeApplication.APP_NAME}",
-                            fontSize = 24.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = prefs.theme.text
                         )
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(2.dp))
                         Text(
                             text = "Beautiful blood glucose visualization for diabetics",
-                            fontSize = 14.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Light,
                             color = prefs.theme.text
                         )
@@ -74,28 +77,27 @@ fun StepIntro(navigator: NavHostController) {
                             navigator.navigate(route = "connectiontype")
                         }
 
-                        // TODO: Implement demo mode
-//                        Column(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(top = 8.dp),
-//
-//                            horizontalAlignment = Alignment.CenterHorizontally
-//                        ) {
-//                            Text(
-//                                "Demo mode",
-//                                fontSize = 12.sp,
-//                                modifier = Modifier
-//                                    .alpha(0.8f)
-//                                    .clickable(
-//                                        interactionSource = remember { MutableInteractionSource() },
-//                                        indication = null
-//                                    ) {
-//                                        showDemoDialog = true
-//                                    },
-//                                color = prefs.theme.text
-//                            )
-//                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "Demo mode",
+                                fontSize = 11.sp,
+                                modifier = Modifier
+                                    .alpha(0.8f)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        showDemoDialog = true
+                                    },
+                                color = prefs.theme.text
+                            )
+                        }
                     }
                 }
             }
@@ -114,8 +116,8 @@ fun StepIntro(navigator: NavHostController) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    // TODO: Enable demo mode
                     showDemoDialog = false
+                    prefs.setRepositoryConfiguration(DemoRepositoryConfiguration())
                 }) {
                     Text("Start", color = prefs.theme.text)
                 }
@@ -184,13 +186,13 @@ fun OnboardFeatureList() {
                 ) {
                     Text(
                         text = feature.title,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = prefs.theme.text
                     )
                     Text(
                         text = feature.description,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Light,
                         color = prefs.theme.text,
                         modifier = Modifier.alpha(0.9f)

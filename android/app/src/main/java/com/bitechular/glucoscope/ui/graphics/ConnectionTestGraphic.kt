@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.SquareContainer
-import com.bitechular.glucoscope.ui.screens.onboarding.ConnectionTestState
+import com.bitechular.glucoscope.ui.screens.onboarding.model.ConnectionTestState
 import kotlin.math.max
 
 @Composable

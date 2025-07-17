@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.bitechular.glucoscope.data.model.DemoRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
 import com.bitechular.glucoscope.preference.PreferenceModel
@@ -48,6 +49,12 @@ fun ConnectionSettingsTab() {
                 serverType = ServerType.NIGHTSCOUT
                 url = currentConfig.url
                 apiToken = currentConfig.apiToken.orEmpty()
+            }
+
+            is DemoRepositoryConfiguration -> {
+                serverType = ServerType.GLUCOSCOPE
+                url = ""
+                apiToken = ""
             }
         }
     }
