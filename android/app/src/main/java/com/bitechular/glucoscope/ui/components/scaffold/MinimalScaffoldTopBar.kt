@@ -18,7 +18,8 @@ import com.bitechular.glucoscope.preference.PreferenceModel
 @Composable
 fun MinimalScaffoldTopBar(
     title: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    showBackButton: Boolean = true,
 ) {
     val prefs = PreferenceModel.current
 
@@ -26,14 +27,16 @@ fun MinimalScaffoldTopBar(
         modifier = Modifier
             .fillMaxWidth()
     ) {
+        // Hide & disable button to make sure the size of the top bar stay the same whether it's visible or not
         IconButton(
             onClick = onBackClick,
-            modifier = Modifier.align(Alignment.CenterStart)
+            modifier = Modifier.align(Alignment.CenterStart),
+            enabled = showBackButton
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = prefs.theme.accent
+                tint = prefs.theme.accent.copy(alpha = if (showBackButton) 1f else 0f)
             )
         }
 
