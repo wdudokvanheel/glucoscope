@@ -29,20 +29,26 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
+import com.bitechular.glucoscope.extensions.isLight
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.SquareContainer
 
 @Composable
 fun ThemedLogoGraphic(modifier: Modifier = Modifier) {
     val prefs = PreferenceModel.current
+    val isLight = prefs.theme.isLight
+
+    val light = if (isLight) prefs.theme.surface else prefs.theme.text
+    val stroke = if (isLight) prefs.theme.text else prefs.theme.surface
+
     SquareContainer(modifier) {
         LogoGraphic(
             powerLight = prefs.theme.lowColor,
-            background = prefs.theme.text,
+            background = light,
             dropFill = prefs.theme.lowColor,
-            dropStroke = prefs.theme.surface,
-            reflectionFill = prefs.theme.text,
-            graphNodesFill = prefs.theme.text
+            dropStroke = stroke,
+            reflectionFill = light,
+            graphNodesFill = light
         )
     }
 }
