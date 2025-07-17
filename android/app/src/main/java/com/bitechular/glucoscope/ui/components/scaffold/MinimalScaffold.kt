@@ -19,9 +19,21 @@ import androidx.compose.ui.graphics.Color
 fun MinimalScaffold(
     background: Color = Color.Transparent,
     topBar: @Composable () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {},
+    bottomBar: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
+
+    val bottomPaddingModifier = if (bottomBar == null) {
+        Modifier.padding(
+            WindowInsets
+                .safeDrawing
+                .only(WindowInsetsSides.Bottom)
+                .asPaddingValues()
+        )
+    } else {
+        Modifier
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -50,10 +62,11 @@ fun MinimalScaffold(
             content()
         }
         Box(
-            modifier = Modifier
-
+            modifier = bottomPaddingModifier
         ) {
-            bottomBar()
+            bottomBar?.let { bottomBar ->
+                bottomBar()
+            }
         }
     }
 }
