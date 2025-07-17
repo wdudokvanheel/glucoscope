@@ -2,7 +2,9 @@ package com.bitechular.glucoscope.ui.screens.configuration.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -13,12 +15,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bitechular.glucoscope.data.model.DemoRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.GlucoScopeRepositoryConfiguration
 import com.bitechular.glucoscope.data.model.NightscoutRepositoryConfiguration
 import com.bitechular.glucoscope.preference.PreferenceModel
+import com.bitechular.glucoscope.ui.components.themed.ThemedAccentButton
 import com.bitechular.glucoscope.ui.components.themed.ThemedSection
 import com.bitechular.glucoscope.ui.components.themed.ThemedSegmentedSelector
 import com.bitechular.glucoscope.ui.components.themed.ThemedTextbox
@@ -36,6 +41,7 @@ fun ConnectionSettingsTab() {
     var serverType by rememberSaveable { mutableStateOf(ServerType.NIGHTSCOUT) }
     var url by rememberSaveable { mutableStateOf("") }
     var apiToken by rememberSaveable { mutableStateOf("") }
+    var demoMode = false
 
     if (currentConfig != null) {
         when (currentConfig) {
@@ -55,6 +61,7 @@ fun ConnectionSettingsTab() {
                 serverType = ServerType.GLUCOSCOPE
                 url = ""
                 apiToken = ""
+                demoMode = true
             }
         }
     }
@@ -68,9 +75,8 @@ fun ConnectionSettingsTab() {
         prefs.setRepositoryConfiguration(config)
     }
 
-    ConfigurationTabView(
-        graphic = { ThemedServerSettingsGraphic() },
-    ) {
+    @Composable
+    fun ConnectionSettingsEditor() {
         ThemedSection(innerPadding = 8.dp) {
             Column(
                 modifier = Modifier
@@ -115,6 +121,37 @@ fun ConnectionSettingsTab() {
                     Text("Save connection settings")
                 }
             }
+        }
+    }
+
+    ConfigurationTabView(
+        graphic = { ThemedServerSettingsGraphic() },
+    ) {
+        if (demoMode) {
+            ThemedSection(innerPadding = 8.dp) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Demo mode",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = prefs.theme.text
+                    )
+
+                    Text(
+                        "Currently in demonstration mode. Please run the setup to connect to a sever.",
+                        fontSize = 14.sp,
+                        color = prefs.theme.text
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    ThemedAccentButton("Setup GlucoScope") {
+                        prefs.repositoryConfiguration = null
+                    }
+                }
+            }
+        } else {
+            ConnectionSettingsEditor()
         }
     }
 }
