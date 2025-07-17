@@ -69,7 +69,7 @@ fun ThemedSegmentedSelector(
                     .width(segmentWidthDp)
                     .fillMaxHeight()
                     .padding(2.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(6.dp))
                     .background(prefs.theme.accent)
             )
 
@@ -84,7 +84,7 @@ fun ThemedSegmentedSelector(
                             .weight(1f)
                             .fillMaxHeight()
                             .padding(2.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(6.dp))
                             .clickable(
                                 interactionSource = interaction,
                                 indication = null
