@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.screens.AppNavigator
-import com.bitechular.glucoscope.ui.screens.Screen
+import com.bitechular.glucoscope.ui.screens.AppScreen
 
 
 @Composable
@@ -24,7 +24,7 @@ fun SettingsButton(
 
     IconButton(
         onClick = {
-            navigator.navigate(Screen.Config.route)
+            navigator.navigate(AppScreen.Config.route)
         },
         modifier = modifier
             .padding(8.dp)
