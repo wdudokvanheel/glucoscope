@@ -30,6 +30,8 @@ class GlucoScopePreferences @Inject constructor(
     private val dataSourceService: DataSourceService,
 ) : ViewModel() {
     var repositoryConfiguration: RepositoryConfiguration? by mutableStateOf(null)
+    var preferencesLoaded by mutableStateOf(false)
+
     var theme by mutableStateOf(GlucoScopeTheme())
 
     var graphMin by mutableDoubleStateOf(2.5)
@@ -83,6 +85,7 @@ class GlucoScopePreferences @Inject constructor(
         highThreshold = dto.highThreshold
         upperThreshold = dto.upperThreshold
         yAxisLabels = dto.yAxisLabels
+        preferencesLoaded = true
 
         // Update datasource service with configuration (if available)
         repositoryConfiguration?.let { setRepositoryConfiguration(it) }

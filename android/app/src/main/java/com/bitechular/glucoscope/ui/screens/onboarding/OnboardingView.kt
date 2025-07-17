@@ -48,10 +48,9 @@ fun OnboardingView() {
             composable("connectiontype") { ConnectionType(viewModel, navController) }
             composable("connectionsettings") { ConnectionSettings(viewModel, navController) }
             composable("connectiontest") {
-                ConnectionTest(viewModel, { config ->
+                ConnectionTest(viewModel) { config ->
                     prefs.setRepositoryConfiguration(config)
-                    appNavigator.navigate("main")
-                })
+                }
             }
         }
     }

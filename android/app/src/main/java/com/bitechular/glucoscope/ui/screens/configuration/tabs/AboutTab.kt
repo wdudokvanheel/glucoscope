@@ -44,7 +44,7 @@ fun AboutTab() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 AboutContent(onEraseAll = {
-
+                    prefs.repositoryConfiguration = null
                 })
             }
         }

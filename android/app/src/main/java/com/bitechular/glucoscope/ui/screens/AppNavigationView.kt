@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.screens.configuration.ConfigurationTabsView
+import com.bitechular.glucoscope.ui.screens.main.LoadingScreen
 import com.bitechular.glucoscope.ui.screens.main.MainScreen
 import com.bitechular.glucoscope.ui.screens.onboarding.OnboardingView
 
@@ -27,20 +28,25 @@ fun AppNavigationView() {
     val navController = rememberNavController()
     val prefs = PreferenceModel.current
 
-    val start = if (prefs.repositoryConfiguration == null) {
-        AppScreen.Onboarding.route
-    } else {
-        AppScreen.Onboarding.route
-    }
+    val start =
+        if (prefs.repositoryConfiguration == null) {
+            AppScreen.Onboarding.route
+        } else {
+            AppScreen.Main.route
+        }
 
-    CompositionLocalProvider(AppNavigator provides navController) {
-        NavHost(
-            navController = navController,
-            startDestination = start
-        ) {
-            composable(AppScreen.Onboarding.route) { OnboardingView() }
-            composable(AppScreen.Main.route) { MainScreen() }
-            composable(AppScreen.Config.route) { ConfigurationTabsView() }
+    if (!prefs.preferencesLoaded) {
+        LoadingScreen()
+    } else {
+        CompositionLocalProvider(AppNavigator provides navController) {
+            NavHost(
+                navController = navController,
+                startDestination = start
+            ) {
+                composable(AppScreen.Onboarding.route) { OnboardingView() }
+                composable(AppScreen.Main.route) { MainScreen() }
+                composable(AppScreen.Config.route) { ConfigurationTabsView() }
+            }
         }
     }
 }
