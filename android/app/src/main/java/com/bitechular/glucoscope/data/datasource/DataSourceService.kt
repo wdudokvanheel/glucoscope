@@ -21,17 +21,24 @@ class DataSourceService {
         _datasource.value = null
     }
 
-    fun setConfiguration(configuration: RepositoryConfiguration) {
+    suspend fun testConnection(configuration: RepositoryConfiguration): Boolean =
+        toRepository(configuration).testConnection()
+
+    fun toRepository(configuration: RepositoryConfiguration): DataSourceRepository =
         when (configuration) {
-            is GlucoScopeRepositoryConfiguration -> _datasource.value =
+            is GlucoScopeRepositoryConfiguration ->
                 GlucoScopeRepository(
                     configuration
                 )
 
-            is NightscoutRepositoryConfiguration -> _datasource.value =
+            is NightscoutRepositoryConfiguration ->
                 NightscoutRepository(
                     configuration
                 )
         }
+
+
+    fun setConfiguration(configuration: RepositoryConfiguration) {
+        _datasource.value = toRepository(configuration)
     }
 }

@@ -18,6 +18,6 @@ object DataSourceModule {
 
     @Provides
     @Singleton
-    fun provideGlucoseRepository(dataSo: DataSourceService): RealtimeDataRepository =
-        RealtimeDataRepository(dataSo)
+    fun provideGlucoseRepository(dataSource: DataSourceService): RealtimeDataRepository =
+        RealtimeDataRepository(dataSource)
 }

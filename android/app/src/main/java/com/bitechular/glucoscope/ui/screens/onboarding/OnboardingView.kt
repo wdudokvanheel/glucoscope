@@ -12,13 +12,16 @@ import androidx.navigation.compose.rememberNavController
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffold
 import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffoldTopBar
+import com.bitechular.glucoscope.ui.screens.AppNavigator
 import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionSettings
+import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionTest
 import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionType
 import com.bitechular.glucoscope.ui.screens.onboarding.steps.Intro
 
 @Composable
 fun OnboardingView() {
     val prefs = PreferenceModel.current
+    val appNavigator = AppNavigator.current
     val navController = rememberNavController()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -44,6 +47,12 @@ fun OnboardingView() {
             composable("intro") { Intro(navController) }
             composable("connectiontype") { ConnectionType(viewModel, navController) }
             composable("connectionsettings") { ConnectionSettings(viewModel, navController) }
+            composable("connectiontest") {
+                ConnectionTest(viewModel, { config ->
+                    prefs.setRepositoryConfiguration(config)
+                    appNavigator.navigate("main")
+                })
+            }
         }
     }
 }
