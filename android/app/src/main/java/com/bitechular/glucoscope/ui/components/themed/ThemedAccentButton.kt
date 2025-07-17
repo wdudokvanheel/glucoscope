@@ -24,7 +24,7 @@ fun ThemedAccentButton(
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = prefs.theme.accent,
-            contentColor = prefs.theme.text
+            contentColor = prefs.theme.background
         )
     ) {
         Text(
