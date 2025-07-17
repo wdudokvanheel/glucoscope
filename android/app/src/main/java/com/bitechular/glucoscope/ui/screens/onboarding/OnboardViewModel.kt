@@ -12,5 +12,7 @@ import jakarta.inject.Inject
 class OnboardingViewModel @Inject constructor(
 ) : ViewModel() {
     var connectionType by mutableStateOf(ServerType.GLUCOSCOPE)
+    var url by mutableStateOf("")
+    var apiToken by mutableStateOf("")
 
 }

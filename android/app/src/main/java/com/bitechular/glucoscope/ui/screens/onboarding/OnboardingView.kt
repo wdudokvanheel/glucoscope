@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.bitechular.glucoscope.preference.PreferenceModel
 import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffold
 import com.bitechular.glucoscope.ui.components.scaffold.MinimalScaffoldTopBar
+import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionSettings
 import com.bitechular.glucoscope.ui.screens.onboarding.steps.ConnectionType
 import com.bitechular.glucoscope.ui.screens.onboarding.steps.Intro
 
@@ -42,6 +43,7 @@ fun OnboardingView() {
         ) {
             composable("intro") { Intro(navController) }
             composable("connectiontype") { ConnectionType(viewModel, navController) }
+            composable("connectionsettings") { ConnectionSettings(viewModel, navController) }
         }
     }
 }
