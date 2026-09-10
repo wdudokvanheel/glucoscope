@@ -71,6 +71,28 @@ final class LibreBluetoothCentral: NSObject {
         }
     }
 
+    /// Serialize calibration persistence with counter reservations and peripheral updates.
+    /// Never reconnect, reset assembly, or publish a capture before its save succeeds.
+    func applyCalibration(_ calibration: LibreCalibration, expectedSession: LibreSensorSession,
+                          completion: @escaping (Result<LibreSensorSession, Error>) -> Void) {
+        queue.async {
+            let result: Result<LibreSensorSession, Error>
+            do {
+                guard let current = self.session, let latest = try self.store.load() else {
+                    throw LibreNFCError.differentSensor
+                }
+                _ = try current.mergingCalibration(calibration, expectedSession: expectedSession)
+                let merged = try latest.mergingCalibration(calibration, expectedSession: expectedSession)
+                try self.store.save(merged)
+                self.session = merged
+                result = .success(merged)
+            } catch {
+                result = .failure(error)
+            }
+            DispatchQueue.main.async { completion(result) }
+        }
+    }
+
     func reconnect() {
         queue.async { [weak self] in
             guard let self else { return }

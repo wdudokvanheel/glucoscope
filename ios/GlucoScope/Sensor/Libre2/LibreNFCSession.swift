@@ -10,6 +10,7 @@ enum LibreNFCError: LocalizedError {
     case sensorNotActivated(UInt8)
     case enableStreamingRejected(Int)
     case differentTag
+    case differentSensor
     case cancelled
 
     var errorDescription: String? {
@@ -22,14 +23,25 @@ enum LibreNFCError: LocalizedError {
         case .sensorNotActivated(let state): return String(format: "The sensor is not in an active state (state %02X).", state)
         case .enableStreamingRejected(let count): return "The sensor rejected Bluetooth streaming setup (response length \(count))."
         case .differentTag: return "A different NFC tag was detected during recovery. Scan the original sensor again."
+        case .differentSensor: return "This scan does not match the paired sensor. Scan the paired sensor to capture calibration."
         case .cancelled: return "The NFC scan was cancelled."
         }
     }
 }
 
 final class LibreNFCSession: NSObject {
+    enum CaptureResult {
+        case setup(LibreSensorSession)
+        case calibration(LibreCalibration, expectedSession: LibreSensorSession)
+    }
+
+    private enum Purpose {
+        case setup
+        case calibration(LibreSensorSession)
+    }
+
     var onLog: ((String) -> Void)?
-    var onCompletion: ((Result<LibreSensorSession, Error>) -> Void)?
+    var onCompletion: ((Result<CaptureResult, Error>) -> Void)?
     var isAvailable: Bool { NFCTagReaderSession.readingAvailable }
 
     private let store: LibreSessionStore
@@ -40,6 +52,7 @@ final class LibreNFCSession: NSObject {
     private var expectedUID: Data?
     private var pollingRestarts = 0
     private var streamingEnableAttempted = false
+    private var purpose: Purpose = .setup
 
     private let readAttempts = 3
     private let maximumPollingRestarts = 2
@@ -51,22 +64,39 @@ final class LibreNFCSession: NSObject {
     }
 
     func start() {
+        start(purpose: .setup)
+    }
+
+    /// Reads calibration only. It neither writes sensor commands nor saves pairing state.
+    func startCalibration(for sensor: LibreSensorSession) {
+        start(purpose: .calibration(sensor))
+    }
+
+    private func start(purpose: Purpose) {
         precondition(Thread.isMainThread)
-        guard isAvailable else { finish(.failure(LibreNFCError.unavailable)); return }
         readerSession?.invalidate()
+        readerSession = nil
         completed = false
         processingTag = false
-        expectedUID = nil
+        self.purpose = purpose
+        switch purpose {
+        case .setup: expectedUID = nil
+        case .calibration(let sensor): expectedUID = sensor.uid
+        }
         pollingRestarts = 0
         streamingEnableAttempted = false
         generation = UUID()
+        guard isAvailable else { finish(.failure(LibreNFCError.unavailable)); return }
         guard let session = NFCTagReaderSession(pollingOption: .iso15693, delegate: self, queue: .main) else {
             finish(.failure(LibreNFCError.unavailable))
             return
         }
         readerSession = session
         session.alertMessage = "Hold the top of your iPhone near the Libre 2 sensor."
-        log("NFC scan started")
+        switch purpose {
+        case .setup: log("NFC setup scan started")
+        case .calibration: log("Read-only NFC calibration scan started; streaming setup will be preserved")
+        }
         session.begin()
     }
 
@@ -82,6 +112,9 @@ final class LibreNFCSession: NSObject {
         var step = "tag detection"
         do {
             let uid = Data(tag.identifier.reversed())
+            if case .calibration(let sensor) = purpose, sensor.uid != uid {
+                throw LibreNFCError.differentSensor
+            }
             if let expectedUID, expectedUID != uid {
                 log("Ignoring a different ISO15693 tag during recovery: expected UID \(expectedUID.hexString), detected \(uid.hexString)")
                 guard pollingRestarts < maximumPollingRestarts else { throw LibreNFCError.differentTag }
@@ -108,6 +141,11 @@ final class LibreNFCSession: NSObject {
             }
             log("Patch query A1 returned \(patchInfo.count) bytes: \(patchInfo.hexString)")
             let kind = try Libre2Protocol.classify(patchInfo: patchInfo)
+            if case .calibration(let sensor) = purpose,
+               !Libre2Protocol.hasSameStableIdentity(uid: sensor.uid, patchInfo: sensor.patchInfo,
+                                                     otherUID: uid, otherPatchInfo: patchInfo) {
+                throw LibreNFCError.differentSensor
+            }
             log("Supported sensor: \(kind.rawValue), UID \(uid.hexString), patch \(patchInfo.hexString)")
 
             var encryptedFRAM = Data()
@@ -121,7 +159,7 @@ final class LibreNFCSession: NSObject {
                 for block in blocks { encryptedFRAM.append(block) }
                 log("Read FRAM blocks \(firstBlock)-\(firstBlock + count - 1) (\(encryptedFRAM.count)/344 bytes)")
             }
-            guard encryptedFRAM.count >= 344 else { throw LibreNFCError.invalidMemory(encryptedFRAM.count) }
+            guard encryptedFRAM.count == 344 else { throw LibreNFCError.invalidMemory(encryptedFRAM.count) }
             let fram = try Libre2Protocol.decryptFRAM(encryptedFRAM, uid: uid, patchInfo: patchInfo)
             guard Libre2Protocol.validateFRAM(fram) else { throw LibreNFCError.invalidMemoryCRC }
             guard fram.count >= 5 else { throw LibreNFCError.invalidMemory(fram.count) }
@@ -129,7 +167,20 @@ final class LibreNFCSession: NSObject {
             guard state == 0x02 || state == 0x03 else {
                 throw LibreNFCError.sensorNotActivated(state)
             }
-            log(String(format: "Sensor lifecycle state %02X permits streaming setup", state))
+            log(String(format: "Sensor lifecycle state %02X; FRAM integrity validated", state))
+            step = "calibration extraction"
+            let calibration = try LibreCalibration.capture(fram: fram, uid: uid, patchInfo: patchInfo)
+            try requireActive(session, generation: expectedGeneration)
+
+            // End the read-only path before any pairing persistence or A1/1E command.
+            // The BLE owner will merge this capture with its latest reserved counter.
+            if case .calibration(let expectedSession) = purpose {
+                log("Calibration captured from the paired sensor; no streaming-enable command sent")
+                session.alertMessage = "Sensor calibration read complete."
+                session.invalidate()
+                finish(.success(.calibration(calibration, expectedSession: expectedSession)))
+                return
+            }
 
             // The supplied implementation and fixtures use 42 as the enable-time value.
             // Keep that known interop value until hardware tests establish wider behavior.
@@ -137,7 +188,7 @@ final class LibreNFCSession: NSObject {
             let temporaryName = kind == .libre2_7F ? "PENDING-MAC" : try Libre2Protocol.expectedLegacyName(uid: uid)
             var sensor = LibreSensorSession(uid: uid, patchInfo: patchInfo, advertisedName: temporaryName,
                                             unlockCode: enableCode, nextUnlockCount: 1,
-                                            setupComplete: false, sensorKind: kind)
+                                            setupComplete: false, sensorKind: kind, calibration: calibration)
 
             // Persist credentials before the state-changing command. A crash here leaves an
             // explicit incomplete setup rather than losing the key needed for BLE login.
@@ -159,7 +210,7 @@ final class LibreNFCSession: NSObject {
             log("Bluetooth streaming enabled; expected peripheral \(sensor.advertisedName)")
             session.alertMessage = "Libre 2 Bluetooth setup complete."
             session.invalidate()
-            finish(.success(sensor))
+            finish(.success(.setup(sensor)))
         } catch {
             guard readerSession === session, generation == expectedGeneration, !completed else { return }
             if !streamingEnableAttempted, isLostConnectionState(error), pollingRestarts < maximumPollingRestarts {
@@ -170,7 +221,7 @@ final class LibreNFCSession: NSObject {
                 session.restartPolling()
                 return
             }
-            log("NFC setup failed at \(step): \(describe(error))")
+            log("NFC scan failed at \(step): \(describe(error))")
             session.invalidate(errorMessage: error.localizedDescription)
             finish(.failure(error))
         }
@@ -252,7 +303,7 @@ final class LibreNFCSession: NSObject {
         DispatchQueue.main.async { [weak self] in self?.onLog?(message) }
     }
 
-    private func finish(_ result: Result<LibreSensorSession, Error>) {
+    private func finish(_ result: Result<CaptureResult, Error>) {
         guard !completed else { return }
         completed = true
         DispatchQueue.main.async { [weak self] in self?.onCompletion?(result) }

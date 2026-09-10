@@ -40,6 +40,24 @@ enum Libre2Protocol {
         }
     }
 
+    /// Patch bytes 4 and 5 are protocol material observed to change after streaming
+    /// enablement. They are required for FRAM/authentication operations but are not
+    /// part of the stable physical-sensor identity.
+    static func hasSameStableIdentity(uid: Data, patchInfo: Data,
+                                      otherUID: Data, otherPatchInfo: Data) -> Bool {
+        let firstUID = Array(uid), secondUID = Array(otherUID)
+        let firstPatch = Array(patchInfo), secondPatch = Array(otherPatchInfo)
+        guard firstUID.count == 8, secondUID.count == 8, firstUID == secondUID,
+              firstPatch.count >= 6, firstPatch.count == secondPatch.count,
+              (try? classify(patchInfo: Data(firstPatch))) != nil,
+              (try? classify(patchInfo: Data(secondPatch))) != nil else {
+            return false
+        }
+        return firstPatch.indices.allSatisfy { index in
+            index == 4 || index == 5 || firstPatch[index] == secondPatch[index]
+        }
+    }
+
     static func expectedLegacyName(uid: Data) throws -> String {
         guard uid.count == 8 else { throw Libre2ProtocolError.invalidUIDLength(uid.count) }
         let alphabet = Array("0123456789ACDEFGHJKLMNPQRTUVWXYZ")

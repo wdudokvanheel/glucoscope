@@ -1,6 +1,6 @@
 # Testing the temporary Libre 2 connection screen
 
-This build opens Libre 2 Diagnostics instead of the viewer/onboarding. It is a connection harness: it does not calculate glucose, write readings to a database, or upload to a backend. Existing viewer code and saved configuration remain available for later integration.
+This build opens Libre 2 Diagnostics instead of the viewer/onboarding. It is a connection and decoding harness: it can show transient experimental glucose calculations, but does not write them to a database, graph them, or upload them as readings. Existing viewer code and saved configuration remain available for later integration.
 
 ## Install and connect
 
@@ -8,7 +8,7 @@ This build opens Libre 2 Diagnostics instead of the viewer/onboarding. It is a c
 2. Run the app and grant Bluetooth access. Use an already activated EU Libre 2 sensor. The implementation recognizes `9D`, `C5`, and non-Plus `7F`; only one non-Plus `7F` has passed the initial connection test. Other sensor types are rejected.
 3. Tap **Set up with NFC** and hold the top edge of the iPhone near the sensor until the NFC sheet finishes. This sends a streaming enable command, which can change which collector receives the sensor stream. Coexistence with the official app or another collector has not been tested.
 4. Keep the app in the foreground for the first BLE discovery. Observe identity, Bluetooth state, service discovery, notification subscription, counter reservation and unlock acknowledgement in the diagnostic log.
-5. Wait for multiple complete frames. Successful transport ends in **receiving CRC-valid frames**, with timestamps and an increasing valid-frame counter. A connected peripheral or successful unlock write alone is not sufficient.
+5. Wait for multiple complete frames. Successful transport ends in **receiving CRC-valid frames**, with timestamps and an increasing valid-frame counter. With matching calibration, **Experimental glucose** then shows each accepted or rejected sparse sample. A connected peripheral or successful unlock write alone is not sufficient.
 6. Use **Copy diagnostics** or **Share diagnostics** to save the result. The diagnostic dump includes sensor identity and packet bytes. Pairing unlock material is not included. Save the dump before ending a test; this first harness keeps a bounded in-memory log, not durable recording.
 
 ## Recovery checks
@@ -22,15 +22,29 @@ This build opens Libre 2 Diagnostics instead of the viewer/onboarding. It is a c
 - **Forget sensor** removes saved pairing state. A new NFC setup is needed afterward. This does not reset or deactivate the physical sensor.
 - A sensor scanned by another collector may require deliberate NFC setup again. Do not assume simultaneous collection works.
 
-For a failure report, include iPhone model, iOS version, sensor revision, action performed, elapsed time, whether another collector was active, and the diagnostic export. Never report a CRC-valid raw packet as a verified glucose reading.
+For a failure report, include iPhone model, iOS version, sensor revision, action performed, elapsed time, whether another collector was active, and the diagnostic export. Never report a CRC-valid raw packet or an experimental calculated value as a verified clinical reading.
 
 ## Validation boundaries
 
-Simulator builds can check compilation, layout and unavailable-radio handling; they cannot exercise sensor NFC/BLE. Unlock, streaming, and a short locked-screen run passed on one non-Plus `7F`; range recovery, restoration, long-duration collection, glucose correctness, and per-revision compatibility remain. iOS force-quit requires reopening the app, and saved pairing state is accessible only after the first device unlock following reboot.
+Simulator builds can check compilation, layout and unavailable-radio handling; they cannot exercise sensor NFC/BLE. Unlock, streaming, a short locked-screen run, experimental decoding and one `willRestoreState` launch passed on one non-Plus `7F`. Range recovery, repeated restoration, long-duration collection, glucose accuracy and per-revision compatibility remain. iOS force-quit requires reopening the app, and saved pairing state is accessible only after the first device unlock following reboot.
 
-See [protocol and source provenance](libre2-eu-protocol.md) and [the full implementation plan](ios-libre2-implementation-plan.md) for the later calibration, glucose, persistence and upload work.
+See [protocol and source provenance](libre2-eu-protocol.md) and [the full implementation plan](ios-libre2-implementation-plan.md) for decoding details and the later persistence and upload work.
 
-## Checks completed on 10 September 2026
+## Experimental glucose check
+
+The user has built and run the experimental decoder and completed corrected read-only calibration recapture. A calibration change clears the prior diagnostic result; only a later CRC-valid frame is displayed with the new snapshot.
+
+For each accepted slot, compare the displayed timestamp and value with the user's established glucose source at the same timestamp. Record both values and units, the sparse offset, sensor minute, and any rejected-slot reason. Compare matched timestamps rather than the time the BLE packet happened to arrive. A small set of matching values is useful diagnostic evidence, but does not establish clinical accuracy or qualify a sensor revision.
+
+Check these failure paths without changing the active sensor where possible:
+
+1. Before calibration, CRC-valid frames should report that calibration is required and show no experimental value.
+2. After calibration, wait for a new frame; the screen must not reinterpret an older payload automatically.
+3. Confirm all seven sparse positions appear as accepted or rejected, including zero or malformed raw slots.
+4. Export diagnostics and confirm frame-level and slot-level rejection reasons are present without calibration source bytes or new credential material.
+5. Forgetting or replacing the sensor must immediately clear the prior experimental frame.
+
+## Checks completed on 10 September 2026 (connection revision only)
 
 - `./ios/Libre2Tests/run.sh` passes the authentication, decryption, integrity and frame-assembly regression tests. See `ios/Libre2Tests/README.md` for synthetic-fixture provenance and limits.
 - Xcode 26.2 Debug builds pass for iPhoneOS (unsigned compilation) and iOS Simulator (ad-hoc signed).
@@ -59,3 +73,46 @@ Service discovery, notification subscription and the counter-1 unlock completed 
 The export at 18:16:39 UTC records background entry at 18:11:26 and foreground return at 18:16:37, matching the user's reported locked-phone test (5 minutes 11 seconds). Five complete frames were received and CRC-validated while backgrounded: 18:12:22, 18:13:24, 18:14:24, 18:15:23 and 18:16:23. Their intervals were 62, 60, 59 and 60 seconds. The session reached eight raw frames and eight verified frames overall. There were no logged disconnections, additional unlocks or integrity failures; the next unlock counter remained 2.
 
 This passes the initial short locked-screen reception check for this non-Plus 7F sensor and iPhone/iOS combination. Range-loss recovery, Bluetooth toggles, process restoration, reboot behavior and longer-duration collection remain untested.
+
+## Read-only calibration capture: first user-run result
+
+The user-run v3 report exported at 18:37:13 UTC on 10 September 2026 (iOS 18.7.8, app `1.0.6 (1)`) confirms identity-checked read-only calibration capture and save at 18:37:13. Metadata reports format 1, sensor minute 4277 and lifecycle 3. No `A1/1E` enablement, stop or reconnect is logged during that capture. Automated test and Xcode build results for this increment have not been supplied; all execution remains with the user.
+
+At export, Bluetooth was powered on and foreground discovery had been running since 18:37:00. There were zero frames and no connection error in this 13-second snapshot. This is not evidence of BLE failure, and it does not yet show v3 frame reception.
+
+The preceding v2 report records a deliberate full setup at 18:36:37–38 after 28 valid frames, leaving next unlock counter 1 and no discovered peripheral. The v3 report retains the same name, UID and patch information, with that same counter 1 and no discovered peripheral. Therefore this test does not establish migration preserving the pre-setup counter/peripheral, continuity of an active stream through calibration capture, or calibration persistence after relaunch.
+
+The preceding v2 connection evidence separately extends to 28 raw and 28 CRC-valid frames from 18:09:23 through 18:36:24 (27 minutes 1 second), at 58–62 second intervals, without logged errors or CRC failures. Background entries at 18:11:26 and 18:16:42 were followed by continued reception; the whole 27-minute interval must not be described as a confirmed locked-phone test.
+
+Next, keep the app in the foreground near the sensor until CRC-valid frames arrive, then tap **Send diagnostics**. Relaunch without another setup, wait for frames and send diagnostics again to check retained calibration and pairing. Do not reset setup to perform these checks.
+
+The remaining broader checklist is:
+
+1. Upgrade over the working paired installation without deleting the app or tapping **Set up with NFC**. Confirm the existing sensor, peripheral UUID and next unlock counter survive, and calibration reports **Needs calibration**. Confirm BLE continues using the saved pair.
+2. Record/export the current counter, peripheral, frame totals and timestamps. Tap **Read calibration with NFC** and scan the same sensor. Confirm logs show read-only capture and calibration saved, with no streaming-enable command, stop, reconnect or extra unlock attributable to this action. The empty `A1` patch query is expected; `A1/1E` enablement is not.
+3. Confirm frame totals do not reset, new frames continue around the scan, and the peripheral/counter remain unchanged unless an independent Bluetooth reconnection advances the counter. If one occurs during the scan, confirm calibration completion preserves the newer counter/peripheral rather than restoring the pre-scan snapshot.
+4. Relaunch and confirm calibration metadata is retained with the same saved pairing. A normal reconnect may reserve a new counter; calibration capture itself must never reset it.
+5. Cancel a calibration scan and, if convenient without changing the pairing, present a different tag. Confirm failure/cancellation preserves the saved pair, calibration and continuing frames. Never use setup or forget as part of this same-sensor check.
+6. Report the diagnostics revision, calibration summary/action status, frame timestamps and experimental slot outcomes. Queue/cancellation races, unavailable Keychain and a replaced session still need integration validation; synthetic fixtures do not establish hardware behavior or glucose accuracy.
+
+## Mutable patch-word finding and corrected recapture
+
+A later report exported at 19:26:27 UTC showed the same UID and stable patch bytes as setup, while patch bytes 4–5 differed after streaming enablement. Those two bytes feed FRAM decryption and Bluetooth authentication but are not stable physical-sensor identity. The earlier exact-patch check therefore rejected the same sensor before reading FRAM.
+
+The corrected source compares the UID and every patch byte except 4–5 for ownership. It still requires supported patch records of equal length with matching trailing bytes. Read-only capture uses the newly observed bytes 4–5 to decrypt current FRAM and retains them with calibration provenance. It leaves the original paired patch, peripheral and counter untouched for BLE authentication; pairing-generation merge checks remain exact.
+
+The report recorded six raw and six CRC-valid frames from 19:21:23 through 19:26:23, with intervals of 60, 61, 59, 61 and 59 seconds. Five arrived after the rejected read-only scan, with no disconnect or additional unlock. This supports stream continuity through the rejected scan; it does not validate corrected calibration capture or calculated glucose.
+
+The corrected path subsequently completed two read-only captures from the same streaming sensor. Both validated all 344 FRAM bytes at lifecycle 3 and sensor minute 4340. The observed patch differed from the saved pairing only in bytes 4–5, and both saves retained the original paired patch, peripheral and next counter 3. No streaming-enable command, unlock, disconnect or reconnect occurred.
+
+The first capture completed with seven raw and seven CRC-valid frames already counted; frame 8 arrived six seconds later, 59 seconds after its predecessor, and six of seven experimental slots were accepted. This demonstrates post-capture continuation for the first scan. The second capture recovered from two transient tag-loss responses and succeeded on its third patch-query attempt. Its export was taken ten seconds after saving, before another frame was due, so that snapshot does not independently demonstrate continuation after the second scan. The diagnostic sample display correctly cleared after each new calibration until a newer frame arrived.
+
+Repeated capture also exposed a clock issue in the user-built v4 behavior. Both corrected scans observed the same sensor minute but were captured 22 seconds apart, so their inferred sensor-start anchors differ by 22 seconds; the first corrected anchor differed from the prior saved anchor by 6 seconds. The stable-clock v5 source increment now stores the first valid sensor-minute/date mapping separately and preserves it across recaptures and restarts so overlapping sensor minutes retain one timestamp. Calibration capture metadata still records each actual scan. Legacy sessions with valid calibration seed a missing anchor once; a present malformed/null anchor remains explicitly unavailable. This v5 increment has not yet been built or run by the user.
+
+## First user-run experimental decode and restoration callback
+
+The v4 export at 19:35:47 UTC records an actual Core Bluetooth `willRestoreState` callback at 19:33:31. The app retrieved the previously paired peripheral and retained the saved calibration without NFC setup, reserved counter 2 once, and advanced the next counter to 3. This demonstrates one successful restoration callback on the tested phone and sensor. It does not establish recovery after process eviction, reboot, force-quit, range loss, or repeated restoration cycles.
+
+Three raw frames arrived and all three passed CRC validation at 19:33:31, 19:34:25 and 19:35:23, with intervals of 54 and 58 seconds. The decoder accepted seven of seven sparse slots in the first two frames and six of seven in the latest frame; its 15-minute slot was rejected because raw glucose was zero. The newest sample timestamps anchored to sensor time were 19:33:23, 19:34:23 and 19:35:23, respectively 8, 2 and 0 seconds before packet receipt. No errors or disconnects were logged.
+
+The user reports that the displayed values seem in line with their established glucose source. This is useful qualitative feedback, but the export alone does not contain a timestamp-matched independent comparison or an agreed tolerance, so glucose accuracy remains unverified. Exact comparison values should remain in the local test record rather than this committed document.

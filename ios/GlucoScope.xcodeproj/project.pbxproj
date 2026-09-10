@@ -70,6 +70,9 @@
 		BB2000000000000000000000 /* Libre2Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000000 /* Libre2Protocol.swift */; };
 		BB2000000000000000000001 /* LibreNFCSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000001 /* LibreNFCSession.swift */; };
 		BB2000000000000000000002 /* LibreSensorSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000002 /* LibreSensorSession.swift */; };
+		BB200000000000000000000B /* LibreCalibration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000B /* LibreCalibration.swift */; };
+		BB200000000000000000000C /* Libre2DiagnosticDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */; };
+		BB200000000000000000000D /* LibreSensorClockAnchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000D /* LibreSensorClockAnchor.swift */; };
 		BB2000000000000000000003 /* LibreSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000003 /* LibreSessionStore.swift */; };
 		BB2000000000000000000004 /* LibreBluetoothCentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000004 /* LibreBluetoothCentral.swift */; };
 		BB2000000000000000000005 /* LibreDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */; };
@@ -144,6 +147,9 @@
 		BB1000000000000000000000 /* Libre2Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2Protocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000000001 /* LibreNFCSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreNFCSession.swift; sourceTree = "<group>"; };
 		BB1000000000000000000002 /* LibreSensorSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSensorSession.swift; sourceTree = "<group>"; };
+		BB100000000000000000000B /* LibreCalibration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreCalibration.swift; sourceTree = "<group>"; };
+		BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2DiagnosticDecoder.swift; sourceTree = "<group>"; };
+		BB100000000000000000000D /* LibreSensorClockAnchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSensorClockAnchor.swift; sourceTree = "<group>"; };
 		BB1000000000000000000003 /* LibreSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSessionStore.swift; sourceTree = "<group>"; };
 		BB1000000000000000000004 /* LibreBluetoothCentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreBluetoothCentral.swift; sourceTree = "<group>"; };
 		BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
@@ -269,6 +275,9 @@
 				BB1000000000000000000000 /* Libre2Protocol.swift */,
 				BB1000000000000000000001 /* LibreNFCSession.swift */,
 				BB1000000000000000000002 /* LibreSensorSession.swift */,
+				BB100000000000000000000B /* LibreCalibration.swift */,
+				BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */,
+				BB100000000000000000000D /* LibreSensorClockAnchor.swift */,
 				BB1000000000000000000003 /* LibreSessionStore.swift */,
 				BB1000000000000000000004 /* LibreBluetoothCentral.swift */,
 				BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */,
@@ -449,6 +458,9 @@
 				BB2000000000000000000000 /* Libre2Protocol.swift in Sources */,
 				BB2000000000000000000001 /* LibreNFCSession.swift in Sources */,
 				BB2000000000000000000002 /* LibreSensorSession.swift in Sources */,
+				BB200000000000000000000B /* LibreCalibration.swift in Sources */,
+				BB200000000000000000000C /* Libre2DiagnosticDecoder.swift in Sources */,
+				BB200000000000000000000D /* LibreSensorClockAnchor.swift in Sources */,
 				BB2000000000000000000003 /* LibreSessionStore.swift in Sources */,
 				BB2000000000000000000004 /* LibreBluetoothCentral.swift in Sources */,
 				BB2000000000000000000005 /* LibreDiagnosticsCoordinator.swift in Sources */,

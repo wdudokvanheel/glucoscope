@@ -12,6 +12,26 @@ struct ProtocolSmoke {
         try expect(Libre2Protocol.classify(patchInfo: Data([0xC5, 0, 0, 0, 0, 0])) == .libre2_C5, "C5 classification")
         try expect(Libre2Protocol.classify(patchInfo: Data([0x7F, 0x0E, 0x30, 1, 0, 0])) == .libre2_7F, "non-Plus 7F classification")
         try expectThrows("7F Plus rejection") { _ = try Libre2Protocol.classify(patchInfo: Data([0x7F, 0x0E, 0x31, 1, 0, 0])) }
+        var observedPatch = patch
+        observedPatch[4] ^= 0x5A
+        observedPatch[5] ^= 0xA5
+        try expect(Libre2Protocol.hasSameStableIdentity(uid: uid, patchInfo: patch,
+                                                        otherUID: uid, otherPatchInfo: observedPatch),
+                   "mutable patch word does not change sensor identity")
+        try expect(!Libre2Protocol.hasSameStableIdentity(uid: uid, patchInfo: patch,
+                                                         otherUID: Data(uid.reversed()), otherPatchInfo: observedPatch),
+                   "stable identity rejects different UID")
+        var changedStablePatch = observedPatch
+        changedStablePatch[1] ^= 1
+        try expect(!Libre2Protocol.hasSameStableIdentity(uid: uid, patchInfo: patch,
+                                                         otherUID: uid, otherPatchInfo: changedStablePatch),
+                   "stable identity rejects changed patch byte")
+        try expect(!Libre2Protocol.hasSameStableIdentity(uid: uid, patchInfo: patch,
+                                                         otherUID: uid, otherPatchInfo: Data(observedPatch.dropLast())),
+                   "stable identity rejects patch length change")
+        try expect(!Libre2Protocol.hasSameStableIdentity(uid: uid, patchInfo: patch + Data([0x11]),
+                                                         otherUID: uid, otherPatchInfo: observedPatch + Data([0x22])),
+                   "stable identity rejects changed trailing patch bytes")
         try expect(Libre2Protocol.expectedLegacyName(uid: uid) == "ABBOTT3M00009DHCR", "legacy advertised name")
 
         // Fixed synthetic inputs, checked against the supplied reference implementation.
@@ -42,6 +62,137 @@ struct ProtocolSmoke {
             try expect(!Libre2Protocol.validateFRAM(corruptedFRAM), "corrupt FRAM section at \(offset)")
         }
         try expect(!Libre2Protocol.validateFRAM(Data(decryptedFRAM.prefix(343))), "truncated FRAM")
+
+        var calibrationFRAM = decryptedFRAM
+        writeBits(&calibrationFRAM, byteOffset: 2, bitOffset: 0, count: 3, value: 5)
+        writeBits(&calibrationFRAM, byteOffset: 2, bitOffset: 3, count: 10, value: 777)
+        writeBits(&calibrationFRAM, byteOffset: 336, bitOffset: 0, count: 8, value: 201)
+        writeBits(&calibrationFRAM, byteOffset: 336, bitOffset: 8, count: 14, value: 12_345)
+        writeBits(&calibrationFRAM, byteOffset: 336, bitOffset: 33, count: 1, value: 1)
+        writeBits(&calibrationFRAM, byteOffset: 336, bitOffset: 40, count: 12, value: 2_345)
+        writeBits(&calibrationFRAM, byteOffset: 336, bitOffset: 52, count: 12, value: 3_000)
+        calibrationFRAM[4] = 0x03
+        calibrationFRAM[316] = 0x34
+        calibrationFRAM[317] = 0x12
+        refreshFRAMCRCs(&calibrationFRAM)
+        let capturedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let calibration = try LibreCalibration.capture(fram: calibrationFRAM, uid: uid, patchInfo: patch, capturedAt: capturedAt)
+        try expectThrows("nonfinite calibration capture time") {
+            _ = try LibreCalibration.capture(fram: calibrationFRAM, uid: uid, patchInfo: patch,
+                                             capturedAt: Date(timeIntervalSince1970: .infinity))
+        }
+        try expect(calibration.i1 == 5 && calibration.i2 == 777, "header calibration bit extraction")
+        try expect(calibration.i3 == -201, "signed i3 extraction")
+        try expect(calibration.i4 == 12_345 && calibration.i5 == 9_380 && calibration.i6 == 12_000, "footer calibration bit extraction")
+        try expect(calibration.sensorMinute == 0x1234 && calibration.lifecycle == 0x03, "capture metadata")
+        try calibration.validateOwnership(uid: uid, patchInfo: patch)
+        try calibration.validateOwnership(uid: uid, patchInfo: observedPatch)
+        try expectThrows("wrong calibration owner") { try calibration.validateOwnership(uid: wrongUID, patchInfo: patch) }
+        try expectThrows("exact FRAM length") { _ = try LibreCalibration.capture(fram: calibrationFRAM + Data([0]), uid: uid, patchInfo: patch) }
+        var badCalibrationFRAM = calibrationFRAM
+        badCalibrationFRAM[100] ^= 1
+        try expectThrows("calibration CRC") { _ = try LibreCalibration.capture(fram: badCalibrationFRAM, uid: uid, patchInfo: patch) }
+        for rejectedState: UInt8 in [0x01, 0x04, 0x05, 0xFF] {
+            var inactiveFRAM = calibrationFRAM
+            inactiveFRAM[4] = rejectedState
+            refreshFRAMCRCs(&inactiveFRAM)
+            try expectThrows("lifecycle \(rejectedState)") { _ = try LibreCalibration.capture(fram: inactiveFRAM, uid: uid, patchInfo: patch) }
+        }
+        var startingFRAM = calibrationFRAM
+        startingFRAM[4] = 0x02
+        refreshFRAMCRCs(&startingFRAM)
+        try expect(try LibreCalibration.capture(fram: startingFRAM, uid: uid, patchInfo: patch).lifecycle == 0x02, "starting lifecycle permitted")
+
+        let calibrationRoundTrip = try JSONDecoder().decode(LibreCalibration.self, from: JSONEncoder().encode(calibration))
+        try expect(calibrationRoundTrip == calibration, "calibration persistence roundtrip")
+        var malformedObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(calibration)) as! [String: Any]
+        malformedObject["calibrationSource"] = Data([1, 2]).base64EncodedString()
+        try expectThrows("malformed persisted source") {
+            _ = try JSONDecoder().decode(LibreCalibration.self, from: JSONSerialization.data(withJSONObject: malformedObject))
+        }
+        malformedObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(calibration)) as! [String: Any]
+        malformedObject["formatVersion"] = 999
+        try expectThrows("unsupported persisted version") {
+            _ = try JSONDecoder().decode(LibreCalibration.self, from: JSONSerialization.data(withJSONObject: malformedObject))
+        }
+
+        let peripheral = UUID(uuidString: "11111111-2222-3333-4444-555555555555")!
+        let creation = Date(timeIntervalSince1970: 1_600_000_000)
+        var oldSession = LibreSensorSession(uid: uid, patchInfo: patch, advertisedName: "ABBOTT",
+                                            peripheralID: peripheral, unlockCode: 42, nextUnlockCount: 93,
+                                            setupComplete: true, sensorKind: .libre2_9D, createdAt: creation)
+        var oldJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(oldSession)) as! [String: Any]
+        oldJSON.removeValue(forKey: "calibration")
+        let migrated = try JSONDecoder().decode(LibreSensorSession.self, from: JSONSerialization.data(withJSONObject: oldJSON))
+        try expect(migrated.needsCalibration, "old session needs calibration")
+        try expect(migrated.peripheralID == peripheral && migrated.unlockCode == 42 && migrated.nextUnlockCount == 93,
+                   "old JSON migration preserves credentials")
+
+        let expectedSnapshot = oldSession
+        oldSession.peripheralID = UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")!
+        oldSession.nextUnlockCount = 104
+        let merged = try oldSession.mergingCalibration(calibration, expectedSession: expectedSnapshot)
+        try expect(merged.calibration == calibration && !merged.needsCalibration, "session calibration merge")
+        try expect(merged.peripheralID == oldSession.peripheralID && merged.nextUnlockCount == 104,
+                   "stale NFC merge preserves advanced BLE state")
+        let originalAnchor = try require(merged.clockAnchor, "first calibration seeds clock anchor")
+        let overlappingTimestamp = try originalAnchor.timestamp(for: calibration.sensorMinute - 7)
+        let laterCalibration = try LibreCalibration.capture(fram: calibrationFRAM, uid: uid, patchInfo: observedPatch,
+                                                            capturedAt: capturedAt.addingTimeInterval(22))
+        let recaptured = try merged.mergingCalibration(laterCalibration, expectedSession: merged)
+        try expect(recaptured.clockAnchor == originalAnchor, "recapture preserves original clock anchor")
+        try expect(try recaptured.clockAnchor?.timestamp(for: calibration.sensorMinute - 7) == overlappingTimestamp,
+                   "overlapping sensor minute keeps stable timestamp")
+        let encryptedWithObservedPatch = try Libre2Protocol.decryptFRAM(calibrationFRAM, uid: uid, patchInfo: observedPatch)
+        let recoveredWithObservedPatch = try Libre2Protocol.decryptFRAM(encryptedWithObservedPatch, uid: uid, patchInfo: observedPatch)
+        let observedCalibration = try LibreCalibration.capture(fram: recoveredWithObservedPatch, uid: uid,
+                                                               patchInfo: observedPatch, capturedAt: capturedAt)
+        let mutablePatchMerged = try oldSession.mergingCalibration(observedCalibration, expectedSession: expectedSnapshot)
+        try expect(mutablePatchMerged.patchInfo == patch && mutablePatchMerged.nextUnlockCount == 104 &&
+                   mutablePatchMerged.peripheralID == oldSession.peripheralID,
+                   "capture-time patch decrypt preserves paired authentication material")
+        try expect(try JSONDecoder().decode(LibreSensorSession.self, from: JSONEncoder().encode(merged)) == merged,
+                   "session persistence roundtrip")
+        var legacyAnchoredObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
+        legacyAnchoredObject.removeValue(forKey: "clockAnchor")
+        let migratedAnchorSession = try JSONDecoder().decode(LibreSensorSession.self,
+                                                             from: JSONSerialization.data(withJSONObject: legacyAnchoredObject))
+        try expect(migratedAnchorSession.clockAnchor == originalAnchor, "legacy calibration seeds clock anchor")
+        var malformedAnchorObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
+        var malformedAnchor = malformedAnchorObject["clockAnchor"] as! [String: Any]
+        malformedAnchor["formatVersion"] = 999
+        malformedAnchorObject["clockAnchor"] = malformedAnchor
+        let malformedAnchorSession = try JSONDecoder().decode(LibreSensorSession.self,
+                                                               from: JSONSerialization.data(withJSONObject: malformedAnchorObject))
+        try expect(malformedAnchorSession.clockAnchor == nil && malformedAnchorSession.calibration == calibration &&
+                   malformedAnchorSession.nextUnlockCount == merged.nextUnlockCount,
+                   "malformed present clock preserves pairing without silent reanchor")
+        let unavailableAnchorRoundTrip = try JSONDecoder().decode(LibreSensorSession.self,
+                                                                  from: JSONEncoder().encode(malformedAnchorSession))
+        try expect(unavailableAnchorRoundTrip.clockAnchor == nil,
+                   "explicit unavailable clock survives another persistence roundtrip")
+        try expectThrows("extreme sensor minute cannot overflow clock arithmetic") {
+            _ = try originalAnchor.timestamp(for: .max)
+        }
+        var replaced = oldSession
+        replaced.createdAt = replaced.createdAt.addingTimeInterval(1)
+        try expectThrows("replaced pairing rejection") { _ = try replaced.mergingCalibration(calibration, expectedSession: expectedSnapshot) }
+        let replacementSession = LibreSensorSession(uid: uid, patchInfo: patch, advertisedName: "ABBOTT",
+                                                    peripheralID: peripheral, unlockCode: 42,
+                                                    setupComplete: true, sensorKind: .libre2_9D,
+                                                    createdAt: creation.addingTimeInterval(1), calibration: laterCalibration)
+        try expect(replacementSession.clockAnchor != originalAnchor, "replacement pairing receives a separate clock anchor")
+        let otherPatch = Data([0xC5, 0, 0, 0, 0, 0])
+        let otherCalibration = try LibreCalibration.capture(fram: calibrationFRAM, uid: uid, patchInfo: otherPatch)
+        try expectThrows("wrong sensor calibration rejection") { _ = try oldSession.mergingCalibration(otherCalibration, expectedSession: expectedSnapshot) }
+
+        var damagedSessionObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
+        var damagedCalibration = damagedSessionObject["calibration"] as! [String: Any]
+        damagedCalibration["formatVersion"] = 999
+        damagedSessionObject["calibration"] = damagedCalibration
+        let recoveredSession = try JSONDecoder().decode(LibreSensorSession.self, from: JSONSerialization.data(withJSONObject: damagedSessionObject))
+        try expect(recoveredSession.calibration == nil && recoveredSession.nextUnlockCount == 104 && recoveredSession.peripheralID == oldSession.peripheralID,
+                   "invalid optional calibration does not discard pairing")
         var exhaustedSession = session
         exhaustedSession.nextUnlockCount = 65536
         try expect(try Libre2Protocol.unlockPayload(session: exhaustedSession, counter: 65535).count == 12, "last reserved counter remains usable")
@@ -118,6 +269,39 @@ struct ProtocolSmoke {
         do { try operation(); throw TestError.failed(name) } catch TestError.failed { throw TestError.failed(name) } catch {}
     }
     enum TestError: Error { case failed(String) }
+
+    static func require<Value>(_ value: Value?, _ name: String) throws -> Value {
+        guard let value else { throw TestError.failed(name) }
+        return value
+    }
+
+    static func writeBits(_ bytes: inout Data, byteOffset: Int, bitOffset: Int, count: Int, value: Int) {
+        for index in 0..<count {
+            let position = byteOffset * 8 + bitOffset + index
+            let mask = UInt8(1 << (position % 8))
+            if value & (1 << index) == 0 { bytes[position / 8] &= ~mask }
+            else { bytes[position / 8] |= mask }
+        }
+    }
+
+    static func refreshFRAMCRCs(_ bytes: inout Data) {
+        for range in [0..<24, 24..<320, 320..<344] {
+            let crc = crc16(Data(bytes[range].dropFirst(2)))
+            bytes[range.lowerBound] = UInt8(truncatingIfNeeded: crc >> 8)
+            bytes[range.lowerBound + 1] = UInt8(truncatingIfNeeded: crc)
+        }
+    }
+
+    static func crc16(_ data: Data) -> UInt16 {
+        var crc: UInt16 = 0xFFFF
+        for byte in data {
+            crc ^= UInt16(byte)
+            for _ in 0..<8 { crc = crc & 1 == 0 ? crc >> 1 : (crc >> 1) ^ 0x8408 }
+        }
+        var reversed: UInt16 = 0
+        for _ in 0..<16 { reversed = (reversed << 1) | (crc & 1); crc >>= 1 }
+        return reversed.byteSwapped
+    }
 }
 
 private extension Data { var hex: String { map { String(format: "%02X", $0) }.joined() } }

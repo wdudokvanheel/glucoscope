@@ -16,6 +16,7 @@ struct LibreDiagnosticsView: View {
                 instructionsSection
                 connectionSection
                 sensorSection
+                experimentalGlucoseSection
                 controlsSection
                 uploadSection
                 frameSection
@@ -52,7 +53,7 @@ struct LibreDiagnosticsView: View {
                     diagnosticsUploader.endpointDidChange()
                 }
 
-            Toggle("Send after NFC setup", isOn: $automaticDiagnosticsUpload)
+            Toggle("Send after NFC scan", isOn: $automaticDiagnosticsUpload)
 
             Button {
                 coordinator.sendDiagnostics(to: diagnosticsEndpoint)
@@ -83,17 +84,67 @@ struct LibreDiagnosticsView: View {
         } header: {
             Text("Diagnostics host")
         } footer: {
-            Text("Automatic upload sends one diagnostics snapshot when NFC setup finishes. Use Send diagnostics to capture later Bluetooth activity.")
+            Text("Automatic upload sends one diagnostics snapshot when an NFC scan finishes. Use Send diagnostics to capture later Bluetooth activity.")
         }
     }
 
     private var instructionsSection: some View {
         Section {
-            Text("This screen is for Libre 2 hardware testing. It reports connection events and diagnostic frames; it does not calculate or display glucose yet.")
+            Text("This screen is for Libre 2 hardware testing. Experimental glucose values are transient diagnostics and have not been validated as clinical readings.")
             Text("Use NFC setup with an already activated EU Libre 2 sensor. Hold the top of the iPhone close to the sensor until the scan finishes. Keep this screen open for the first Bluetooth connection.")
                 .foregroundStyle(.secondary)
         } header: {
             Text("Before you start")
+        }
+    }
+
+    private var experimentalGlucoseSection: some View {
+        Section {
+            Text(coordinator.diagnosticGlucoseStatus)
+                .foregroundStyle(.secondary)
+            Text(coordinator.clockSummary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let frame = coordinator.diagnosticFrame {
+                if let rejection = frame.rejection {
+                    LabeledContent("Frame rejected") {
+                        Text(rejection.description)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                } else {
+                    ForEach(Array(frame.slots.enumerated()), id: \.offset) { _, slot in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(slot.timestamp, format: .dateTime.month().day().hour().minute().second())
+                                    .font(.body.monospacedDigit())
+                                Spacer()
+                                if let mgDL = slot.glucoseMgDL, slot.rejection == nil {
+                                    Text(String(format: "%.1f mg/dL · %.2f mmol/L", mgDL, mgDL / 18.0182))
+                                        .monospacedDigit()
+                                } else {
+                                    Text("Rejected")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Text("Offset \(slot.offsetMinutes) min · sensor minute \(slot.sensorMinute) · raw \(slot.rawGlucose)/\(slot.rawTemperature)/\(slot.temperatureAdjustment)")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                            if let rejection = slot.rejection {
+                                Text(rejection.description)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            }
+        } header: {
+            Text("Experimental glucose")
+        } footer: {
+            Text("Calculated samples are shown only in this diagnostic screen and export. They are not saved, graphed or uploaded as readings.")
         }
     }
 
@@ -118,6 +169,10 @@ struct LibreDiagnosticsView: View {
 
     private var sensorSection: some View {
         Section("Paired sensor") {
+            Text(coordinator.calibrationSummary)
+                .foregroundStyle(.secondary)
+            statusRow("Calibration action", value: coordinator.calibrationStatus)
+
             if coordinator.sensorSummary.isEmpty {
                 Text("No sensor identity saved. Run NFC setup to read the sensor identity and enable Bluetooth streaming.")
                     .foregroundStyle(.secondary)
@@ -131,6 +186,13 @@ struct LibreDiagnosticsView: View {
 
     private var controlsSection: some View {
         Section("Actions") {
+            Button {
+                coordinator.startNFCCalibration()
+            } label: {
+                Label("Read calibration with NFC", systemImage: "wave.3.right")
+            }
+            .disabled(coordinator.isScanningNFC || !coordinator.isNFCAvailable || !coordinator.canCaptureCalibration)
+
             Button {
                 coordinator.startNFCSetup()
             } label: {
@@ -187,7 +249,7 @@ struct LibreDiagnosticsView: View {
                     .textSelection(.enabled)
             }
 
-            Text("A connection or raw frame alone is not proof that sensor data is valid. Successful verification appears in the collector status and event log; glucose decoding is not implemented yet.")
+            Text("A connection or raw frame alone is not proof that sensor data is valid. Experimental values appear only after frame integrity and per-sample checks pass.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }

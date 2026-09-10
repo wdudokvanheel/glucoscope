@@ -4,6 +4,8 @@ root="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 swiftc \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
   "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreFrameAssembler.swift" \
@@ -11,3 +13,12 @@ swiftc \
   "$root/ios/Libre2Tests/ProtocolSmoke.swift" \
   -o "$tmp/libre2-smoke"
 "$tmp/libre2-smoke"
+swiftc \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2DiagnosticDecoder.swift" \
+  "$root/ios/Libre2Tests/DiagnosticDecoderSmoke.swift" \
+  -o "$tmp/libre2-decoder-smoke"
+"$tmp/libre2-decoder-smoke"
