@@ -38,3 +38,27 @@ swiftc \
   "$root/ios/Libre2Tests/ReadingStoreSmoke.swift" \
   -o "$tmp/libre2-reading-store-smoke"
 "$tmp/libre2-reading-store-smoke"
+swiftc \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreVerifiedFrame.swift" \
+  "$root/ios/GlucoScope/Service/LibreCollectionCoordinator.swift" \
+  "$root/ios/Libre2Tests/CollectionCoordinatorSmoke.swift" \
+  -o "$tmp/libre2-collection-smoke"
+"$tmp/libre2-collection-smoke"
+swiftc \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSessionStore.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreVerifiedFrame.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreTypes.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreModel.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStore.swift" \
+  "$root/ios/GlucoScope/Service/LibrePersistenceBridge.swift" \
+  "$root/ios/Libre2Tests/PersistenceBridgeSmoke.swift" \
+  -o "$tmp/libre2-persistence-bridge-smoke"
+"$tmp/libre2-persistence-bridge-smoke"

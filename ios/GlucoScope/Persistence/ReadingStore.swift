@@ -73,6 +73,107 @@ public actor ReadingStore {
         health
     }
 
+    /// Atomically creates metadata for a previously unseen wear or returns the
+    /// canonical row for its exact UUID. Existing identity/revision disagreements
+    /// require repair. A clock disagreement is returned unchanged for the bridge
+    /// to classify; the existing SQLite clock is never rewritten here.
+    public func resolveSessionMetadata(
+        _ proposed: ReadingSessionSnapshot
+    ) async throws -> StoredSessionSnapshot {
+        try ensureHealthy()
+        try validate(proposed)
+        guard let context = writerContext else {
+            throw ReadingStoreError.unavailable(health)
+        }
+
+        do {
+            return try Self.perform(on: context) {
+                do {
+                    if let existing = try Self.fetchStoredSession(id: proposed.id, in: context) {
+                        let stored = try Self.makeSessionSnapshot(existing)
+                        try Self.verifyIdentity(of: stored, against: proposed)
+
+                        guard Self.clocksMatch(stored.clock, proposed.clock) else {
+                            return stored
+                        }
+                        if proposed.observedAt > stored.lastObservedAt {
+                            existing.setValue(proposed.observedAt, forKey: "lastObservedAt")
+                        }
+                        if stored.lifecycleState != proposed.lifecycleState {
+                            existing.setValue(proposed.lifecycleState.rawValue, forKey: "lifecycleState")
+                        }
+                        if context.hasChanges {
+                            try self.faultInjector?.check(.beforeSave)
+                            try context.save()
+                        }
+                        return try Self.makeSessionSnapshot(existing)
+                    }
+
+                    let inserted = Self.insertSession(proposed, in: context)
+                    try self.faultInjector?.check(.beforeSave)
+                    try context.save()
+                    return try Self.makeSessionSnapshot(inserted)
+                } catch {
+                    context.rollback()
+                    throw error
+                }
+            }
+        } catch let error as ReadingStoreError {
+            throw error
+        } catch let error as ReadingStoreInternalError {
+            switch error {
+            case .sessionFingerprintMismatch, .sessionRevisionMismatch, .sessionClockMismatch:
+                throw ReadingStoreError.repairRequired(Self.redactedReason(for: error))
+            default:
+                throw markUnhealthy(operation: .query, error: error, dropped: 0)
+            }
+        } catch {
+            throw markUnhealthy(operation: .query, error: error, dropped: 0)
+        }
+    }
+
+    /// Read-only lookup used solely by deliberate missing-clock repair. The UUID,
+    /// fingerprint and revision must all identify the same retained wear.
+    public func sessionMetadata(
+        id: UUID,
+        stableIdentityFingerprint: Data,
+        sensorRevision: String
+    ) async throws -> StoredSessionSnapshot? {
+        try ensureHealthy()
+        try Self.validateIdentityFields(
+            stableIdentityFingerprint: stableIdentityFingerprint,
+            sensorRevision: sensorRevision
+        )
+        guard let context = writerContext else {
+            throw ReadingStoreError.unavailable(health)
+        }
+
+        do {
+            return try Self.perform(on: context) {
+                guard let existing = try Self.fetchStoredSession(id: id, in: context) else {
+                    return nil
+                }
+                let stored = try Self.makeSessionSnapshot(existing)
+                guard stored.stableIdentityFingerprint == stableIdentityFingerprint else {
+                    throw ReadingStoreInternalError.sessionFingerprintMismatch
+                }
+                guard stored.sensorRevision == sensorRevision else {
+                    throw ReadingStoreInternalError.sessionRevisionMismatch
+                }
+                return stored
+            }
+        } catch let error as ReadingStoreInternalError {
+            switch error {
+            case .sessionFingerprintMismatch, .sessionRevisionMismatch:
+                throw ReadingStoreError.repairRequired(Self.redactedReason(for: error))
+            default:
+                throw markUnhealthy(operation: .query, error: error, dropped: 0)
+            }
+        } catch {
+            throw markUnhealthy(operation: .query, error: error, dropped: 0)
+        }
+    }
+
     public func ingest(_ submission: ReadingSubmission) async throws -> ReadingCommit {
         try ensureHealthy()
         try validate(submission)
@@ -433,18 +534,7 @@ private extension ReadingStore {
             throw ReadingStoreError.invalidInput("candidate batch exceeds configured maximum")
         }
         let session = submission.session
-        guard (1...128).contains(session.stableIdentityFingerprint.count) else {
-            throw ReadingStoreError.invalidInput("stable identity fingerprint has an invalid length")
-        }
-        try Self.validateBounded(session.sensorRevision, name: "sensor revision", maximum: 64)
-        try Self.validateBounded(session.clock.provenance, name: "clock provenance", maximum: 128)
-        guard Self.isFinite(session.firstObservedAt),
-              Self.isFinite(session.observedAt),
-              Self.isFinite(session.clock.referenceDate),
-              session.firstObservedAt <= session.observedAt,
-              (0...20_880).contains(session.clock.referenceSensorMinute) else {
-            throw ReadingStoreError.invalidInput("session timestamps or clock minute are invalid")
-        }
+        try validate(session)
 
         for candidate in submission.candidates {
             guard (0...20_880).contains(candidate.sensorMinute),
@@ -463,6 +553,32 @@ private extension ReadingStore {
             }
             _ = try Self.sampleDate(sensorMinute: candidate.sensorMinute, clock: session.clock)
         }
+    }
+
+    func validate(_ session: ReadingSessionSnapshot) throws {
+        try Self.validateIdentityFields(
+            stableIdentityFingerprint: session.stableIdentityFingerprint,
+            sensorRevision: session.sensorRevision
+        )
+        try Self.validateBounded(session.clock.provenance, name: "clock provenance", maximum: 128)
+        guard Self.isFinite(session.firstObservedAt),
+              Self.isFinite(session.observedAt),
+              Self.isFinite(session.clock.referenceDate),
+              session.firstObservedAt <= session.observedAt,
+              (0...20_880).contains(session.clock.referenceSensorMinute) else {
+            throw ReadingStoreError.invalidInput("session timestamps or clock minute are invalid")
+        }
+
+    }
+
+    static func validateIdentityFields(
+        stableIdentityFingerprint: Data,
+        sensorRevision: String
+    ) throws {
+        guard (1...128).contains(stableIdentityFingerprint.count) else {
+            throw ReadingStoreError.invalidInput("stable identity fingerprint has an invalid length")
+        }
+        try validateBounded(sensorRevision, name: "sensor revision", maximum: 64)
     }
 
     func validate(_ destination: ReadingDestination) throws {
@@ -673,6 +789,57 @@ private extension ReadingStore {
 }
 
 private extension ReadingStore {
+    static func fetchStoredSession(
+        id: UUID,
+        in context: NSManagedObjectContext
+    ) throws -> NSManagedObject? {
+        let request = NSFetchRequest<NSManagedObject>(entityName: ReadingStoreEntity.session)
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 2
+        let matches = try context.fetch(request)
+        guard matches.count <= 1 else { throw ReadingStoreInternalError.duplicateSession }
+        return matches.first
+    }
+
+    static func verifyIdentity(
+        of stored: StoredSessionSnapshot,
+        against proposed: ReadingSessionSnapshot
+    ) throws {
+        guard stored.stableIdentityFingerprint == proposed.stableIdentityFingerprint else {
+            throw ReadingStoreInternalError.sessionFingerprintMismatch
+        }
+        guard stored.sensorRevision == proposed.sensorRevision else {
+            throw ReadingStoreInternalError.sessionRevisionMismatch
+        }
+    }
+
+    static func clocksMatch(_ lhs: ReadingClockSnapshot, _ rhs: ReadingClockSnapshot) -> Bool {
+        lhs.referenceSensorMinute == rhs.referenceSensorMinute &&
+        abs(lhs.referenceDate.timeIntervalSince(rhs.referenceDate)) <= 0.001 &&
+        lhs.provenance == rhs.provenance
+    }
+
+    @discardableResult
+    static func insertSession(
+        _ snapshot: ReadingSessionSnapshot,
+        in context: NSManagedObjectContext
+    ) -> NSManagedObject {
+        let session = NSEntityDescription.insertNewObject(
+            forEntityName: ReadingStoreEntity.session,
+            into: context
+        )
+        session.setValue(snapshot.id, forKey: "id")
+        session.setValue(snapshot.stableIdentityFingerprint, forKey: "stableIdentityFingerprint")
+        session.setValue(snapshot.sensorRevision, forKey: "sensorRevision")
+        session.setValue(snapshot.firstObservedAt, forKey: "firstObservedAt")
+        session.setValue(snapshot.observedAt, forKey: "lastObservedAt")
+        session.setValue(snapshot.lifecycleState.rawValue, forKey: "lifecycleState")
+        session.setValue(snapshot.clock.referenceSensorMinute, forKey: "clockReferenceSensorMinute")
+        session.setValue(snapshot.clock.referenceDate, forKey: "clockReferenceDate")
+        session.setValue(snapshot.clock.provenance, forKey: "clockProvenance")
+        return session
+    }
+
     static func resolveSession(
         _ snapshot: ReadingSessionSnapshot,
         in context: NSManagedObjectContext

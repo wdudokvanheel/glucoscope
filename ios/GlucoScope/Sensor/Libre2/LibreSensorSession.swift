@@ -109,6 +109,39 @@ struct LibreSensorSession: Codable, Sendable, Equatable {
         return persistenceSessionID
     }
 
+    /// Operational fields such as counter, peripheral and calibration may advance
+    /// while a frame is in flight. These immutable fields identify the exact
+    /// durable pairing whose Keychain record may be migrated or repaired.
+    func hasSameDurablePairing(as other: LibreSensorSession) -> Bool {
+        createdAt == other.createdAt &&
+        unlockCode == other.unlockCode &&
+        setupComplete == other.setupComplete &&
+        sensorKind == other.sensorKind &&
+        Libre2Protocol.hasSameStableIdentity(
+            uid: uid,
+            patchInfo: patchInfo,
+            otherUID: other.uid,
+            otherPatchInfo: other.patchInfo
+        )
+    }
+
+    /// Pure compare-and-update used inside the Keychain store's shared lock. The
+    /// receiver is the latest saved value so all newer operational fields survive.
+    func restoringMissingClockAnchor(
+        _ anchor: LibreSensorClockAnchor,
+        expectedSession: LibreSensorSession
+    ) throws -> LibreSensorSession {
+        guard hasSameDurablePairing(as: expectedSession),
+              try validatedPersistenceSessionID() == expectedSession.validatedPersistenceSessionID() else {
+            throw LibrePersistenceIdentityError.repairRequired
+        }
+        guard needsClockAnchor else { throw LibrePersistenceIdentityError.repairRequired }
+        try anchor.validateOwnership(uid: uid, patchInfo: patchInfo)
+        var repaired = self
+        repaired.clockAnchor = anchor
+        return repaired
+    }
+
     /// Versioned SHA-256 physical identity; mutable patch bytes 4–5 and all
     /// pairing secrets are excluded. The domain prefix fixes the hash format.
     func stableIdentityFingerprint() throws -> Data {

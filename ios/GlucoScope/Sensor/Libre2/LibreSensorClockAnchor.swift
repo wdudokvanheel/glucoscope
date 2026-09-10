@@ -12,6 +12,7 @@ enum LibreSensorClockAnchorError: Error, Equatable {
 /// it is not a bound on phone-clock error, capture latency, or sensor drift.
 struct LibreSensorClockAnchor: Codable, Sendable, Equatable {
     static let currentFormatVersion = 1
+    static let canonicalPersistenceProvenance = "libre2-nfc-minute-clock-v1-u60"
     // Supported Libre 2 revisions have a 14.5-day diagnostic lifetime. Keep
     // session recovery and decoder acceptance on the same reference domain.
     static let maximumSensorMinute = 20_880
@@ -34,6 +35,36 @@ struct LibreSensorClockAnchor: Codable, Sendable, Equatable {
                                       referenceDate: calibration.capturedAt,
                                       referenceSensorMinute: calibration.sensorMinute,
                                       uncertaintySeconds: 60)
+    }
+
+    /// Restores the non-secret canonical clock persisted with reading metadata.
+    /// Sensor ownership is supplied by the current, already matched Keychain wear;
+    /// UID and patch bytes are intentionally never stored in the SQLite clock row.
+    static func restoreCanonical(
+        referenceDate: Date,
+        referenceSensorMinute: Int64,
+        provenance: String,
+        ownerUID: Data,
+        ownerPatchInfo: Data
+    ) throws -> LibreSensorClockAnchor {
+        guard provenance == canonicalPersistenceProvenance,
+              let minute = Int(exactly: referenceSensorMinute),
+              (0...maximumSensorMinute).contains(minute),
+              ownerUID.count == 8,
+              (try? Libre2Protocol.classify(patchInfo: ownerPatchInfo)) != nil,
+              Self.isUsable(date: referenceDate) else {
+            throw LibreSensorClockAnchorError.invalidReference
+        }
+        let restored = LibreSensorClockAnchor(
+            formatVersion: currentFormatVersion,
+            ownerUID: ownerUID,
+            ownerPatchInfo: ownerPatchInfo,
+            referenceDate: referenceDate,
+            referenceSensorMinute: minute,
+            uncertaintySeconds: 60
+        )
+        try restored.validateOwnership(uid: ownerUID, patchInfo: ownerPatchInfo)
+        return restored
     }
 
     func validateOwnership(uid: Data, patchInfo: Data) throws {

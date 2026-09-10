@@ -15,6 +15,7 @@ struct LibreDiagnosticsView: View {
             List {
                 instructionsSection
                 connectionSection
+                storageSection
                 sensorSection
                 experimentalGlucoseSection
                 controlsSection
@@ -164,6 +165,17 @@ struct LibreDiagnosticsView: View {
                 }
                 .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private var storageSection: some View {
+        Section("Collection storage") {
+            Text(coordinator.collectionStatus.summary)
+                .foregroundStyle(.secondary)
+            statusRow("Stale frames rejected", value: coordinator.collectionStatus.staleFrameCount.formatted())
+            Text("Canonical ingestion is disabled. This version opens protected storage and reconciles sensor metadata only. Experimental glucose remains transient.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 

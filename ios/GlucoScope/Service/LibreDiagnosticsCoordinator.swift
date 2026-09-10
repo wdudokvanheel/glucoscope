@@ -13,6 +13,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     static let shared = LibreDiagnosticsCoordinator()
 
     @Published private(set) var status = "Starting"
+    @Published private(set) var collectionStatus = LibreCollectionCoordinator.Status()
     @Published private(set) var bluetoothState = "Unknown"
     @Published private(set) var sensorSummary = ""
     @Published private(set) var calibrationSummary = "No paired sensor"
@@ -35,10 +36,38 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
 
     private static let maximumLogEntries = 500
     private let store = LibreSessionStore()
+    private let frameGate = LibreFrameGenerationGate()
+    private let readingStore = ReadingStore(configuration: ReadingStoreConfiguration(storage: .sqlite(
+        url: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("LibreReadings", isDirectory: true)
+            .appendingPathComponent("readings.sqlite")
+    )))
+    private lazy var persistenceBridge = LibrePersistenceBridge(readingStore: readingStore, sessionStore: store)
+    private lazy var collection = LibreCollectionCoordinator(
+        gate: frameGate,
+        openStore: { [readingStore] in
+            switch await readingStore.currentHealth() {
+            case .notLoaded: try await readingStore.load()
+            case .unhealthy: _ = try await readingStore.retryAfterFailure()
+            case .healthy: break
+            case .closed: throw ReadingStoreError.unavailable(.closed)
+            }
+        },
+        prepareSession: { [weak self] frame in
+            guard let self else { throw LibreFrameOwnershipError.staleFrame }
+            try await self.prepareMetadata(for: frame)
+        },
+        onStatus: { [weak self] value in
+            guard let self else { return }
+            let changed = self.collectionStatus.summary != value.summary
+            self.collectionStatus = value
+            if changed { self.appendLog("Storage: \(value.summary)") }
+        }
+    )
     private var nfcSession: LibreNFCSession?
     private var operationGeneration: UInt64 = 0
     private var currentSensorSession: LibreSensorSession?
-    private lazy var bluetooth = LibreBluetoothCentral(store: store) { [weak self] event in
+    private lazy var bluetooth = LibreBluetoothCentral(store: store, frameGate: frameGate) { [weak self] event in
         self?.receive(event)
     }
 
@@ -46,12 +75,17 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         let formatter = ISO8601DateFormatter()
         let header = [
             "GlucoScope Libre 2 diagnostics",
-            "Diagnostics revision: Experimental glucose decoding v5 (persistent sensor clock)",
+            "Diagnostics revision: Experimental glucose decoding v6 (frame ownership and metadata storage)",
             "App: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"))",
             "Device: \(UIDevice.current.model), iOS \(UIDevice.current.systemVersion)",
             "Exported: \(formatter.string(from: Date()))",
             "Status: \(status)",
             "Bluetooth: \(bluetoothState)",
+            "Storage: \(collectionStatus.summary)",
+            "Storage operation: \(collectionStatus.operation) at \(formatter.string(from: collectionStatus.updatedAt))",
+            "Canonical ingestion: disabled; metadata only; dropped candidates: \(collectionStatus.droppedCandidateCount)",
+            "Stale or out-of-order frames rejected: \(collectionStatus.staleFrameCount)",
+            "Last accepted process sequence: \(collectionStatus.lastSequence.map(String.init) ?? "none")",
             "Sensor: \(sensorSummary)",
             "Calibration: \(calibrationSummary)",
             "Sensor clock: \(clockSummary)",
@@ -74,6 +108,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
 
     private override init() {
         super.init()
+        collection.start()
         _ = bluetooth
         refreshStoredSession()
         isNFCAvailable = LibreNFCSession(store: store).isAvailable
@@ -94,6 +129,8 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     /// callbacks from two sensors cannot be mixed.
     func startNFCSetup() {
         precondition(Thread.isMainThread)
+        frameGate.invalidate()
+        collection.transportInvalidated()
         operationGeneration &+= 1
         let generation = operationGeneration
         nfcSession?.cancel()
@@ -197,6 +234,8 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
 
     func reconnect() {
         precondition(Thread.isMainThread)
+        frameGate.invalidate()
+        collection.transportInvalidated()
         operationGeneration &+= 1
         if isScanningNFC { calibrationStatus = "NFC action interrupted" }
         nfcSession?.cancel()
@@ -220,11 +259,14 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         diagnosticFrame = nil
         diagnosticGlucoseStatus = waitingStatus(for: currentSensorSession)
         appendLog("Reconnect requested")
+        collection.lifecycleOpportunity()
         bluetooth.reconnect()
     }
 
     func stop() {
         precondition(Thread.isMainThread)
+        frameGate.invalidate()
+        collection.transportInvalidated()
         operationGeneration &+= 1
         if isScanningNFC { calibrationStatus = "NFC action interrupted" }
         nfcSession?.cancel()
@@ -240,6 +282,8 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
 
     func forgetSensor() {
         precondition(Thread.isMainThread)
+        frameGate.invalidate()
+        collection.transportInvalidated()
         operationGeneration &+= 1
         if isScanningNFC { calibrationStatus = "NFC action interrupted" }
         nfcSession?.cancel()
@@ -276,6 +320,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     }
 
     @objc private func appBecameActive() {
+        collection.lifecycleOpportunity()
         bluetooth.appBecameActive()
         isNFCAvailable = LibreNFCSession(store: store).isAvailable
         appendLog("Application became active")
@@ -315,27 +360,39 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             bluetoothState = value
             appendLog("Bluetooth state: \(value)")
         case .status(let value):
+            guard isRunning || value == "Stopped" || value == "No sensor configured" else { return }
             status = value
             appendLog(value)
         case .log(let message):
             appendLog(message)
         case .sessionChanged(let session):
+            guard isRunning else { return }
             updateSensorSummary(session)
         case .rawFrame(let data, let date):
+            guard isRunning else { return }
             frameCount += 1
             lastFrameAt = date
             lastFrameHex = data.hexString
             diagnosticFrame = nil
             diagnosticGlucoseStatus = "Validating latest BLE frame"
             appendLog("Raw BLE frame #\(frameCount): \(data.hexString)")
-        case .verifiedPayload(let payload, let date):
+        case .transportInvalidated:
+            collection.transportInvalidated()
+            diagnosticFrame = nil
+            diagnosticGlucoseStatus = isRunning
+                ? waitingStatus(for: currentSensorSession, newFrame: true) : "Collection stopped"
+        case .verifiedPayload(let frame):
+            guard isRunning, collection.receive(frame) else { return }
+            let payload = frame.payload
+            let date = frame.receivedAt
             verifiedFrameCount += 1
             lastVerifiedFrameAt = date
             lastPayloadHex = payload.hexString
             status = "Receiving CRC-valid frames"
             appendLog("Verified/decrypted payload: \(payload.hexString)")
-            decodeDiagnosticPayload(payload)
+            decodeDiagnosticPayload(frame)
         case .error(let message):
+            guard isRunning else { return }
             status = message
             diagnosticFrame = nil
             diagnosticGlucoseStatus = "Latest frame unavailable: \(message)"
@@ -396,12 +453,24 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         updateSensorSummary(updated)
     }
 
-    private func decodeDiagnosticPayload(_ payload: Data) {
-        guard let session = currentSensorSession else {
-            diagnosticFrame = nil
-            diagnosticGlucoseStatus = "No paired sensor session"
-            return
+    private func prepareMetadata(for frame: LibreVerifiedFrame) async throws {
+        guard frameGate.isCurrent(frame), let identity = frame.persistenceSessionID,
+              try frame.sessionSnapshot.validatedPersistenceSessionID() == identity else {
+            throw LibreFrameOwnershipError.staleFrame
         }
+        let prepared = try await persistenceBridge.prepare(
+            session: frame.sessionSnapshot,
+            receivedAt: frame.receivedAt,
+            isCurrent: { [frameGate] in frameGate.isCurrent(frame) }
+        )
+        guard frameGate.isCurrent(frame), prepared.session == frame.sessionSnapshot else {
+            throw LibreFrameOwnershipError.staleFrame
+        }
+    }
+
+    private func decodeDiagnosticPayload(_ frame: LibreVerifiedFrame) {
+        guard frameGate.isCurrent(frame) else { return }
+        let session = frame.sessionSnapshot
         guard !session.needsCalibration, let calibration = session.calibration else {
             diagnosticFrame = nil
             diagnosticGlucoseStatus = "Calibration is required"
@@ -413,9 +482,10 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             return
         }
         let decoded = Libre2DiagnosticDecoder.decode(
-            payload: payload, calibration: calibration, clockAnchor: clockAnchor,
+            payload: frame.payload, calibration: calibration, clockAnchor: clockAnchor,
             uid: session.uid, patchInfo: session.patchInfo
         )
+        guard frameGate.isCurrent(frame) else { return }
         diagnosticFrame = decoded
         if let rejection = decoded.rejection {
             diagnosticGlucoseStatus = "Frame rejected: \(rejection.description)"
