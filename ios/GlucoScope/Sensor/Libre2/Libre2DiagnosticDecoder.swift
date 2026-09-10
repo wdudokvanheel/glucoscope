@@ -53,7 +53,7 @@ struct Libre2DiagnosticSlot: Sendable, Equatable {
 enum Libre2DiagnosticDecoder {
     static let version = "libre2-nonlinear-diagnostic-v2"
     static let sampleOffsets = [0, 2, 4, 6, 7, 12, 15]
-    static let maximumSensorMinute = 20_880
+    static let maximumSensorMinute = LibreSensorClockAnchor.maximumSensorMinute
 
     static func decode(payload: Data, calibration: LibreCalibration, clockAnchor: LibreSensorClockAnchor?,
                        uid: Data, patchInfo: Data) -> Libre2DiagnosticFrame {

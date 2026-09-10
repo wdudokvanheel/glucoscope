@@ -123,6 +123,7 @@ struct ProtocolSmoke {
                                             setupComplete: true, sensorKind: .libre2_9D, createdAt: creation)
         var oldJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(oldSession)) as! [String: Any]
         oldJSON.removeValue(forKey: "calibration")
+        oldJSON.removeValue(forKey: "clockAnchor")
         let migrated = try JSONDecoder().decode(LibreSensorSession.self, from: JSONSerialization.data(withJSONObject: oldJSON))
         try expect(migrated.needsCalibration, "old session needs calibration")
         try expect(migrated.peripheralID == peripheral && migrated.unlockCode == 42 && migrated.nextUnlockCount == 93,
@@ -158,6 +159,13 @@ struct ProtocolSmoke {
         let migratedAnchorSession = try JSONDecoder().decode(LibreSensorSession.self,
                                                              from: JSONSerialization.data(withJSONObject: legacyAnchoredObject))
         try expect(migratedAnchorSession.clockAnchor == originalAnchor, "legacy calibration seeds clock anchor")
+        var nullAnchorObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
+        nullAnchorObject["clockAnchor"] = NSNull()
+        let nullAnchorSession = try JSONDecoder().decode(LibreSensorSession.self,
+                                                        from: JSONSerialization.data(withJSONObject: nullAnchorObject))
+        try expect(nullAnchorSession.clockAnchor == nil && nullAnchorSession.needsClockAnchor &&
+                   nullAnchorSession.calibration == calibration,
+                   "explicit null clock remains unavailable instead of migrating from calibration")
         var malformedAnchorObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
         var malformedAnchor = malformedAnchorObject["clockAnchor"] as! [String: Any]
         malformedAnchor["formatVersion"] = 999
@@ -171,6 +179,63 @@ struct ProtocolSmoke {
                                                                   from: JSONEncoder().encode(malformedAnchorSession))
         try expect(unavailableAnchorRoundTrip.clockAnchor == nil,
                    "explicit unavailable clock survives another persistence roundtrip")
+        var foreignAnchorObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
+        var foreignAnchor = foreignAnchorObject["clockAnchor"] as! [String: Any]
+        foreignAnchor["ownerUID"] = Data(uid.reversed()).base64EncodedString()
+        foreignAnchorObject["clockAnchor"] = foreignAnchor
+        let foreignAnchorSession = try JSONDecoder().decode(LibreSensorSession.self,
+                                                            from: JSONSerialization.data(withJSONObject: foreignAnchorObject))
+        try expect(foreignAnchorSession.clockAnchor != nil && foreignAnchorSession.needsClockAnchor,
+                   "foreign well-formed clock is retained but unavailable")
+        let repairedAnchorSession = try foreignAnchorSession.mergingCalibration(laterCalibration,
+                                                                                expectedSession: foreignAnchorSession)
+        try expect(repairedAnchorSession.clockAnchor != nil && !repairedAnchorSession.needsClockAnchor &&
+                   repairedAnchorSession.clockAnchor != foreignAnchorSession.clockAnchor,
+                   "deliberate calibration recapture repairs an unavailable clock")
+        try expect(repairedAnchorSession.peripheralID == foreignAnchorSession.peripheralID &&
+                   repairedAnchorSession.nextUnlockCount == foreignAnchorSession.nextUnlockCount &&
+                   repairedAnchorSession.patchInfo == foreignAnchorSession.patchInfo,
+                   "clock repair preserves live pairing state")
+        var outOfLifetimeAnchorObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(merged)) as! [String: Any]
+        var outOfLifetimeAnchor = outOfLifetimeAnchorObject["clockAnchor"] as! [String: Any]
+        outOfLifetimeAnchor["referenceSensorMinute"] = LibreSensorClockAnchor.maximumSensorMinute + 1
+        outOfLifetimeAnchorObject["clockAnchor"] = outOfLifetimeAnchor
+        let outOfLifetimeAnchorSession = try JSONDecoder().decode(
+            LibreSensorSession.self,
+            from: JSONSerialization.data(withJSONObject: outOfLifetimeAnchorObject)
+        )
+        try expect(outOfLifetimeAnchorSession.clockAnchor == nil && outOfLifetimeAnchorSession.needsClockAnchor &&
+                   outOfLifetimeAnchorSession.calibration == calibration &&
+                   outOfLifetimeAnchorSession.peripheralID == merged.peripheralID &&
+                   outOfLifetimeAnchorSession.nextUnlockCount == merged.nextUnlockCount,
+                   "out-of-lifetime clock is unavailable without discarding pairing")
+        let repairedLifetimeAnchorSession = try outOfLifetimeAnchorSession.mergingCalibration(
+            laterCalibration,
+            expectedSession: outOfLifetimeAnchorSession
+        )
+        try expect(!repairedLifetimeAnchorSession.needsClockAnchor &&
+                   repairedLifetimeAnchorSession.peripheralID == outOfLifetimeAnchorSession.peripheralID &&
+                   repairedLifetimeAnchorSession.nextUnlockCount == outOfLifetimeAnchorSession.nextUnlockCount,
+                   "deliberate recapture repairs out-of-lifetime clock without resetting BLE state")
+        var lifetimeBoundaryFRAM = calibrationFRAM
+        lifetimeBoundaryFRAM[316] = UInt8(truncatingIfNeeded: LibreSensorClockAnchor.maximumSensorMinute)
+        lifetimeBoundaryFRAM[317] = UInt8(LibreSensorClockAnchor.maximumSensorMinute >> 8)
+        refreshFRAMCRCs(&lifetimeBoundaryFRAM)
+        let lifetimeBoundaryCalibration = try LibreCalibration.capture(
+            fram: lifetimeBoundaryFRAM, uid: uid, patchInfo: patch, capturedAt: capturedAt
+        )
+        try expect(try LibreSensorClockAnchor.capture(from: lifetimeBoundaryCalibration).referenceSensorMinute ==
+                   LibreSensorClockAnchor.maximumSensorMinute,
+                   "clock accepts supported sensor lifetime endpoint")
+        lifetimeBoundaryFRAM[316] = UInt8(truncatingIfNeeded: LibreSensorClockAnchor.maximumSensorMinute + 1)
+        lifetimeBoundaryFRAM[317] = UInt8((LibreSensorClockAnchor.maximumSensorMinute + 1) >> 8)
+        refreshFRAMCRCs(&lifetimeBoundaryFRAM)
+        let outOfLifetimeCalibration = try LibreCalibration.capture(
+            fram: lifetimeBoundaryFRAM, uid: uid, patchInfo: patch, capturedAt: capturedAt
+        )
+        try expectThrows("clock rejects reference after supported sensor lifetime") {
+            _ = try LibreSensorClockAnchor.capture(from: outOfLifetimeCalibration)
+        }
         try expectThrows("extreme sensor minute cannot overflow clock arithmetic") {
             _ = try originalAnchor.timestamp(for: .max)
         }

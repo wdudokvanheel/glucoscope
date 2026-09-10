@@ -12,6 +12,9 @@ enum LibreSensorClockAnchorError: Error, Equatable {
 /// it is not a bound on phone-clock error, capture latency, or sensor drift.
 struct LibreSensorClockAnchor: Codable, Sendable, Equatable {
     static let currentFormatVersion = 1
+    // Supported Libre 2 revisions have a 14.5-day diagnostic lifetime. Keep
+    // session recovery and decoder acceptance on the same reference domain.
+    static let maximumSensorMinute = 20_880
 
     let formatVersion: Int
     let ownerUID: Data
@@ -22,7 +25,7 @@ struct LibreSensorClockAnchor: Codable, Sendable, Equatable {
 
     static func capture(from calibration: LibreCalibration) throws -> LibreSensorClockAnchor {
         guard Self.isUsable(date: calibration.capturedAt),
-              (0...Int(UInt16.max)).contains(calibration.sensorMinute) else {
+              (0...maximumSensorMinute).contains(calibration.sensorMinute) else {
             throw LibreSensorClockAnchorError.invalidReference
         }
         return LibreSensorClockAnchor(formatVersion: currentFormatVersion,
@@ -38,7 +41,7 @@ struct LibreSensorClockAnchor: Codable, Sendable, Equatable {
             throw LibreSensorClockAnchorError.unsupportedFormatVersion(formatVersion)
         }
         guard Self.isUsable(date: referenceDate),
-              (0...Int(UInt16.max)).contains(referenceSensorMinute),
+              (0...Self.maximumSensorMinute).contains(referenceSensorMinute),
               uncertaintySeconds.isFinite, uncertaintySeconds >= 0 else {
             throw LibreSensorClockAnchorError.invalidReference
         }
@@ -81,7 +84,7 @@ struct LibreSensorClockAnchor: Codable, Sendable, Equatable {
         guard ownerUID.count == 8,
               (try? Libre2Protocol.classify(patchInfo: Data(Array(ownerPatchInfo)))) != nil,
               Self.isUsable(date: referenceDate),
-              (0...Int(UInt16.max)).contains(referenceSensorMinute),
+              (0...Self.maximumSensorMinute).contains(referenceSensorMinute),
               uncertaintySeconds.isFinite, uncertaintySeconds >= 0 else {
             throw LibreSensorClockAnchorError.invalidReference
         }
