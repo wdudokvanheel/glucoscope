@@ -22,3 +22,19 @@ swiftc \
   "$root/ios/Libre2Tests/DiagnosticDecoderSmoke.swift" \
   -o "$tmp/libre2-decoder-smoke"
 "$tmp/libre2-decoder-smoke"
+swiftc \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSessionStore.swift" \
+  "$root/ios/Libre2Tests/IdentitySmoke.swift" \
+  -o "$tmp/libre2-identity-smoke"
+"$tmp/libre2-identity-smoke"
+swiftc \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreTypes.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreModel.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStore.swift" \
+  "$root/ios/Libre2Tests/ReadingStoreSmoke.swift" \
+  -o "$tmp/libre2-reading-store-smoke"
+"$tmp/libre2-reading-store-smoke"

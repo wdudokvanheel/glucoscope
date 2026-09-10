@@ -12,12 +12,17 @@ enum LibreSessionStoreError: LocalizedError {
 }
 
 final class LibreSessionStore {
+    // Different transport/coordinator instances share the same Keychain item.
+    // Serialize in-process migration and identity-preserving counter saves.
+    private static let lock = NSRecursiveLock()
     private let service = (Bundle.main.bundleIdentifier ?? "GlucoScope") + ".libre2"
     private let account = "active-sensor-session"
 
     init() {}
 
     func load() throws -> LibreSensorSession? {
+        Self.lock.lock()
+        defer { Self.lock.unlock() }
         var query = baseQuery
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -28,8 +33,20 @@ final class LibreSessionStore {
         return try JSONDecoder().decode(LibreSensorSession.self, from: data)
     }
 
+    /// Ingestion must use this entry point, not an unsaved decoded legacy record.
+    /// Diagnostics keep using load() even when the optional wear identity is damaged.
+    func loadForIngestion() throws -> LibreSensorSession? {
+        Self.lock.lock()
+        defer { Self.lock.unlock() }
+        guard let session = try load() else { return nil }
+        return try session.requiringPersistenceIdentity(save: save)
+    }
+
     func save(_ session: LibreSensorSession) throws {
-        let encoded = try JSONEncoder().encode(session)
+        Self.lock.lock()
+        defer { Self.lock.unlock() }
+        let durable = try session.retainingDurableIdentity(from: load())
+        let encoded = try JSONEncoder().encode(durable)
         let update = [kSecValueData as String: encoded,
                       kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly] as CFDictionary
         var status = SecItemUpdate(baseQuery as CFDictionary, update)
@@ -43,6 +60,8 @@ final class LibreSessionStore {
     }
 
     func clear() throws {
+        Self.lock.lock()
+        defer { Self.lock.unlock() }
         let status = SecItemDelete(baseQuery as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else { throw LibreSessionStoreError.keychain(status) }
     }

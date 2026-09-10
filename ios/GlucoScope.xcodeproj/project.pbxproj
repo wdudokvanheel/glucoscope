@@ -80,6 +80,9 @@
 		BB2000000000000000000007 /* LibreFrameAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000007 /* LibreFrameAssembler.swift */; };
 		BB2000000000000000000008 /* LibreReadRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000008 /* LibreReadRetry.swift */; };
 		BB2000000000000000000009 /* LibreDiagnosticsUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000009 /* LibreDiagnosticsUploader.swift */; };
+		BB200000000000000000000E /* ReadingStoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000E /* ReadingStoreTypes.swift */; };
+		BB200000000000000000000F /* ReadingStoreModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000F /* ReadingStoreModel.swift */; };
+		BB2000000000000000000010 /* ReadingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000010 /* ReadingStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -157,6 +160,9 @@
 		BB1000000000000000000007 /* LibreFrameAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreFrameAssembler.swift; sourceTree = "<group>"; };
 		BB1000000000000000000008 /* LibreReadRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreReadRetry.swift; sourceTree = "<group>"; };
 		BB1000000000000000000009 /* LibreDiagnosticsUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreDiagnosticsUploader.swift; sourceTree = "<group>"; };
+		BB100000000000000000000E /* ReadingStoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStoreTypes.swift; sourceTree = "<group>"; };
+		BB100000000000000000000F /* ReadingStoreModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStoreModel.swift; sourceTree = "<group>"; };
+		BB1000000000000000000010 /* ReadingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -278,6 +284,9 @@
 				BB100000000000000000000B /* LibreCalibration.swift */,
 				BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */,
 				BB100000000000000000000D /* LibreSensorClockAnchor.swift */,
+				BB1000000000000000000010 /* ReadingStore.swift */,
+				BB100000000000000000000F /* ReadingStoreModel.swift */,
+				BB100000000000000000000E /* ReadingStoreTypes.swift */,
 				BB1000000000000000000003 /* LibreSessionStore.swift */,
 				BB1000000000000000000004 /* LibreBluetoothCentral.swift */,
 				BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */,
@@ -461,6 +470,9 @@
 				BB200000000000000000000B /* LibreCalibration.swift in Sources */,
 				BB200000000000000000000C /* Libre2DiagnosticDecoder.swift in Sources */,
 				BB200000000000000000000D /* LibreSensorClockAnchor.swift in Sources */,
+				BB2000000000000000000010 /* ReadingStore.swift in Sources */,
+				BB200000000000000000000F /* ReadingStoreModel.swift in Sources */,
+				BB200000000000000000000E /* ReadingStoreTypes.swift in Sources */,
 				BB2000000000000000000003 /* LibreSessionStore.swift in Sources */,
 				BB2000000000000000000004 /* LibreBluetoothCentral.swift in Sources */,
 				BB2000000000000000000005 /* LibreDiagnosticsCoordinator.swift in Sources */,

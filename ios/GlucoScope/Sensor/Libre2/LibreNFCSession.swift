@@ -190,6 +190,22 @@ final class LibreNFCSession: NSObject {
                                             unlockCode: enableCode, nextUnlockCount: 1,
                                             setupComplete: false, sensorKind: kind, calibration: calibration)
 
+            // Read/upgrade the durable identity before replacing pairing credentials.
+            // Same-wear setup retains its original clock; uncertain continuity fails
+            // before saving pending credentials or sending streaming enablement.
+            step = "wear session reconciliation"
+            try requireActive(session, generation: expectedGeneration)
+            var previous = try store.load()
+            if let saved = previous,
+               Libre2Protocol.hasSameStableIdentity(uid: uid, patchInfo: patchInfo,
+                                                   otherUID: saved.uid, otherPatchInfo: saved.patchInfo) {
+                previous = try saved.requiringPersistenceIdentity { upgraded in
+                    try requireActive(session, generation: expectedGeneration)
+                    try store.save(upgraded)
+                }
+            }
+            sensor = try sensor.preservingWearIdentity(from: previous)
+
             // Persist credentials before the state-changing command. A crash here leaves an
             // explicit incomplete setup rather than losing the key needed for BLE login.
             try requireActive(session, generation: expectedGeneration)
