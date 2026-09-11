@@ -28,24 +28,27 @@ When resuming development-phone collection:
 
 For failures, include app revision, iPhone/iOS, sensor revision, action, elapsed time and an export via [the diagnostics host](diagnostics-host.md). Keep private exports out of commits. A physical comparison is useful when corresponding reference samples are available; it is not needed to keep building the app.
 
-## NFC history check (pending on device)
+## NFC history check
 
-Use the new **Scan sensor for history (NFC)** action on the already paired sensor. This is a read-only memory scan: it does not re-enable streaming, reset pairing or change the saved clock.
+The first physical scan and subsequent BLE reception succeeded on 12 September 2026 (local time); see the completed observation below. Repeat-scan deduplication and retention of NFC-imported history after relaunch remain device follow-ups.
+
+Use the **Scan sensor for history (NFC)** action on the already paired sensor. This is a read-only memory scan: it does not re-enable streaming, reset pairing or change the saved clock.
 
 1. Keep the phone near the sensor until the NFC sheet finishes, then wait for the import result. Check the reported new-reading count, trend/history counts and oldest/newest sample dates.
 2. Confirm saved readings appear with their original sensor times. The scan provides up to 16 minute-resolution trend slots and 32 quarter-hour history slots; younger sensors and rejected/unwritten slots provide fewer.
 3. Scan again. Overlapping samples should add no duplicates; a sample produced between scans can add a new row. BLE reception should continue without a new unlock caused by the history scan.
 4. Relaunch and confirm saved history remains. Export diagnostics if the scan or import fails. Cancelled scans should leave saved pairing and collection intact.
 
-All 15 portable runs passed, including decoder → coordinator → SQLite import, BLE trend deduplication, separate coarse history, repeat scans and reopen. A final focused rerun passed the history-index and fresh-calibration checks; simulator compilation passed too. Actual NFC tag delivery and simultaneous BLE reception remain this phone check.
+All 15 portable runs passed, including decoder → coordinator → SQLite import, BLE trend deduplication, separate coarse history, repeat scans and reopen. A final focused rerun passed the history-index and fresh-calibration checks; simulator compilation passed too. The first phone export confirms NFC delivery/import and continued BLE reception afterward. It does not independently verify glucose values or quarter-hour ring timing against a reference.
 
 ## Completed device observations
 
-All observations below are from one non-Plus `7F` on iOS 18.7.8, app `1.0.6 (1)`, during 10–11 September 2026.
+All observations below are from one non-Plus `7F` on iOS 18.7.8, app `1.0.6 (1)`, during 10–12 September 2026 (local time).
 
 | Check | Observed result |
 | --- | --- |
 | NFC setup | Initial two attempts lost the tag at the empty `A1` patch query. A later scan read/validated all 344 FRAM bytes and enabled streaming on first read attempts. |
+| NFC history backfill | The first read-only history scan read and validated all 344 FRAM bytes, decoded 16 trend and 32 history samples, and reported 38 new readings with 0 skipped across roughly eight hours. No streaming-enable command was sent. A subsequent export showed verified/committed BLE frames advancing from 2 to 3, an empty queue and zero frame rejections/discards. Repeat-scan deduplication and NFC-history retention after relaunch remain unchecked on device. |
 | Foreground BLE | `FDE3`/`F001`/`F002`, subscription and counter-1 unlock succeeded. Frames arrived in `20 + 18 + 8` fragments; the first two passed CRC 59 seconds apart. A continuation reached 28/28 valid frames over 27m 1s, with 58–62s intervals. |
 | Locked reception | Five frames during a 5m 11s locked interval, spaced 62, 60, 59 and 60 seconds; no logged disconnect, additional unlock or CRC failure. The full 27-minute continuation was not all confirmed locked time. |
 | Restoration | One `willRestoreState` callback restored the saved peripheral/calibration without NFC, reserved counter 2 once and received three valid frames. |
