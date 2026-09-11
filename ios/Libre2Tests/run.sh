@@ -35,8 +35,7 @@ compile_production_decoder() {
     "$root/ios/GlucoScope/Persistence/ReadingStoreTypes.swift" \
     "$root/ios/Libre2Tests/ProductionDecoderSmoke.swift"
 }
-# Compile and execute the ordinary source shape with no engineering evaluation API.
-# This is the same closed qualification gate compiled into the app.
+# Compile and execute the ordinary checked development source shape with no fixture API.
 compile_production_decoder -o "$tmp/libre2-production-gate-smoke"
 "$tmp/libre2-production-gate-smoke"
 # Compile the deterministic engineering seam only into this portable executable.
@@ -137,7 +136,7 @@ compile_ordered_ingestion() {
     "$smoke" \
     -o "$output"
 }
-# The ordinary adapter source shape keeps the production qualification gate closed.
+# The ordinary adapter source shape persists checked development readings.
 compile_ordered_ingestion \
   "$tmp/libre2-candidate-adapter-gate-smoke" \
   "$root/ios/Libre2Tests/CandidateAdapterSmoke.swift"

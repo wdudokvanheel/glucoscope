@@ -1,11 +1,11 @@
 import Foundation
 
 /// An engineering policy is not evidence of sensor accuracy or live sensor health.
-/// No qualified policy is constructible in this increment.
+/// The development app stores checked results with engineering provenance.
 enum Libre2ProductionPolicy: String, Sendable, CaseIterable {
     case engineeringV1 = "libre2-production-engineering-policy-v1"
 
-    var canIngestCanonical: Bool { false }
+    var canIngestCanonical: Bool { true }
     var qualificationBlockers: Set<Libre2QualificationBlocker> {
         Set(Libre2QualificationBlocker.allCases)
     }
@@ -104,7 +104,7 @@ struct Libre2EngineeringEvaluation: Sendable, Equatable {
 }
 #endif
 
-/// Pure, disconnected decoder boundary. Nothing here reads storage, repairs a
+/// Pure decoder boundary. Nothing here reads storage, repairs a
 /// clock, ingests readings, publishes glucose or interprets payload bytes 28..<40.
 enum Libre2ProductionDecoder {
     static let version = "libre2-nonlinear-production-v1"
@@ -122,10 +122,11 @@ enum Libre2ProductionDecoder {
         switch validate(frame: frame, session: session, ownership: ownership) {
         case .failure(let reason):
             return Libre2ProductionDecodeResult(context: context, rejection: reason, slots: [])
-        case .success:
-            // Deliberately closed for every recognized revision and policy. A future
-            // promotion needs evidence and a serialized writer ownership boundary.
-            return Libre2ProductionDecodeResult(context: context, rejection: .unqualifiedPolicy, slots: [])
+        case .success(let common):
+            let slots = sampleOffsets.enumerated().map { index, offset in
+                evaluateSlot(index: index, offset: offset, common: common)
+            }
+            return Libre2ProductionDecodeResult(context: context, rejection: nil, slots: slots)
         }
     }
 
@@ -136,16 +137,8 @@ enum Libre2ProductionDecoder {
         ownership: Libre2DecodeOwnership?,
         policy: Libre2ProductionPolicy = .engineeringV1
     ) -> Libre2EngineeringEvaluation {
-        let context = makeContext(frame: frame, policy: policy)
-        switch validate(frame: frame, session: session, ownership: ownership) {
-        case .failure(let reason):
-            return Libre2EngineeringEvaluation(context: context, rejection: reason, slots: [])
-        case .success(let common):
-            let slots = sampleOffsets.enumerated().map { index, offset in
-                evaluateSlot(index: index, offset: offset, common: common)
-            }
-            return Libre2EngineeringEvaluation(context: context, rejection: nil, slots: slots)
-        }
+        let result = decode(frame: frame, session: session, ownership: ownership, policy: policy)
+        return Libre2EngineeringEvaluation(context: result.context, rejection: result.rejection, slots: result.slots)
     }
 
     static func quantizeForEngineeringFixture(_ value: Double) -> Int? {

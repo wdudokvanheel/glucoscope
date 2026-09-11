@@ -84,7 +84,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         let formatter = ISO8601DateFormatter()
         let header = [
             "GlucoScope Libre 2 diagnostics",
-            "Diagnostics revision: v9 runtime ordered ingestion",
+            "Diagnostics revision: v10 saved experimental readings",
             "App: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"))",
             "Device: \(UIDevice.current.model), iOS \(UIDevice.current.systemVersion)",
             "Exported: \(formatter.string(from: Date()))",
@@ -92,7 +92,8 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             "Bluetooth: \(bluetoothState)",
             "Storage: \(collectionStatus.summary)",
             "Storage operation: \(collectionStatus.operation) at \(formatter.string(from: collectionStatus.updatedAt))",
-            "Canonical ingestion: blocked by unqualified decoder policy; uncommitted candidates: \(collectionStatus.droppedCandidateCount)",
+            "Local ingestion: enabled; experimental engineering values; uncommitted candidates: \(collectionStatus.droppedCandidateCount)",
+            "Saved reading display: \(collectionStatus.savedReadingsStatus)",
             "Ingestion queue: \(collectionStatus.queuedFrames)/\(LibreOrderedIngestion.capacity) frames",
             "Committed frames: \(collectionStatus.completedFrames); decode-rejected frames: \(collectionStatus.rejectedFrames); undecoded discarded frames: \(collectionStatus.discardedFrames)",
             "Stale or out-of-order frames rejected: \(collectionStatus.staleFrameCount)",

@@ -7,7 +7,7 @@ struct TransportHandoffSmoke {
     static let epoch = Date(timeIntervalSince1970: 1_700_000_000)
 
     static func main() async throws {
-        try ordinaryDecoderRemainsClosed()
+        try ordinaryDecoderProducesCheckedOutcomes()
         #if LIBRE2_TRANSPORT_HANDOFF_FIXTURES && LIBRE2_ORDERED_INGESTION_FIXTURES
         try await offerPrecedesDiagnosticCapture()
         try await rejectedCompletedFramesRetainNoBody()
@@ -17,11 +17,11 @@ struct TransportHandoffSmoke {
         try await lifecyclePurgesQueueAndRevokesDiagnostics()
         print("Libre transport handoff checks passed (synthetic, disconnected; driver integration unverified).")
         #else
-        print("Libre transport handoff ordinary source shape passed; production decoder remains closed.")
+        print("Libre transport handoff ordinary source shape passed with checked development decoding.")
         #endif
     }
 
-    static func ordinaryDecoderRemainsClosed() throws {
+    static func ordinaryDecoderProducesCheckedOutcomes() throws {
         let sensor = try session()
         let gate = LibreFrameGenerationGate()
         let generation = gate.activate(session: sensor, persistenceSessionID: sensor.persistenceSessionID)
@@ -49,10 +49,10 @@ struct TransportHandoffSmoke {
                 persistenceSessionID: sensor.persistenceSessionID
             )
         )
-        try expect(decoded.rejection == .unqualifiedPolicy && decoded.slots.isEmpty,
-                   "ordinary production decoder emits zero canonical slots")
-        try expect(!Libre2ProductionPolicy.engineeringV1.canIngestCanonical,
-                   "engineering policy remains closed")
+        try expect(decoded.rejection == nil && decoded.slots.count == 7,
+                   "ordinary development decoder emits seven checked slot outcomes")
+        try expect(Libre2ProductionPolicy.engineeringV1.canIngestCanonical,
+                   "engineering policy enables local development ingestion")
     }
 
     #if LIBRE2_TRANSPORT_HANDOFF_FIXTURES && LIBRE2_ORDERED_INGESTION_FIXTURES

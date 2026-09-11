@@ -16,8 +16,7 @@ struct LibreDiagnosticsView: View {
                 instructionsSection
                 connectionSection
                 storageSection
-                storageProbeSection
-                lockedStorageProbeSection
+                savedReadingsSection
                 sensorSection
                 experimentalGlucoseSection
                 controlsSection
@@ -25,6 +24,8 @@ struct LibreDiagnosticsView: View {
                 frameSection
                 logSection
                 diagnosticsSection
+                storageProbeSection
+                lockedStorageProbeSection
             }
             .navigationTitle("Libre 2 Diagnostics")
             .navigationBarTitleDisplayMode(.inline)
@@ -93,8 +94,8 @@ struct LibreDiagnosticsView: View {
 
     private var instructionsSection: some View {
         Section {
-            Text("For the locked-device storage check, use a passcode-enabled iPhone and keep the sensor with its existing reader. If Collection requested is Enabled, tap Stop connection first. Arm the isolated probe, immediately press the side button, leave it locked for about 20 seconds, then unlock and export diagnostics before closing the app.")
-            Text("Sensor setup and experimental glucose remain separate diagnostic tools. Their calculated values are transient and have not been validated as clinical readings.")
+            Text("The collector uses the saved sensor connection. Incoming valid readings are saved on this device and loaded again after relaunch.")
+            Text("Values are experimental development data. Saved readings appear below; diagnostic details and optional storage probes are further down.")
                 .foregroundStyle(.secondary)
         } header: {
             Text("Before you start")
@@ -147,7 +148,7 @@ struct LibreDiagnosticsView: View {
         } header: {
             Text("Experimental glucose")
         } footer: {
-            Text("Calculated samples are shown only in this diagnostic screen and export. They are not saved, graphed or uploaded as readings.")
+            Text("This section shows the latest frame calculation. The Saved experimental readings section shows values actually committed to local storage after ingestion checks.")
         }
     }
 
@@ -175,10 +176,37 @@ struct LibreDiagnosticsView: View {
             Text(coordinator.collectionStatus.summary)
                 .foregroundStyle(.secondary)
             statusRow("Queued frames", value: "\(coordinator.collectionStatus.queuedFrames)/\(LibreOrderedIngestion.capacity)")
+            statusRow("Committed frames", value: coordinator.collectionStatus.completedFrames.formatted())
             statusRow("Decode-rejected frames", value: coordinator.collectionStatus.rejectedFrames.formatted())
             statusRow("Discarded before decode", value: coordinator.collectionStatus.discardedFrames.formatted())
             statusRow("Stale frames rejected", value: coordinator.collectionStatus.staleFrameCount.formatted())
-            Text("Saving readings is disabled by the decoder qualification policy. Incoming frames now pass through the local ingestion worker; experimental glucose remains transient.")
+            Text("Experimental readings are saved on this device with their sensor timestamps.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var savedReadingsSection: some View {
+        Section("Saved experimental readings") {
+            Text(coordinator.collectionStatus.savedReadingsStatus)
+                .foregroundStyle(.secondary)
+            ForEach(coordinator.collectionStatus.recentReadings, id: \.id) { reading in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(reading.sampleDate, format: .dateTime.month(.abbreviated).day().hour().minute())
+                        Text(reading.primaryOrigin == .bleLive ? "Sensor sample" : "Recovered sensor sample")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text(String(format: "%.1f mmol/L", Double(reading.glucoseMGDL) / 18.0182))
+                        .monospacedDigit()
+                    Text("\(reading.glucoseMGDL) mg/dL")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Text("Read from local storage and restored after relaunch. Experimental values; no glucose uploads are running.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

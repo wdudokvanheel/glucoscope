@@ -1,7 +1,7 @@
 import Foundation
 
 /// One ordinary-source runtime route: composition -> transport handoff -> ordered
-/// ingestion -> production decoder. No decoder, adapter, queue, or writer fixture
+/// ingestion -> checked development decoder -> SQLite. No decoder, adapter, queue, or writer fixture
 /// flags are enabled for this executable.
 @main
 @MainActor
@@ -19,19 +19,7 @@ struct CollectionCoordinatorSmoke {
         let store = ReadingStore(configuration: .init(storage: .sqlite(
             url: directory.appendingPathComponent("readings.sqlite")
         )))
-        let bridge = LibrePersistenceBridge(dependencies: .init(
-            loadForIngestion: { _ in throw Failure("runtime candidate route touched Keychain") },
-            restoreMissingClockAnchor: { _, _ in throw Failure("runtime candidate route repaired Keychain") },
-            resolveSessionMetadata: { _ in throw Failure("runtime candidate route used the retired metadata writer") },
-            querySessionMetadata: { id, fingerprint, revision in
-                try await store.sessionMetadata(
-                    id: id, stableIdentityFingerprint: fingerprint, sensorRevision: revision
-                )
-            },
-            openStore: { try await store.load() },
-            retryStoreAfterFailure: { _ = try await store.retryAfterFailure() },
-            currentStoreHealth: { await store.currentHealth() }
-        ))
+        let bridge = makeBridge(for: store)
         let gate = LibreFrameGenerationGate()
         var reported: [LibreCollectionCoordinator.Status] = []
         let coordinator = LibreCollectionCoordinator(
@@ -62,29 +50,38 @@ struct CollectionCoordinatorSmoke {
         try expect(firstAccepted, "runtime handoff did not synchronously reserve the first frame")
         try await waitUntilIdle(coordinator.ingestion)
         var queue = coordinator.ingestion.snapshot
-        try expect(queue.rejectedWholeFrames == 1 && queue.completedFrames == 0 &&
+        try expect(queue.completedFrames == 1 && queue.rejectedWholeFrames == 0 &&
                    queue.lastOfferedSequence != nil,
-                   "actual runtime route did not reach the ordinary closed production decoder")
+                   "actual runtime route did not commit the first checked frame")
 
         let secondAccepted = producer.sync {
             handoff.completeFrame(
                 raw: rawFrame(marker: 0x22),
-                verifiedPayload: payload(minute: 1_002, glucose: 1_100),
+                verifiedPayload: payload(minute: 1_002, glucose: 1_000),
                 receivedAt: epoch.addingTimeInterval(60)
             )
         }
         try expect(secondAccepted, "runtime handoff did not reserve the overlapping frame")
         try await waitUntilIdle(coordinator.ingestion)
         queue = coordinator.ingestion.snapshot
-        try expect(queue.rejectedWholeFrames == 2 && queue.completedFrames == 0,
-                   "both real ordered frames must reach the closed decoder exactly once")
-        try await eventually { coordinator.status.rejectedFrames == 2 }
-        try expect(reported.last?.rejectedFrames == 2,
+        try expect(queue.completedFrames == 2 && queue.rejectedWholeFrames == 0,
+                   "both real ordered frames must commit exactly once")
+        try await eventually { coordinator.status.completedFrames == 2 && !coordinator.isWorking }
+        try expect(reported.last?.completedFrames == 2 && reported.last?.rejectedFrames == 0,
                    "coalesced runtime state did not reach the coordinator status callback")
 
-        let empty = try await store.snapshot()
-        try expect(empty.sessions.isEmpty && empty.readings.isEmpty && empty.deliveries.isEmpty,
-                   "closed decoder route must not write candidate metadata or readings")
+        let committed = try await store.snapshot()
+        let expectedMinutes: [Int64] = [985, 987, 988, 990, 993, 994, 995, 996, 998, 1_000, 1_002]
+        try expect(committed.sessions.count == 1 && committed.readings.map(\.sensorMinute) == expectedMinutes,
+                   "overlapping runtime frames did not converge to the expected sparse sample keys")
+        try expect(committed.readings.allSatisfy {
+            $0.glucoseMGDL == 112 && $0.quality == "engineeringChecksPassed-v1" &&
+            $0.decoderVersion == Libre2ProductionDecoder.version
+        }, "runtime rows lost checked development values or provenance")
+        try expect(committed.deliveries.count == expectedMinutes.count && committed.conflicts.isEmpty,
+                   "same-value overlap must retain one delivery per reading with no conflicts")
+        try expect(coordinator.status.recentReadings == Array(committed.readings.reversed()),
+                   "runtime UI status did not read its newest values back from SQLite")
 
         producer.sync { handoff.invalidate() }
         let acceptedAfterStop = producer.sync {
@@ -98,7 +95,33 @@ struct CollectionCoordinatorSmoke {
                    coordinator.ingestion.snapshot.retainedFrames == 0,
                    "synchronous stop must revoke ownership and purge runtime work before returning")
         try await store.close()
-        print("Libre runtime collector route reached the ordinary closed decoder; stop revocation passed.")
+
+        let reopened = ReadingStore(configuration: .init(storage: .sqlite(
+            url: directory.appendingPathComponent("readings.sqlite")
+        )))
+        try await reopened.load()
+        let restored = try await reopened.snapshot()
+        try expect(restored.readings == committed.readings && restored.deliveries == committed.deliveries,
+                   "SQLite reopen changed runtime reading IDs, values, timestamps, or delivery identity")
+        let recent = try await reopened.recentReadings(limit: 15)
+        try expect(recent == Array(committed.readings.reversed()),
+                   "store-backed current/history query did not return the durable newest-first rows")
+        let limited = try await reopened.recentReadings(limit: 2)
+        let none = try await reopened.recentReadings(limit: 0)
+        try expect(limited == Array(recent.prefix(2)) && none.isEmpty,
+                   "bounded stored-reading query did not honor its requested limit")
+
+        let relaunched = LibreCollectionCoordinator(
+            gate: LibreFrameGenerationGate(), readingStore: reopened, bridge: makeBridge(for: reopened)
+        )
+        relaunched.start()
+        try await eventually {
+            relaunched.status.recentReadings == recent && !relaunched.isWorking
+        }
+        try expect(relaunched.status.savedReadingsStatus == "Latest 11 saved readings",
+                   "fresh runtime composition did not publish reopened readings before any frame arrived")
+        try await reopened.close()
+        print("Libre runtime collector persisted overlapping checked readings; stop and SQLite reopen passed.")
     }
 
     nonisolated static func waitUntilIdle(_ queue: LibreOrderedIngestion) async throws {
@@ -115,6 +138,29 @@ struct CollectionCoordinatorSmoke {
             guard ContinuousClock.now < deadline else { throw Failure("runtime status callback timed out") }
             await Task.yield()
         }
+    }
+
+    nonisolated static func makeBridge(for store: ReadingStore) -> LibrePersistenceBridge {
+        LibrePersistenceBridge(dependencies: .init(
+            loadForIngestion: { _ in throw Failure("runtime candidate route touched Keychain") },
+            restoreMissingClockAnchor: { _, _ in throw Failure("runtime candidate route repaired Keychain") },
+            resolveSessionMetadata: { _ in throw Failure("runtime candidate route used the retired metadata writer") },
+            querySessionMetadata: { id, fingerprint, revision in
+                try await store.sessionMetadata(
+                    id: id, stableIdentityFingerprint: fingerprint, sensorRevision: revision
+                )
+            },
+            openStore: {
+                switch await store.currentHealth() {
+                case .notLoaded: try await store.load()
+                case .healthy: break
+                case .unhealthy: _ = try await store.retryAfterFailure()
+                case .closed: throw ReadingStoreError.unavailable(.closed)
+                }
+            },
+            retryStoreAfterFailure: { _ = try await store.retryAfterFailure() },
+            currentStoreHealth: { await store.currentHealth() }
+        ))
     }
 
     nonisolated static func session() throws -> LibreSensorSession {

@@ -1,7 +1,7 @@
 import Foundation
 
-/// Collector candidate boundary. The ordinary entry point always invokes the
-/// closed production decoder; it has no caller-supplied decoder/result/policy.
+/// Collector candidate boundary. The entry point invokes the checked development
+/// decoder; it has no caller-supplied decoder results or diagnostic values.
 final class LibreCandidateAdapter: @unchecked Sendable {
     private let readingStore: ReadingStore
     private let bridge: LibrePersistenceBridge
@@ -165,9 +165,8 @@ final class LibreCandidateAdapter: @unchecked Sendable {
                                      canonicalSession: session, context: output.context, rejection: output.rejection,
                                      slots: output.slots.map(Slot.init))
                 permitsMapping = Libre2ProductionPolicy.engineeringV1.canIngestCanonical
-                // No qualified quality exists. Adding a qualified policy requires
-                // an explicit reviewed adapter change, never a caller-set string.
-                expectedQuality = ""
+                // Preserve engineering provenance in every saved development reading.
+                expectedQuality = "engineeringChecksPassed-v1"
             #if LIBRE2_CANDIDATE_ADAPTER_FIXTURES && LIBRE2_ENGINEERING_DECODER_FIXTURES
             case .fixture(let mutation):
                 let output = Libre2ProductionDecoder.evaluateEngineering(

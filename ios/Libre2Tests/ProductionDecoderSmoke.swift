@@ -1,7 +1,7 @@
 import Foundation
 
-/// Synthetic contract fixtures only. They exercise a decoder which is disconnected
-/// from storage, graphing and upload, and do not establish physical sensor accuracy.
+/// Synthetic contract fixtures only. They exercise the checked development decoder
+/// and do not establish physical sensor accuracy.
 @main
 struct ProductionDecoderSmoke {
     static let uid = Data([1, 2, 3, 4, 5, 6, 7, 8])
@@ -21,13 +21,13 @@ struct ProductionDecoderSmoke {
         let fixture = try makeFixture()
 
         let blockers = Libre2ProductionPolicy.engineeringV1.qualificationBlockers
-        try expect(!Libre2ProductionPolicy.engineeringV1.canIngestCanonical,
-                   "the only policy cannot authorize canonical ingestion")
+        try expect(Libre2ProductionPolicy.engineeringV1.canIngestCanonical,
+                   "the development policy authorizes checked local ingestion")
         try expect(blockers == Set(Libre2QualificationBlocker.allCases) && blockers.count == 4,
                    "all qualification blockers remain explicit")
         let canonical = decode(fixture)
-        try expect(canonical.rejection == .unqualifiedPolicy && canonical.slots.isEmpty,
-                   "a structurally valid frame remains closed at the canonical gate")
+        try expect(canonical.rejection == nil && canonical.slots.count == 7,
+                   "a structurally valid frame produces seven checked development outcomes")
         try expect(canonical.context.persistenceSessionID == wearID &&
                    canonical.context.generation == fixture.frame.generation &&
                    canonical.context.sequence == fixture.frame.sequence &&
@@ -38,15 +38,15 @@ struct ProductionDecoderSmoke {
 
         try wholeFrameRejections(fixture)
         try immutableOwnershipAndSlices(fixture)
-        try recognizedRevisionsRemainUnqualified()
+        try recognizedRevisionsDecode()
 
 #if LIBRE2_ENGINEERING_DECODER_FIXTURES
         try slotOutcomesAndIndependentMath()
         try dateAndMinuteBoundaries()
         try roundingBoundaries()
-        print("Libre 2 production decoder normal gate and engineering fixtures passed (not accuracy validation).")
+        print("Libre 2 checked development decoder and engineering fixtures passed (not accuracy validation).")
 #else
-        print("Libre 2 production decoder canonical gate passed with engineering seam excluded.")
+        print("Libre 2 checked development decoder passed with engineering seam excluded.")
 #endif
     }
 
@@ -214,14 +214,14 @@ struct ProductionDecoderSmoke {
         sourcePayload[0] ^= 1
         sourceSession.patchInfo[0] = 0xC5
         let immutable = Fixture(frame: ownedFrame, session: valid.session, ownership: owned)
-        try expect(decode(immutable).rejection == .unqualifiedPolicy && ownedFrame.payload != sourcePayload &&
+        try expect(decode(immutable).rejection == nil && ownedFrame.payload != sourcePayload &&
                    ownedFrame.sessionSnapshot != sourceSession,
                    "frame owns payload and session values independently of later mutation")
 
         let prefixedPayload = Data([0xFF]) + valid.frame.payload
         let slicedPayload = prefixedPayload.dropFirst()
         let slicedPayloadFrame = copiedFrame(valid.frame, payload: slicedPayload)
-        try expect(decode(reown(slicedPayloadFrame, session: valid.session)).rejection == .unqualifiedPolicy,
+        try expect(decode(reown(slicedPayloadFrame, session: valid.session)).rejection == nil,
                    "sliced payload indices are normalized")
 
         var slicedSession = valid.frame.sessionSnapshot
@@ -230,15 +230,16 @@ struct ProductionDecoderSmoke {
         slicedSession.uid = prefixedUID.dropFirst()
         slicedSession.patchInfo = prefixedPatch.dropFirst()
         let slicedMetadataFrame = copiedFrame(valid.frame, sessionSnapshot: slicedSession)
-        try expect(decode(reown(slicedMetadataFrame, session: valid.session)).rejection == .unqualifiedPolicy,
+        try expect(decode(reown(slicedMetadataFrame, session: valid.session)).rejection == nil,
                    "sliced UID and patch metadata are normalized before fixed indexing")
     }
 
-    static func recognizedRevisionsRemainUnqualified() throws {
+    static func recognizedRevisionsDecode() throws {
         for patch in [Data([0x9D, 0, 0, 0, 0, 0]), Data([0xC5, 0, 0, 0, 0, 0]), patch7F] {
             let fixture = try makeFixture(patch: patch)
-            try expect(decode(fixture).rejection == .unqualifiedPolicy,
-                       "recognized revision \(patch[0]) has no qualified canonical policy")
+            let result = decode(fixture)
+            try expect(result.rejection == nil && result.slots.count == 7,
+                       "recognized revision \(patch[0]) decodes for development storage")
         }
     }
 

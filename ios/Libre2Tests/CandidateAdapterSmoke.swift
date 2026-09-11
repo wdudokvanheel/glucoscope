@@ -16,7 +16,7 @@ struct CandidateAdapterSmoke {
     }
 
     static func main() async throws {
-        try await ordinaryClosedBoundary()
+        try await ordinaryDevelopmentBoundary()
         #if LIBRE2_CANDIDATE_ADAPTER_FIXTURES && LIBRE2_ENGINEERING_DECODER_FIXTURES && LIBRE2_ORDERED_INGESTION_FIXTURES
         try await mappingAndDuplicates()
         try await orderedReversedMinutesAndConflicts()
@@ -28,9 +28,9 @@ struct CandidateAdapterSmoke {
         #if LIBRE2_COMMIT_OWNERSHIP_FIXTURES
         try await guardedRevocation()
         #endif
-        print("Libre candidate adapter fixture mapping/guarded persistence passed; production policy remains closed.")
-        #else
-        print("Libre candidate adapter ordinary closed source shape passed with zero candidate metadata/readings.")
+        print("Libre candidate adapter fixture mapping/guarded persistence passed with development ingestion enabled.")
+#else
+        print("Libre candidate adapter ordinary development source persisted checked readings.")
         #endif
     }
 
@@ -66,7 +66,7 @@ struct CandidateAdapterSmoke {
         return Rig(gate: gate, frame: frame, store: store, adapter: adapter, faults: faults)
     }
 
-    static func ordinaryClosedBoundary() async throws {
+    static func ordinaryDevelopmentBoundary() async throws {
         let rig = try await rig()
         let queue = LibreOrderedIngestion(adapter: rig.adapter, gate: rig.gate)
         queue.start()
@@ -74,10 +74,16 @@ struct CandidateAdapterSmoke {
         try expect(queue.snapshot.state == .ready, "ordinary fixed adapter opens queue")
         try expect(queue.offer(rig.frame), "ordinary queue accepts current frame")
         try await waitIdle(queue)
-        try expect(queue.snapshot.rejectedWholeFrames == 1 && queue.snapshot.completedFrames == 0,
-                   "normal decoder stays unqualified even when fixture flags are present")
-        try await expectEmpty(rig.store, "ordinary decode must not persist candidate-path metadata")
-        try expect(!Libre2ProductionPolicy.engineeringV1.canIngestCanonical, "production policy cannot promote")
+        try expect(queue.snapshot.completedFrames == 1 && queue.snapshot.rejectedWholeFrames == 0,
+                   "ordinary checked decoder completes through the guarded writer")
+        let snapshot = try await rig.store.snapshot()
+        try expect(snapshot.sessions.count == 1 && snapshot.readings.count == 7 &&
+                   snapshot.deliveries.count == 7 && snapshot.readings.allSatisfy {
+                       $0.quality == "engineeringChecksPassed-v1" &&
+                       $0.decoderVersion == Libre2ProductionDecoder.version
+                   }, "ordinary development source persists checked readings with provenance")
+        try expect(Libre2ProductionPolicy.engineeringV1.canIngestCanonical,
+                   "development policy enables local ingestion")
     }
 
     static func waitIdle(_ queue: LibreOrderedIngestion) async throws {

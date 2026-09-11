@@ -552,6 +552,29 @@ public actor ReadingStore {
     }
     #endif
 
+    /// Bounded newest-first rows for the development app's local reading display.
+    public func recentReadings(limit: Int = 15) async throws -> [StoredReadingSnapshot] {
+        try ensureHealthy()
+        guard let context = writerContext else {
+            throw ReadingStoreError.unavailable(health)
+        }
+        let boundedLimit = max(0, min(100, limit))
+        guard boundedLimit > 0 else { return [] }
+        do {
+            return try Self.perform(on: context) {
+                let request = NSFetchRequest<NSManagedObject>(entityName: ReadingStoreEntity.reading)
+                request.fetchLimit = boundedLimit
+                request.sortDescriptors = [
+                    NSSortDescriptor(key: "sampleDate", ascending: false),
+                    NSSortDescriptor(key: "sampleKind", ascending: true)
+                ]
+                return try context.fetch(request).map(Self.makeReadingSnapshot)
+            }
+        } catch {
+            throw markUnhealthy(operation: .query, error: error, dropped: 0)
+        }
+    }
+
     public func snapshot() async throws -> ReadingStoreSnapshot {
         guard let context = writerContext else {
             throw ReadingStoreError.unavailable(health)
