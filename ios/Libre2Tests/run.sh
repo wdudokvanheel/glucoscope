@@ -22,6 +22,26 @@ swiftc \
   "$root/ios/Libre2Tests/DiagnosticDecoderSmoke.swift" \
   -o "$tmp/libre2-decoder-smoke"
 "$tmp/libre2-decoder-smoke"
+compile_production_decoder() {
+  swiftc "$@" \
+    "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+    "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
+    "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
+    "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
+    "$root/ios/GlucoScope/Sensor/Libre2/LibreVerifiedFrame.swift" \
+    "$root/ios/GlucoScope/Sensor/Libre2/Libre2DiagnosticDecoder.swift" \
+    "$root/ios/GlucoScope/Sensor/Libre2/Libre2ProductionDecoder.swift" \
+    "$root/ios/GlucoScope/Persistence/ReadingStoreTypes.swift" \
+    "$root/ios/Libre2Tests/ProductionDecoderSmoke.swift"
+}
+# Compile and execute the ordinary source shape with no engineering evaluation API.
+# This is the same closed qualification gate compiled into the app.
+compile_production_decoder -o "$tmp/libre2-production-gate-smoke"
+"$tmp/libre2-production-gate-smoke"
+# Compile the deterministic engineering seam only into this portable executable.
+compile_production_decoder -D LIBRE2_ENGINEERING_DECODER_FIXTURES \
+  -o "$tmp/libre2-production-engineering-smoke"
+"$tmp/libre2-production-engineering-smoke"
 swiftc \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \

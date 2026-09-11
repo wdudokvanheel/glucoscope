@@ -87,6 +87,7 @@
 		BB2000000000000000000012 /* LibreCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000012 /* LibreCollectionCoordinator.swift */; };
 		BB2000000000000000000013 /* LibrePersistenceBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000013 /* LibrePersistenceBridge.swift */; };
 		BB2000000000000000000014 /* LibreStorageProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000014 /* LibreStorageProbe.swift */; };
+		BB2000000000000000000015 /* Libre2ProductionDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000015 /* Libre2ProductionDecoder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -171,6 +172,7 @@
 		BB1000000000000000000012 /* LibreCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreCollectionCoordinator.swift; sourceTree = "<group>"; };
 		BB1000000000000000000013 /* LibrePersistenceBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibrePersistenceBridge.swift; sourceTree = "<group>"; };
 		BB1000000000000000000014 /* LibreStorageProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreStorageProbe.swift; sourceTree = "<group>"; };
+		BB1000000000000000000015 /* Libre2ProductionDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2ProductionDecoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -291,6 +293,7 @@
 				BB1000000000000000000002 /* LibreSensorSession.swift */,
 				BB100000000000000000000B /* LibreCalibration.swift */,
 				BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */,
+				BB1000000000000000000015 /* Libre2ProductionDecoder.swift */,
 				BB100000000000000000000D /* LibreSensorClockAnchor.swift */,
 				BB1000000000000000000011 /* LibreVerifiedFrame.swift */,
 				BB1000000000000000000012 /* LibreCollectionCoordinator.swift */,
@@ -481,6 +484,7 @@
 				BB2000000000000000000002 /* LibreSensorSession.swift in Sources */,
 				BB200000000000000000000B /* LibreCalibration.swift in Sources */,
 				BB200000000000000000000C /* Libre2DiagnosticDecoder.swift in Sources */,
+				BB2000000000000000000015 /* Libre2ProductionDecoder.swift in Sources */,
 				BB200000000000000000000D /* LibreSensorClockAnchor.swift in Sources */,
 				BB2000000000000000000011 /* LibreVerifiedFrame.swift in Sources */,
 				BB2000000000000000000012 /* LibreCollectionCoordinator.swift in Sources */,
