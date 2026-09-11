@@ -252,7 +252,9 @@ enum Libre2ProductionDecoder {
         guard interval.isFinite, seconds.isFinite, storeDateRange.contains(seconds) else {
             return rejected(.invalidSampleDate)
         }
-        let timestamp = Date(timeIntervalSince1970: seconds)
+        // Match the canonical clock and writer without an epoch conversion that
+        // can round away subsecond precision from an NFC capture's Date().
+        let timestamp = common.clock.referenceDate.addingTimeInterval(interval)
         guard usableDate(timestamp) else { return rejected(.invalidSampleDate) }
         let start = index * 4
         let bytes = common.bytes

@@ -291,7 +291,6 @@ final class LibreCandidateAdapter: @unchecked Sendable {
                 guard !delta.overflow else { throw AdapterInvariant() }
                 let seconds = session.clock.referenceDate.timeIntervalSince1970 + Double(delta.partialValue) * 60
                 guard seconds.isFinite, (946_684_800...4_102_444_800).contains(seconds),
-                      slot.timestamp == Date(timeIntervalSince1970: seconds),
                       slot.timestamp == session.clock.referenceDate.addingTimeInterval(
                         Double(delta.partialValue) * 60
                       ) else { throw AdapterInvariant() }

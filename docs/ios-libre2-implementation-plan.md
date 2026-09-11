@@ -50,7 +50,9 @@ For the custom backend, uploads will require authenticated writes and server sta
 
 [Testing instructions and device observations](libre2-ble-testing.md) are the single record of completed physical checks. One `7F` has streamed in foreground and during a short locked-screen interval, recovered one pending connection, and retained a stable clock across calibration capture and relaunch. Two user-reported values matched the reference's preceding-minute display; no timestamp-matched accuracy dataset exists. The user is currently using their usual reader, so no collector switch is needed for software work.
 
-The local-saving change (`fe91b37`) passed all 14 portable runs and an unsigned iPhone 16 / iOS 18.5 simulator Debug build under Xcode 26.2. The runtime test saved two overlapping frames as 11 unique readings and delivery rows, stopped collection, reopened SQLite with stable IDs/values/timestamps, and loaded saved values in a fresh coordinator before new packets. The build's only warning was the existing AppIntents skip because that framework is absent. No phone run of this change has been completed.
+The local-saving change (`fe91b37`) passed all 14 portable runs and an unsigned iPhone 16 / iOS 18.5 simulator Debug build under Xcode 26.2. The runtime test saved two overlapping frames as 11 unique readings and delivery rows, stopped collection, reopened SQLite with stable IDs/values/timestamps, and loaded saved values in a fresh coordinator before new packets. The build's only warning was the existing AppIntents skip because that framework is absent. Initial validation was software-only.
+
+The first v10 phone run exposed a fractional-timestamp comparison bug. v11 uses the same `Date` arithmetic in decoding, adapter checks and storage. The regression fails on the old code and passes with the fix; all 14 portable tests and the unsigned simulator Debug build pass. The user reports that frames now commit; the phone relaunch check remains.
 
 ```sh
 ./ios/Libre2Tests/run.sh

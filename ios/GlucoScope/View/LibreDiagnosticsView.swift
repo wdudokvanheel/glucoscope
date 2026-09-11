@@ -178,7 +178,7 @@ struct LibreDiagnosticsView: View {
             statusRow("Queued frames", value: "\(coordinator.collectionStatus.queuedFrames)/\(LibreOrderedIngestion.capacity)")
             statusRow("Committed frames", value: coordinator.collectionStatus.completedFrames.formatted())
             statusRow("Decode-rejected frames", value: coordinator.collectionStatus.rejectedFrames.formatted())
-            statusRow("Discarded before decode", value: coordinator.collectionStatus.discardedFrames.formatted())
+            statusRow("Discarded frames", value: coordinator.collectionStatus.discardedFrames.formatted())
             statusRow("Stale frames rejected", value: coordinator.collectionStatus.staleFrameCount.formatted())
             Text("Experimental readings are saved on this device with their sensor timestamps.")
                 .font(.caption)

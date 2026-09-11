@@ -6,7 +6,9 @@ import Foundation
 @main
 @MainActor
 struct CollectionCoordinatorSmoke {
-    nonisolated static let epoch = Date(timeIntervalSince1970: 1_700_000_000)
+    // This captured-at value cannot round-trip through Unix epoch arithmetic
+    // without moving by one representable Date instant.
+    nonisolated static let epoch = Date(timeIntervalSinceReferenceDate: 810_000_000.1234568)
     nonisolated static let uid = Data([1, 2, 3, 4, 5, 6, 7, 8])
     nonisolated static let patch = Data([0x7F, 0, 0, 0, 0, 0])
 
@@ -52,7 +54,23 @@ struct CollectionCoordinatorSmoke {
         var queue = coordinator.ingestion.snapshot
         try expect(queue.completedFrames == 1 && queue.rejectedWholeFrames == 0 &&
                    queue.lastOfferedSequence != nil,
-                   "actual runtime route did not commit the first checked frame")
+                   "fractional-clock runtime route did not commit the first checked frame")
+
+        let duplicateAccepted = producer.sync {
+            handoff.completeFrame(
+                raw: rawFrame(marker: 0x12),
+                verifiedPayload: payload(minute: 1_000, glucose: 1_000),
+                receivedAt: epoch
+            )
+        }
+        try expect(duplicateAccepted, "runtime handoff did not reserve the duplicate frame")
+        try await waitUntilIdle(coordinator.ingestion)
+        queue = coordinator.ingestion.snapshot
+        let afterDuplicate = try await store.snapshot()
+        try expect(queue.completedFrames == 2 && queue.rejectedWholeFrames == 0 &&
+                   afterDuplicate.readings.count == 7 && afterDuplicate.deliveries.count == 7 &&
+                   afterDuplicate.conflicts.isEmpty && afterDuplicate.publishedCommits.count == 1,
+                   "fractional-clock duplicate was not an idempotent completed frame")
 
         let secondAccepted = producer.sync {
             handoff.completeFrame(
@@ -64,10 +82,10 @@ struct CollectionCoordinatorSmoke {
         try expect(secondAccepted, "runtime handoff did not reserve the overlapping frame")
         try await waitUntilIdle(coordinator.ingestion)
         queue = coordinator.ingestion.snapshot
-        try expect(queue.completedFrames == 2 && queue.rejectedWholeFrames == 0,
-                   "both real ordered frames must commit exactly once")
-        try await eventually { coordinator.status.completedFrames == 2 && !coordinator.isWorking }
-        try expect(reported.last?.completedFrames == 2 && reported.last?.rejectedFrames == 0,
+        try expect(queue.completedFrames == 3 && queue.rejectedWholeFrames == 0,
+                   "all real ordered frames must complete exactly once")
+        try await eventually { coordinator.status.completedFrames == 3 && !coordinator.isWorking }
+        try expect(reported.last?.completedFrames == 3 && reported.last?.rejectedFrames == 0,
                    "coalesced runtime state did not reach the coordinator status callback")
 
         let committed = try await store.snapshot()
@@ -76,8 +94,9 @@ struct CollectionCoordinatorSmoke {
                    "overlapping runtime frames did not converge to the expected sparse sample keys")
         try expect(committed.readings.allSatisfy {
             $0.glucoseMGDL == 112 && $0.quality == "engineeringChecksPassed-v1" &&
-            $0.decoderVersion == Libre2ProductionDecoder.version
-        }, "runtime rows lost checked development values or provenance")
+            $0.decoderVersion == Libre2ProductionDecoder.version &&
+            $0.sampleDate == epoch.addingTimeInterval(Double($0.sensorMinute - 1_000) * 60)
+        }, "runtime rows lost checked values, provenance, or native anchor arithmetic")
         try expect(committed.deliveries.count == expectedMinutes.count && committed.conflicts.isEmpty,
                    "same-value overlap must retain one delivery per reading with no conflicts")
         try expect(coordinator.status.recentReadings == Array(committed.readings.reversed()),

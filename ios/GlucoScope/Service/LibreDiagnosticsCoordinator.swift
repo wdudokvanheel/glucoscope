@@ -84,7 +84,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         let formatter = ISO8601DateFormatter()
         let header = [
             "GlucoScope Libre 2 diagnostics",
-            "Diagnostics revision: v10 saved experimental readings",
+            "Diagnostics revision: v11 saved reading timestamp fix",
             "App: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"))",
             "Device: \(UIDevice.current.model), iOS \(UIDevice.current.systemVersion)",
             "Exported: \(formatter.string(from: Date()))",
@@ -95,7 +95,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             "Local ingestion: enabled; experimental engineering values; uncommitted candidates: \(collectionStatus.droppedCandidateCount)",
             "Saved reading display: \(collectionStatus.savedReadingsStatus)",
             "Ingestion queue: \(collectionStatus.queuedFrames)/\(LibreOrderedIngestion.capacity) frames",
-            "Committed frames: \(collectionStatus.completedFrames); decode-rejected frames: \(collectionStatus.rejectedFrames); undecoded discarded frames: \(collectionStatus.discardedFrames)",
+            "Committed frames: \(collectionStatus.completedFrames); decode-rejected frames: \(collectionStatus.rejectedFrames); discarded frames (sample count unknown): \(collectionStatus.discardedFrames)",
             "Stale or out-of-order frames rejected: \(collectionStatus.staleFrameCount)",
             "Last offered process sequence: \(collectionStatus.lastSequence.map(String.init) ?? "none")",
             "Storage probe: synthetic metadata only; isolated from production readings and delivery",
