@@ -1,6 +1,6 @@
 # EU Libre 2 connection diagnostic protocol
 
-This documents the implemented EU Libre 2 protocol, calibration and nonlinear conversion. NFC/BLE and diagnostic decoding have been exercised on one physical non-Plus `7F`. The ordinary checked decoder now feeds local reading storage; the detailed diagnostic decoder remains available for inspection. NFC history import and uploads are future work. See [current app work](ios-libre2-implementation-plan.md) and [device observations](libre2-ble-testing.md).
+This documents the implemented EU Libre 2 protocol, calibration and nonlinear conversion. NFC/BLE and diagnostic decoding have been exercised on one physical non-Plus `7F`. The ordinary checked decoder now feeds local reading storage; the detailed diagnostic decoder remains available for inspection. Read-only NFC history import now saves into that same store; uploads remain future work. See [current app work](ios-libre2-implementation-plan.md) and [device observations](libre2-ble-testing.md).
 
 ## Reference provenance
 
@@ -84,7 +84,13 @@ C(u2 + (patchWord4 XOR 0x0044) + i,
 
 XOR this eight-byte key with the encrypted block. For these EU revisions the same argument applies to header, body and footer; the reference's `0xCADC` branch is used by its separate US-family implementation, which is excluded here.
 
-Validate each plaintext section `0..<24`, `24..<320`, and `320..<344`. Its first two bytes contain `H` (defined above) little-endian, covering the remaining bytes in that section. Only after all three section checks pass may byte 4 be trusted as lifecycle state. Permit `02` (starting) and `03` (ready). Reject not started, expired, shutdown and unknown states before sending streaming enablement. Calibration capture now follows these integrity checks; importing history remains later work.
+Validate each plaintext section `0..<24`, `24..<320`, and `320..<344`. Its first two bytes contain `H` (defined above) little-endian, covering the remaining bytes in that section. Only after all three section checks pass may byte 4 be trusted as lifecycle state. Permit `02` (starting) and `03` (ready). Reject not started, expired, shutdown and unknown states before sending streaming enablement. Calibration capture and NFC history decoding follow these integrity checks.
+
+### NFC trend and history layout
+
+The independently implemented decoder reads the layout described by `Utilities/LibreDataParser.swift:49–59,69–81,111–145,375–392` and `Utilities/LibreMeasurement.swift:47–57` in the supplied reference (hashes above). FRAM byte 26 is the next write position in the 16-slot trend ring starting at byte 28; byte 27 is the next position in the 32-slot history ring starting at byte 124. Both rings use six-byte records, traversed backwards from the slot immediately before their cursor. Sensor age is the little-endian word at bytes 316–317. Within each record, least-significant-first bits 0–12 hold glucose, bits 24–37 hold temperature, bits 38–46 hold adjustment magnitude multiplied by four, and bit 47 gives its negative sign. These fields feed the same checked nonlinear conversion as BLE.
+
+Trend record `n` represents sensor minute `age - n`. History records are 15 minutes apart: with integer quotient `q = (age - 3) / 15`, the newest represents `15*q`, advanced by 15 when the history cursor differs from `q % 32`. This preserves the reference's correction for a cursor written before the age counter; for example, age 1007 with cursor 3 represents minute 1005. Any corrected sample after the reported age is rejected individually; other slots still decode. Samples before sensor start, during warmup, or outside the existing numeric/date checks are also individual rejections. Every date comes from the paired wear's original canonical anchor using `Date.addingTimeInterval`; receipt time never moves that anchor. Reference-derived ring timing has synthetic coverage but has not yet been checked against a physical history scan.
 
 ## BLE transport and frame integrity
 

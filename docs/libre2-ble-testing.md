@@ -28,6 +28,17 @@ When resuming development-phone collection:
 
 For failures, include app revision, iPhone/iOS, sensor revision, action, elapsed time and an export via [the diagnostics host](diagnostics-host.md). Keep private exports out of commits. A physical comparison is useful when corresponding reference samples are available; it is not needed to keep building the app.
 
+## NFC history check (pending on device)
+
+Use the new **Scan sensor for history (NFC)** action on the already paired sensor. This is a read-only memory scan: it does not re-enable streaming, reset pairing or change the saved clock.
+
+1. Keep the phone near the sensor until the NFC sheet finishes, then wait for the import result. Check the reported new-reading count, trend/history counts and oldest/newest sample dates.
+2. Confirm saved readings appear with their original sensor times. The scan provides up to 16 minute-resolution trend slots and 32 quarter-hour history slots; younger sensors and rejected/unwritten slots provide fewer.
+3. Scan again. Overlapping samples should add no duplicates; a sample produced between scans can add a new row. BLE reception should continue without a new unlock caused by the history scan.
+4. Relaunch and confirm saved history remains. Export diagnostics if the scan or import fails. Cancelled scans should leave saved pairing and collection intact.
+
+All 15 portable runs passed, including decoder → coordinator → SQLite import, BLE trend deduplication, separate coarse history, repeat scans and reopen. A final focused rerun passed the history-index and fresh-calibration checks; simulator compilation passed too. Actual NFC tag delivery and simultaneous BLE reception remain this phone check.
+
 ## Completed device observations
 
 All observations below are from one non-Plus `7F` on iOS 18.7.8, app `1.0.6 (1)`, during 10–11 September 2026.

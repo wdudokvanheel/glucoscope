@@ -1,6 +1,6 @@
 # iOS Libre 2 storage and ingestion
 
-`LibreCollectionCoordinator` owns the live route from BLE handoff through `LibreOrderedIngestion`, `LibreCandidateAdapter` and the existing `ReadingStore`. The ordinary checked decoder supplies local development readings. The diagnostics screen reloads the latest 15 saved readings on startup, completed frame processing and storage recovery. Graph integration and upload workers remain next app work.
+`LibreCollectionCoordinator` owns the live route from BLE handoff through `LibreOrderedIngestion`, `LibreCandidateAdapter` and the existing `ReadingStore`. The ordinary checked decoder supplies local development readings. The diagnostics screen reloads the latest 15 saved readings on startup, completed frame processing and storage recovery. A deliberate NFC history scan submits one decoded batch directly to the existing `ReadingStore`, sharing the established clock and sample-kind deduplication with BLE. Graph integration and upload workers remain next app work.
 
 ## Data flow
 
@@ -26,7 +26,7 @@ The iOS 16.4-compatible `NSPersistentContainer` uses SQLite in Application Suppo
 
 The existing delivery relationship supports a single required destination per reading. The confirmed product needs multiple independently tracked destinations; extend this when implementing uploads. Delivery states and payload storage alone do not constitute a running uploader.
 
-BLE live/recovery and future NFC trend use `.trend` and deduplicate together. NFC 15-minute history has a separate kind. Prefer trend in future graph queries when both cover the same minute. Preserve gaps and equal values at distinct minutes.
+BLE live/recovery and NFC trend use `.trend` and deduplicate together. NFC 15-minute history has a separate kind. Prefer trend in future graph queries when both cover the same minute. Preserve gaps and equal values at distinct minutes.
 
 For duplicates, integer glucose must match exactly and dates must agree within the configured tolerance (default one second). Agreement can merge origin flags. Conflicts preserve the first value, date, quality, decoder and frozen payload, and record a redacted diagnostic. This comparison tolerance is not an accuracy threshold.
 

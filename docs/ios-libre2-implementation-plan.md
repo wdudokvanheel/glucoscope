@@ -12,25 +12,26 @@ The BLE queue assembles and verifies frames, then offers their captured identity
 
 | Area | Implemented |
 | --- | --- |
-| NFC | EU sensor identity, 344-byte FRAM read/decrypt/CRC, calibration capture, streaming setup and read retries. Read-only calibration capture preserves pairing and the established clock. |
+| NFC | EU identity, 344-byte FRAM read/decrypt/CRC, calibration, streaming setup and retries. Read-only history scan decodes 16 trend/32 history slots into the existing store while preserving pairing and clock. |
 | BLE | `FDE3` / `F001` / `F002` discovery, persisted unlock counters, fragment assembly, decryption, CRC, restoration and pending reconnection. |
 | Decoder | Seven sparse slots, sensor-specific nonlinear conversion, ownership and date checks, per-slot rejection and integer mg/dL conversion. |
 | Local storage | Core Data SQLite, stable wear identity/clock, deduplication, atomic readings and delivery records, ordered ingestion and bounded work. |
 | Diagnostics | Connection/setup status, latest frames/calculations, storage status, saved readings, log export and local upload. |
 
-Connecting saved local readings to the existing graph, mode selection, standalone tabs, uploads, alarms, Live Activity and NFC history import still need implementation. Existing delivery records are storage groundwork; no upload worker runs yet. The current schema supports one required delivery row per reading; multiple destinations need that relationship extended when uploads are built.
+Connecting saved local readings to the existing graph, mode selection, standalone tabs, uploads, alarms and Live Activity still need implementation. NFC history import is implemented; its first phone scan remains pending. Existing delivery records are storage groundwork; no upload worker runs yet. The current schema supports one required delivery row per reading; multiple destinations need that relationship extended when uploads are built.
 
 ## Next app work
 
-**Next coding task:** connect a local `DataSource` to the existing graph and add Viewer/standalone mode selection. The user can run the phone check in parallel; coding does not need to wait for it.
+**Current progress:** NFC history backfill is implemented through the existing reading store; all 15 portable runs and simulator compilation passed; the first phone scan is pending. Graph integration, mode selection and other UI work come afterward. The user can run phone checks in parallel; coding does not need to wait for them.
 
 Workflow preference: use Sol/Astra child agents for implementation and testing; agents may compile, while the user owns app and physical-device runs.
 
-1. Exercise real BLE → saved readings during a short locked-screen interval. Inspect the saved timestamps and sparse overlap. The development database may be reset as needed.
-2. Connect a local `DataSource` to the existing graph and add Viewer/standalone selection. Preserve Viewer behavior and stop obsolete polling/results when switching sources. Collection and graphs must work with no server or credentials.
-3. Build first-time skippable onboarding, Sensor management, Stats and standalone Settings from [the app experience decisions](ios-ble-app-experience-plan.md). Resolve feature-specific open choices when implementing that feature.
-4. Add multiple upload destinations with independent queues and the agreed newest-first history controls. Implement and test each backend's actual write contract, including authentication, units, retries and duplicate handling.
-5. Add NFC history import, then alarms and Live Activity using saved readings and explicit reading age.
+1. Check the implemented NFC backfill on the phone using **Scan sensor for history (NFC)**. The scan preserves BLE pairing/collection and reports the number of new readings saved.
+2. Continue the separate locked-screen BLE saving check. Inspect timestamps and overlap; the development database may be reset as needed.
+3. Connect a local `DataSource` to the existing graph and add Viewer/standalone selection. Preserve Viewer behavior and stop obsolete polling/results when switching sources. Collection and graphs must work with no server or credentials.
+4. Build first-time skippable onboarding, Sensor management, Stats and standalone Settings from [the app experience decisions](ios-ble-app-experience-plan.md). Resolve feature-specific open choices when implementing that feature.
+5. Add multiple upload destinations with independent queues and the agreed newest-first history controls. Implement and test each backend's actual write contract, including authentication, units, retries and duplicate handling.
+6. Add alarms and Live Activity using saved readings and explicit reading age.
 
 Use the existing theme framework, SVG assets and graph components. Avoid adding more policy layers or separate ingestion modes to advance these tasks.
 
@@ -39,7 +40,7 @@ Use the existing theme framework, SVG assets and graph components. Avoid adding 
 - iOS 16.4+, one active already-activated EU Libre 2 sensor. Android and sensor activation/reset/lifetime extension are outside this work.
 - Parser support is EU `9D`, `C5` and non-Plus `7F`; physical testing so far covers one `7F`. Plus, US, Libre 1, Libre 3 and unknown patches are rejected.
 - Bluetooth packets carry offsets **0, 2, 4, 6, 7, 12, 15 minutes**. They recover only those slots; gaps stay visible.
-- Planned NFC backfill reads 16 recent trend slots and 32 history slots spaced 15 minutes apart, roughly eight hours subject to sensor age and available data. Use **Scan sensor for history (NFC)**; a BLE scan cannot download arbitrary history.
+- NFC backfill reads 16 recent trend slots and 32 history slots spaced 15 minutes apart, roughly eight hours subject to sensor age and available data. Use **Scan sensor for history (NFC)**; a BLE scan cannot download arbitrary history.
 - Keep full-resolution local history indefinitely while space permits. A year is a sizing benchmark, not a retention limit. A synthetic 28-day run (40,320 readings plus delivery rows) used 11.17 MB of closed SQLite storage, projecting roughly 150 MB/year plus WAL/OS overhead. This was a Mac test.
 - Mode switches and sensor replacement preserve local history and upload queues. Viewer pauses collection, standalone alarms/Live Activity and new upload requests; an in-flight upload may finish. Existing installations should enter Viewer on upgrade.
 - Future deletion is a deliberate user action showing the affected date range, count and pending deliveries. Storage errors should be visible, with no automatic database deletion.
@@ -49,6 +50,8 @@ For the custom backend, uploads will require authenticated writes and server sta
 ## Testing and observed results
 
 [Testing instructions and device observations](libre2-ble-testing.md) are the single record of completed physical checks. One `7F` has streamed in foreground and during a short locked-screen interval, recovered one pending connection, and retained a stable clock across calibration capture and relaunch. Two user-reported values matched the reference's preceding-minute display. Separately, the user reports that recovered historical readings exactly matched their xDrip/Zukka device at the corresponding times; no exported timestamp-matched comparison dataset exists.
+
+The NFC backfill change passed all 15 portable executables, followed by a focused rerun covering history-index markers and fresh scan calibration. The ordinary coordinator test seeded seven BLE readings, imported 41 missing NFC readings (48 total), repeated with zero inserts, and reopened SQLite with identical readings/deliveries. Fractional timestamps, ring wrap, publication lag, rejected slots and independent packed-field expectations passed. The simulator build also passed with existing warnings. Physical NFC scanning is pending.
 
 The local-saving change (`fe91b37`) passed all 14 portable runs and an unsigned iPhone 16 / iOS 18.5 simulator Debug build under Xcode 26.2. The runtime test saved two overlapping frames as 11 unique readings and delivery rows, stopped collection, reopened SQLite with stable IDs/values/timestamps, and loaded saved values in a fresh coordinator before new packets. The build's only warning was the existing AppIntents skip because that framework is absent. Initial validation was software-only.
 

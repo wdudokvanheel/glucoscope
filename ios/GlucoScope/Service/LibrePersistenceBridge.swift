@@ -124,16 +124,30 @@ actor LibrePersistenceBridge {
         guard let durableID = frame.persistenceSessionID else {
             throw LibreFrameOwnershipError.missingDurableIdentity
         }
-        let captured = frame.sessionSnapshot
+        guard try frame.sessionSnapshot.validatedPersistenceSessionID() == durableID else {
+            throw LibrePersistenceBridgeError.staleSession
+        }
+        let prepared = try await prepareCandidates(session: frame.sessionSnapshot,
+                                                   receivedAt: frame.receivedAt)
+        guard isCurrent() else { throw LibrePersistenceBridgeError.staleSession }
+        return prepared
+    }
+
+    /// NFC uses the same read-only session/clock reconciliation as BLE, without
+    /// migrating pairing state or inventing a transport frame.
+    func prepareCandidates(
+        session captured: LibreSensorSession,
+        receivedAt: Date
+    ) async throws -> LibrePersistencePreparation {
+        let durableID = try captured.validatedPersistenceSessionID()
         var normalized = captured
         normalized.uid = Data(captured.uid)
         normalized.patchInfo = Data(captured.patchInfo)
-        let proposed = try Self.makeSessionSnapshot(session: normalized, observedAt: frame.receivedAt)
+        let proposed = try Self.makeSessionSnapshot(session: normalized, observedAt: receivedAt)
         guard proposed.id == durableID else { throw LibrePersistenceBridgeError.staleSession }
         let stored = try await dependencies.querySessionMetadata(
             durableID, proposed.stableIdentityFingerprint, proposed.sensorRevision
         )
-        guard isCurrent() else { throw LibrePersistenceBridgeError.staleSession }
         guard let stored else {
             return LibrePersistencePreparation(session: captured, sessionSnapshot: proposed)
         }
@@ -155,7 +169,7 @@ actor LibrePersistenceBridge {
                 stableIdentityFingerprint: stored.stableIdentityFingerprint,
                 sensorRevision: stored.sensorRevision,
                 firstObservedAt: stored.firstObservedAt,
-                observedAt: max(stored.lastObservedAt, frame.receivedAt),
+                observedAt: max(stored.lastObservedAt, receivedAt),
                 lifecycleState: stored.lifecycleState,
                 clock: stored.clock
             )

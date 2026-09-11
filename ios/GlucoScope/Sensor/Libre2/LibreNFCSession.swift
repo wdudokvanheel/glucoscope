@@ -23,7 +23,7 @@ enum LibreNFCError: LocalizedError {
         case .sensorNotActivated(let state): return String(format: "The sensor is not in an active state (state %02X).", state)
         case .enableStreamingRejected(let count): return "The sensor rejected Bluetooth streaming setup (response length \(count))."
         case .differentTag: return "A different NFC tag was detected during recovery. Scan the original sensor again."
-        case .differentSensor: return "This scan does not match the paired sensor. Scan the paired sensor to capture calibration."
+        case .differentSensor: return "This scan does not match the paired sensor. Scan the currently paired sensor."
         case .cancelled: return "The NFC scan was cancelled."
         }
     }
@@ -33,11 +33,20 @@ final class LibreNFCSession: NSObject {
     enum CaptureResult {
         case setup(LibreSensorSession)
         case calibration(LibreCalibration, expectedSession: LibreSensorSession)
+        case history(fram: Data, expectedSession: LibreSensorSession, receivedAt: Date)
     }
 
     private enum Purpose {
         case setup
         case calibration(LibreSensorSession)
+        case history(LibreSensorSession)
+
+        var pairedSensor: LibreSensorSession? {
+            switch self {
+            case .setup: return nil
+            case .calibration(let sensor), .history(let sensor): return sensor
+            }
+        }
     }
 
     var onLog: ((String) -> Void)?
@@ -72,6 +81,11 @@ final class LibreNFCSession: NSObject {
         start(purpose: .calibration(sensor))
     }
 
+    /// Reads the paired sensor's memory without changing pairing or streaming.
+    func startHistory(for sensor: LibreSensorSession) {
+        start(purpose: .history(sensor))
+    }
+
     private func start(purpose: Purpose) {
         precondition(Thread.isMainThread)
         readerSession?.invalidate()
@@ -79,10 +93,7 @@ final class LibreNFCSession: NSObject {
         completed = false
         processingTag = false
         self.purpose = purpose
-        switch purpose {
-        case .setup: expectedUID = nil
-        case .calibration(let sensor): expectedUID = sensor.uid
-        }
+        expectedUID = purpose.pairedSensor?.uid
         pollingRestarts = 0
         streamingEnableAttempted = false
         generation = UUID()
@@ -96,6 +107,7 @@ final class LibreNFCSession: NSObject {
         switch purpose {
         case .setup: log("NFC setup scan started")
         case .calibration: log("Read-only NFC calibration scan started; streaming setup will be preserved")
+        case .history: log("Read-only NFC history scan started; Bluetooth collection continues")
         }
         session.begin()
     }
@@ -112,7 +124,7 @@ final class LibreNFCSession: NSObject {
         var step = "tag detection"
         do {
             let uid = Data(tag.identifier.reversed())
-            if case .calibration(let sensor) = purpose, sensor.uid != uid {
+            if let sensor = purpose.pairedSensor, sensor.uid != uid {
                 throw LibreNFCError.differentSensor
             }
             if let expectedUID, expectedUID != uid {
@@ -141,7 +153,7 @@ final class LibreNFCSession: NSObject {
             }
             log("Patch query A1 returned \(patchInfo.count) bytes: \(patchInfo.hexString)")
             let kind = try Libre2Protocol.classify(patchInfo: patchInfo)
-            if case .calibration(let sensor) = purpose,
+            if let sensor = purpose.pairedSensor,
                !Libre2Protocol.hasSameStableIdentity(uid: sensor.uid, patchInfo: sensor.patchInfo,
                                                      otherUID: uid, otherPatchInfo: patchInfo) {
                 throw LibreNFCError.differentSensor
@@ -168,6 +180,14 @@ final class LibreNFCSession: NSObject {
                 throw LibreNFCError.sensorNotActivated(state)
             }
             log(String(format: "Sensor lifecycle state %02X; FRAM integrity validated", state))
+            try requireActive(session, generation: expectedGeneration)
+            if case .history(let expectedSession) = purpose {
+                log("History memory read from the paired sensor; no streaming-enable command sent")
+                session.alertMessage = "Sensor history read complete."
+                session.invalidate()
+                finish(.success(.history(fram: fram, expectedSession: expectedSession, receivedAt: Date())))
+                return
+            }
             step = "calibration extraction"
             let calibration = try LibreCalibration.capture(fram: fram, uid: uid, patchInfo: patchInfo)
             try requireActive(session, generation: expectedGeneration)

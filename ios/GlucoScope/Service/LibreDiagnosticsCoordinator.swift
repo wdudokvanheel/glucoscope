@@ -20,6 +20,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     @Published private(set) var calibrationSummary = "No paired sensor"
     @Published private(set) var clockSummary = "No paired sensor"
     @Published private(set) var calibrationStatus = "Idle"
+    @Published private(set) var historyStatus = "No history scan yet"
     @Published private(set) var canCaptureCalibration = false
     @Published private(set) var logs: [LogEntry] = []
     @Published private(set) var frameCount = 0
@@ -64,6 +65,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         }
     }
     private var nfcSession: LibreNFCSession?
+    private var nfcHistoryInProgress = false
     private var operationGeneration: UInt64 = 0
     private var lockedProbeBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var currentSensorSession: LibreSensorSession?
@@ -104,6 +106,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             "Calibration: \(calibrationSummary)",
             "Sensor clock: \(clockSummary)",
             "Calibration action: \(calibrationStatus)",
+            "NFC history action: \(historyStatus)",
             "Raw frames: \(frameCount)",
             "Verified frames: \(verifiedFrameCount)",
             "Last verified: \(lastVerifiedFrameAt.map { formatter.string(from: $0) } ?? "none")",
@@ -198,31 +201,50 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
                 return
             }
             operationGeneration &+= 1
-            beginNFC(generation: operationGeneration, calibrationFor: saved)
+            beginNFC(generation: operationGeneration, pairedSensor: saved)
         } catch {
             calibrationStatus = "Could not read saved sensor: \(error.localizedDescription)"
             appendLog("ERROR: \(calibrationStatus)")
         }
     }
 
-    private func beginNFCSetup(generation: UInt64) {
-        beginNFC(generation: generation, calibrationFor: nil)
+    func startNFCHistory() {
+        precondition(Thread.isMainThread)
+        guard !isScanningNFC else { return }
+        do {
+            guard let saved = try store.load(), saved.setupComplete else {
+                historyStatus = "Complete sensor setup before reading history"
+                return
+            }
+            operationGeneration &+= 1
+            beginNFC(generation: operationGeneration, pairedSensor: saved, history: true)
+        } catch {
+            historyStatus = "Could not read saved sensor: \(error.localizedDescription)"
+            appendLog("ERROR: \(historyStatus)")
+        }
     }
 
-    private func beginNFC(generation: UInt64, calibrationFor saved: LibreSensorSession?) {
+    private func beginNFCSetup(generation: UInt64) {
+        beginNFC(generation: generation, pairedSensor: nil)
+    }
+
+    private func beginNFC(generation: UInt64, pairedSensor saved: LibreSensorSession?, history: Bool = false) {
+        nfcHistoryInProgress = history
         let session = LibreNFCSession(store: store)
-        let isCalibration = saved != nil
+        let isCalibration = saved != nil && !history
         isNFCAvailable = session.isAvailable
         guard isNFCAvailable else {
             isScanningNFC = false
-            if isCalibration { calibrationStatus = "NFC is unavailable on this device" }
+            if history { historyStatus = "NFC is unavailable on this device" }
+            else if isCalibration { calibrationStatus = "NFC is unavailable on this device" }
             else { status = "NFC is unavailable on this device" }
             appendLog("NFC is unavailable on this device")
             sendDiagnosticsAfterNFCIfEnabled()
             return
         }
         isScanningNFC = true
-        if isCalibration { calibrationStatus = "Reading calibration; Bluetooth collection continues" }
+        if history { historyStatus = "Reading sensor history; Bluetooth collection continues" }
+        else if isCalibration { calibrationStatus = "Reading calibration; Bluetooth collection continues" }
         else { status = "Hold the top of the iPhone near the sensor" }
         session.onLog = { [weak self] message in
             guard let self, self.operationGeneration == generation else { return }
@@ -261,8 +283,47 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
                     self.sendDiagnosticsAfterNFCIfEnabled()
                 }
                 return
+            case .success(.history(let fram, let expectedSession, let receivedAt)):
+                self.historyStatus = "Saving sensor history"
+                Task { [weak self] in
+                    guard let self else { return }
+                    do {
+                        let saved = try await self.collection.saveNFCHistory(
+                            fram: fram, pairedSession: expectedSession, receivedAt: receivedAt,
+                            isCurrent: { [weak self] in
+                                guard let self, self.operationGeneration == generation,
+                                      let latest = try? self.store.load() else { return false }
+                                return latest.hasSameDurablePairing(as: expectedSession)
+                                    && latest.persistenceSessionID == expectedSession.persistenceSessionID
+                                    && latest.clockAnchor == expectedSession.clockAnchor
+                            }
+                        )
+                        guard self.operationGeneration == generation else { return }
+                        self.historyStatus = "History saved: \(saved.trendCount) trend, \(saved.historyCount) history; \(saved.insertedCount) new, \(saved.rejectedCount) skipped"
+                        if let oldest = saved.oldestSampleDate, let newest = saved.newestSampleDate {
+                            let formatter = DateFormatter()
+                            formatter.dateStyle = .medium
+                            formatter.timeStyle = .short
+                            self.historyStatus += ". Samples: \(formatter.string(from: oldest)) – \(formatter.string(from: newest))"
+                        }
+                        self.appendLog(self.historyStatus)
+                    } catch {
+                        guard self.operationGeneration == generation else { return }
+                        if case ReadingStoreError.operationFailed(let failure) = error,
+                           failure.durableCommitAwaitingPublication {
+                            self.historyStatus = "History saved; storage refresh failed"
+                        } else {
+                            self.historyStatus = "History import failed: \(error.localizedDescription)"
+                        }
+                        self.appendLog("ERROR: \(self.historyStatus)")
+                    }
+                    self.isScanningNFC = false
+                    self.sendDiagnosticsAfterNFCIfEnabled()
+                }
+                return
             case .failure(let error):
-                if isCalibration { self.calibrationStatus = "Calibration scan failed: \(error.localizedDescription)" }
+                if history { self.historyStatus = "History scan failed: \(error.localizedDescription)" }
+                else if isCalibration { self.calibrationStatus = "Calibration scan failed: \(error.localizedDescription)" }
                 else {
                     self.refreshStoredSession()
                     self.status = "NFC setup failed"
@@ -273,7 +334,8 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             self.sendDiagnosticsAfterNFCIfEnabled()
         }
         nfcSession = session
-        if let saved { session.startCalibration(for: saved) }
+        if let saved, history { session.startHistory(for: saved) }
+        else if let saved { session.startCalibration(for: saved) }
         else { session.start() }
     }
 
@@ -281,7 +343,10 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         precondition(Thread.isMainThread)
         bluetooth.invalidateTransportSynchronously()
         operationGeneration &+= 1
-        if isScanningNFC { calibrationStatus = "NFC action interrupted" }
+        if isScanningNFC {
+            if nfcHistoryInProgress { historyStatus = "History scan interrupted" }
+            else { calibrationStatus = "NFC action interrupted" }
+        }
         nfcSession?.cancel()
         nfcSession = nil
         isScanningNFC = false
@@ -311,7 +376,10 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         precondition(Thread.isMainThread)
         bluetooth.invalidateTransportSynchronously()
         operationGeneration &+= 1
-        if isScanningNFC { calibrationStatus = "NFC action interrupted" }
+        if isScanningNFC {
+            if nfcHistoryInProgress { historyStatus = "History scan interrupted" }
+            else { calibrationStatus = "NFC action interrupted" }
+        }
         nfcSession?.cancel()
         nfcSession = nil
         isScanningNFC = false
@@ -327,7 +395,10 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         precondition(Thread.isMainThread)
         bluetooth.invalidateTransportSynchronously()
         operationGeneration &+= 1
-        if isScanningNFC { calibrationStatus = "NFC action interrupted" }
+        if isScanningNFC {
+            if nfcHistoryInProgress { historyStatus = "History scan interrupted" }
+            else { calibrationStatus = "NFC action interrupted" }
+        }
         nfcSession?.cancel()
         nfcSession = nil
         isScanningNFC = false
@@ -339,6 +410,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         calibrationSummary = "No paired sensor"
         clockSummary = "No paired sensor"
         calibrationStatus = "Idle"
+        historyStatus = "No history scan yet"
         canCaptureCalibration = false
         status = "Sensor forgotten"
         appendLog("Saved sensor pairing was removed")

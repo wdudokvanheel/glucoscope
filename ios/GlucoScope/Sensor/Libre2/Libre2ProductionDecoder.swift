@@ -37,14 +37,14 @@ struct Libre2DecodeContext: Sendable, Equatable {
 
 enum Libre2FrameRejection: String, Error, Sendable {
     case collectionDisabled, staleOwnership, missingWearIdentity, sessionMismatch
-    case invalidLength, invalidCRC, unsupportedRevision
+    case invalidLength, invalidCRC, unsupportedRevision, invalidRingIndex
     case missingCalibration, invalidCalibrationMetadata, wrongCalibrationOwner, lifecycleNotSupported
     case missingAnchor, invalidAnchor, clockDisagreement, invalidSessionMetadata, inactiveSession
     case sensorMinuteBeforeAnchor, sensorLifetimeExceeded, invalidCalibrationDomain, unqualifiedPolicy
 }
 
 enum Libre2SlotRejectionReason: String, Sendable {
-    case sampleBeforeStart, warmup, invalidSampleDate, zeroGlucose, zeroTemperature
+    case sampleBeforeStart, sampleAfterCurrentMinute, warmup, invalidSampleDate, zeroGlucose, zeroTemperature
     case invalidTemperatureDomain, temperatureOutsideEngineeringRange, nonfiniteConversion
     case glucoseOutsideCanonicalRange
 }
@@ -66,13 +66,14 @@ struct Libre2AcceptedSlot: Sendable, Equatable {
     let decoderVersion: String
     let quality: String
 
-    fileprivate init(index: Int, offsetMinutes: Int, sensorMinute: Int, timestamp: Date, glucoseMGDL: Int) {
+    fileprivate init(index: Int, offsetMinutes: Int, sensorMinute: Int, timestamp: Date, glucoseMGDL: Int,
+                     decoderVersion: String = Libre2ProductionDecoder.version) {
         self.index = index
         self.offsetMinutes = offsetMinutes
         self.sensorMinute = sensorMinute
         self.timestamp = timestamp
         self.glucoseMGDL = glucoseMGDL
-        self.decoderVersion = Libre2ProductionDecoder.version
+        self.decoderVersion = decoderVersion
         self.quality = "engineeringChecksPassed-v1"
     }
 }
@@ -237,25 +238,6 @@ enum Libre2ProductionDecoder {
     }
 
     private static func evaluateSlot(index: Int, offset: Int, common: ValidatedFrame) -> Libre2SlotOutcome {
-        let subtraction = common.minute.subtractingReportingOverflow(offset)
-        let minute = subtraction.partialValue
-        func rejected(_ reason: Libre2SlotRejectionReason) -> Libre2SlotOutcome {
-            .rejected(Libre2SlotRejection(index: index, offsetMinutes: offset,
-                                         sensorMinute: subtraction.overflow ? nil : minute, reason: reason))
-        }
-        guard !subtraction.overflow, minute >= 0 else { return rejected(.sampleBeforeStart) }
-        guard minute >= 60 else { return rejected(.warmup) }
-        let delta = Int64(minute).subtractingReportingOverflow(common.clock.referenceSensorMinute)
-        guard !delta.overflow else { return rejected(.invalidSampleDate) }
-        let interval = Double(delta.partialValue) * 60
-        let seconds = common.clock.referenceDate.timeIntervalSince1970 + interval
-        guard interval.isFinite, seconds.isFinite, storeDateRange.contains(seconds) else {
-            return rejected(.invalidSampleDate)
-        }
-        // Match the canonical clock and writer without an epoch conversion that
-        // can round away subsecond precision from an NFC capture's Date().
-        let timestamp = common.clock.referenceDate.addingTimeInterval(interval)
-        guard usableDate(timestamp) else { return rejected(.invalidSampleDate) }
         let start = index * 4
         let bytes = common.bytes
         let word = UInt32(bytes[start]) | UInt32(bytes[start + 1]) << 8
@@ -264,9 +246,42 @@ enum Libre2ProductionDecoder {
         let temperature = Double((word >> 14) & 0xFFF) * 4
         let magnitude = Double((word >> 26) & 0x1F) * 4
         let adjustment = word & 0x8000_0000 == 0 ? magnitude : -magnitude
+        return evaluateRawSlot(index: index, offset: offset, frameMinute: common.minute,
+                               glucose: glucose, temperature: temperature, adjustment: adjustment,
+                               calibration: common.calibration, clock: common.clock,
+                               calibrationOffset: common.offset, sensitivity: common.sensitivity)
+    }
+
+    /// The BLE and NFC layouts feed the same checked conversion and clock mapping.
+    static func evaluateRawSlot(
+        index: Int, offset: Int, frameMinute: Int,
+        glucose: Double, temperature: Double, adjustment: Double,
+        calibration: LibreCalibration, clock: ReadingClockSnapshot,
+        calibrationOffset: Double, sensitivity: Double,
+        decoderVersion: String = version
+    ) -> Libre2SlotOutcome {
+        let subtraction = frameMinute.subtractingReportingOverflow(offset)
+        let minute = subtraction.partialValue
+        func rejected(_ reason: Libre2SlotRejectionReason) -> Libre2SlotOutcome {
+            .rejected(Libre2SlotRejection(index: index, offsetMinutes: offset,
+                                         sensorMinute: subtraction.overflow ? nil : minute, reason: reason))
+        }
+        guard !subtraction.overflow, minute >= 0 else { return rejected(.sampleBeforeStart) }
+        guard minute >= 60 else { return rejected(.warmup) }
+        let delta = Int64(minute).subtractingReportingOverflow(clock.referenceSensorMinute)
+        guard !delta.overflow else { return rejected(.invalidSampleDate) }
+        let interval = Double(delta.partialValue) * 60
+        let seconds = clock.referenceDate.timeIntervalSince1970 + interval
+        guard interval.isFinite, seconds.isFinite, storeDateRange.contains(seconds) else {
+            return rejected(.invalidSampleDate)
+        }
+        // Match the canonical clock and writer without an epoch conversion that
+        // can round away subsecond precision from an NFC capture's Date().
+        let timestamp = clock.referenceDate.addingTimeInterval(interval)
+        guard usableDate(timestamp) else { return rejected(.invalidSampleDate) }
         guard glucose > 0 else { return rejected(.zeroGlucose) }
         guard temperature > 0 else { return rejected(.zeroTemperature) }
-        let denominator = Double(common.calibration.i6) + adjustment
+        let denominator = Double(calibration.i6) + adjustment
         guard denominator.isFinite, denominator > 0 else { return rejected(.invalidTemperatureDomain) }
         let scaledTemperature = temperature * 72_500
         guard scaledTemperature.isFinite else { return rejected(.invalidTemperatureDomain) }
@@ -287,8 +302,8 @@ enum Libre2ProductionDecoder {
         guard (-10.0...60.0).contains(celsius) else { return rejected(.temperatureOutsideEngineeringRange) }
         // All fields were structurally decoded into bounded integers. Convert them
         // before subtraction/multiplication to avoid fixed-width integer traps.
-        let glucoseDifference = glucose - Double(common.calibration.i3)
-        let calibrationDifference = Double(common.calibration.i4) - Double(common.calibration.i3)
+        let glucoseDifference = glucose - Double(calibration.i3)
+        let calibrationDifference = Double(calibration.i4) - Double(calibration.i3)
         let scaledGlucose = 65 * glucoseDifference
         guard scaledGlucose.isFinite, calibrationDifference.isFinite, calibrationDifference > 0 else {
             return rejected(.nonfiniteConversion)
@@ -300,13 +315,13 @@ enum Libre2ProductionDecoder {
         guard factor.isFinite, factor > 0 else { return rejected(.nonfiniteConversion) }
         let corrected = normalized * factor
         guard corrected.isFinite else { return rejected(.nonfiniteConversion) }
-        let numerator = corrected - common.offset
+        let numerator = corrected - calibrationOffset
         guard numerator.isFinite else { return rejected(.nonfiniteConversion) }
-        let value = numerator / common.sensitivity
+        let value = numerator / sensitivity
         guard value.isFinite else { return rejected(.nonfiniteConversion) }
         guard let integer = quantize(value) else { return rejected(.glucoseOutsideCanonicalRange) }
         return .accepted(Libre2AcceptedSlot(index: index, offsetMinutes: offset, sensorMinute: minute,
-                                            timestamp: timestamp, glucoseMGDL: integer))
+                                            timestamp: timestamp, glucoseMGDL: integer, decoderVersion: decoderVersion))
     }
 
     private static func quantize(_ value: Double) -> Int? {

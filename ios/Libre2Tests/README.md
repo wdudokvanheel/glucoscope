@@ -21,6 +21,7 @@ The runner compiles app-owned Swift protocol, decoder, coordination and Core Dat
 | Candidate adapter | Ordinary decoder-to-candidate-to-store path plus fixture-driven mixed rejection, provenance and conflict cases. |
 | Ordered ingestion | Eight retained frames including active work, FIFO, drop-newest, 120-second residence limit, sequence gaps and deterministic invalidation races. |
 | Transport handoff | Synchronous offer before diagnostics, rejected-body suppression, bounded relay, metadata-only notification storms and lifecycle/drain races. |
+| NFC history | All 16 trend/32 history positions, wrapped cursors, 15-minute alignment/publication lag, wide packed fields with independent numeric expectations, unwritten/future/young-wear slots, CRC/identity failures, fractional clock reuse, actual BLE/NFC overlap, repeat import and SQLite reopen. |
 | Runtime composition | Actual coordinator/handoff/queue/adapter/store composition with synthetic frames; saved-reading refresh and reopen. |
 | Storage probe | Separate synthetic metadata reopen/relaunch, injected lock/background state and cancellation. Device-only protection outcomes stay distinct from injected Mac behavior. |
 

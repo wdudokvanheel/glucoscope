@@ -317,6 +317,16 @@ struct LibreDiagnosticsView: View {
     private var controlsSection: some View {
         Section("Actions") {
             Button {
+                coordinator.startNFCHistory()
+            } label: {
+                Label("Scan sensor for history (NFC)", systemImage: "clock.arrow.circlepath")
+            }
+            .disabled(coordinator.isScanningNFC || !coordinator.isNFCAvailable || !coordinator.canCaptureCalibration || coordinator.storageProbeStatus.lockedVerificationArmed)
+            Text(coordinator.historyStatus)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Button {
                 coordinator.startNFCCalibration()
             } label: {
                 Label("Read calibration with NFC", systemImage: "wave.3.right")
