@@ -51,13 +51,15 @@ Bluetooth/standalone uses a bottom tab bar with four primary destinations:
 
 The standalone home experience should feel continuous with the current graph rather than like a diagnostics console. Connection and stale-data state must remain distinct from a current glucose reading.
 
+Mark readings as stale after **5 minutes without a fresh reading by default**, configurable in Sensor settings. Use this shared stale state for the standalone display, Live Activity and sustained-alarm timer resets. Measure reading age from the sample time so receiving old history does not make it fresh. The optional missing-reading alarm retains its own configured delay, and the separate five-minute first-reading setup timeout retains its agreed behavior.
+
 ### Stats direction
 
-The confirmed starting set is time in range, average glucose, time above range, time below range and variability. The user requests useful insight beyond this set where appropriate; this is a direction to curate understandable statistics, not an agreed exhaustive metric list.
+The confirmed starting set is time in range, average glucose, time above range, time below range and variability. Stats uses the same **Low, High and Very high** settings as the graph and includes a separate **very high** breakdown. These remain shared display/Stats settings; starter alarm thresholds are copied from them and then independently editable. The user requests useful insight beyond this set where appropriate; this is a direction to curate understandable statistics, not an agreed exhaustive metric list.
 
 Confirmed time windows are **Today, 7, 14, 30 and 90 days**, with **14 days** as the initial selection. Lead with a simple overview; each metric can open more detail with a plain-language explanation. Use appropriate icons and theme colors consistently with the rest of the app.
 
-When the selected window has incomplete data, show available statistics with an explicit coverage note, such as **2 days of data available** for a 14-day selection. Do not imply that the full selected period was recorded. Choose range settings, variability measures, minimum data requirements and the empty state when building Stats. Explain metric definitions and avoid implying that incomplete coverage represents the entire selected period.
+When the selected window has incomplete data, show available statistics with an explicit coverage note, such as **2 days of data available** for a 14-day selection. Do not imply that the full selected period was recorded. Choose variability measures, minimum data requirements and the empty state when building Stats. Explain metric definitions and avoid implying that incomplete coverage represents the entire selected period.
 
 ## Standalone Settings structure
 
@@ -68,7 +70,7 @@ Use a native iOS-style settings list with clear labels, standard controls and fo
 - **Server uploads** — configure multiple Nightscout and/or existing custom-backend destinations, show each target's state independently, and provide per-destination history upload and diagnostics.
 - **Alarms** — multiple independently configurable alarm rules, a small starter set, and a guided creation flow with optional advanced settings. Include high/low, sustained-high/low and missing-reading alarms; see the confirmed direction below.
 - **Live Activity** — opt in to a persistent glucose display with current value, trend arrow, reading age and a mini graph; configure a separate theme if desired and optional lock-screen privacy.
-- **Sensor settings** — the setup-timeout notification and **Keep trying after setup timeout** options are enabled by default and independently opt-out. All sensor management and BLE settings live in the Sensor tab; this supersedes the earlier separate Bluetooth management sub-screen in Settings. Any Settings shortcut should lead to that same destination.
+- **Sensor settings** — configure the stale-reading threshold (5 minutes by default), setup-timeout notification and **Keep trying after setup timeout**. The two setup options are enabled by default and independently opt-out. All sensor management and BLE settings live in the Sensor tab; this supersedes the earlier separate Bluetooth management sub-screen in Settings. Any Settings shortcut should lead to that same destination.
 - **About** — app, support and version information.
 - **Switch to Viewer** — warn if readings are pending upload, pause standalone uploads, stop Bluetooth collection, scanning/reconnection and standalone recording, stop all standalone alarms and pending repeats, end the standalone Live Activity, then return to the Viewer experience.
 
@@ -87,7 +89,7 @@ This structure is an information-architecture request, not a promise that every 
 
 “Always show” records the desired experience, not a guarantee of uninterrupted iOS presentation. Test lifecycle, refresh, privacy and recovery on supported devices and explain concrete limits in the UI.
 
-Still to decide: no-reading presentation, the stale threshold, update cadence and acceptable recovery when iOS ends or limits an activity.
+Still to decide: no-reading presentation, update cadence and acceptable recovery when iOS ends or limits an activity. Use the shared configurable stale threshold from Sensor settings.
 
 ## Alarm experience
 
@@ -99,8 +101,10 @@ Still to decide: no-reading presentation, the stale threshold, update cadence an
 - **Add alarm** uses a short wizard: choose a type with a clear explanation, configure its main settings, then optionally open advanced settings. Keep the basic path approachable while allowing detailed customization.
 - Provide general alarm settings for shared behavior, including the default sound/ringtone, requested Do Not Disturb override, snooze duration and **Stop repeating on recovery**. Each alarm inherits the general setting unless the user explicitly overrides it for that alarm. Make inheritance and overrides clear in the UI. Every inherited setting must show its current resolved value, such as **Use default · 5 min**, **Use default · [sound name]** or **Use default · On**, never just **Default**. These displayed values must follow changes to the general settings.
 - Advanced settings per alarm include active time windows (such as daytime or outside working hours), overrides for shared behavior, and either single-fire behavior or repetition every user-selected X minutes until dismissed or an applicable stop condition is met.
+- Users can add multiple active time windows to an alarm. Each window has a time range and either **Every day** or **Specific days**. **Specific days** shows all seven weekdays with independent on/off checkboxes so the user can select any combination of days for that window. The alarm is scheduled active whenever any configured window applies.
+- The general **Override Do Not Disturb** setting defaults **off**. Each alarm can inherit that value or explicitly override it; inherited controls show the current general value.
 - **Stop repeating on recovery** is enabled by default as a general setting and can be overridden per alarm. With it enabled, repeats stop when glucose recovers; users can opt out to require explicit dismissal even after recovery. Use the configured threshold margin for the recovery boundary.
-- Sustained-alarm timers reset only once glucose moves a small distance back inside the threshold. While glucose hovers within that margin, the timer keeps counting. Expose the margin in Advanced settings; its default size and allowed values still need definition.
+- Sustained-alarm timers reset only once glucose moves a small distance back inside the threshold. While glucose hovers within that margin, the timer keeps counting. Expose the margin in Advanced settings. The user has no preferred numeric margin; propose its default size and allowed values after checking sensor behavior.
 - Offer **Dismiss** and **Snooze** for the individual alarm, leaving other alarms active. **Dismiss** silences the current episode without disabling the rule. The rule can fire again only after glucose recovers beyond the configured margin and subsequently crosses the trigger threshold again, satisfying any configured sustained duration.
 - **Snooze** temporarily silences that alarm for its configured duration, inherited from the general snooze setting unless overridden. The general snooze default is **5 minutes**.
 - When an alarm's active time window ends, stop its ongoing repeats as well as preventing new notifications outside that window. This applies even if the alarm was configured to repeat until dismissed.
@@ -112,7 +116,7 @@ Still to decide: no-reading presentation, the stale threshold, update cadence an
 
 The Do Not Disturb override is requested product behavior, subject to later iOS capability, entitlement, permission and device validation. Do not present it as effective until the supported behavior is established.
 
-Still to decide: remaining default values (including margin size), additional alarm types, recovery/rearming for non-glucose alarms and detailed schedule controls. Test alarm timing, historical-reading exclusion and sustained-timer resets during implementation.
+Still to decide: remaining default values (including margin size), additional alarm types and recovery/rearming for non-glucose alarms. Test alarm timing, historical-reading exclusion and sustained-timer resets during implementation.
 
 ## Upload destination experience
 
@@ -123,6 +127,7 @@ Still to decide: remaining default values (including margin size), additional al
 - A newly added destination receives only new readings by default. Offer an optional **Upload existing history** action with a selectable lookback, including **all available local history from the beginning**. The user accepts that a full-history upload can take a while.
 - Historical upload uses committed standalone readings and delivery tracking for the chosen destination; it must not duplicate local glucose records or include Viewer data.
 - Each destination's settings includes a useful **Debug** screen. It must allow the user to inspect all queued readings and a log of successful and failed send attempts, including useful error messages. Keep credentials and other secrets redacted from diagnostic output.
+- Retain **30 days of upload success/failure logs by default**. Always show every reading still queued, regardless of its age; expiring diagnostic logs must not remove pending deliveries or their current failure status.
 - Include a manual **Retry now** action when failed readings remain pending for that destination. The exact label may be refined; the intent is to retry pending failures on demand.
 - Send queued readings in **reverse chronological order (newest first)**, including history backfills. Show progress with the date/time of the reading currently being sent and the target start date being worked back toward.
 - Provide **Pause**, **Resume** and **Cancel remaining upload**, plus the ability to **Clear upload queue** for the selected destination. Cancel/clear removes the selected pending upload work while preserving local history and readings already sent; it cannot undo remote uploads. Keep clear-queue behavior distinct from temporarily pausing or disabling a destination.
@@ -131,7 +136,7 @@ Still to decide: remaining default values (including margin size), additional al
 - When an individual destination is disabled, record when it was disabled. On re-enabling, offer to upload all locally available readings missed during the disabled interval, optionally starting at a user-selected date within that interval. Catch-up is a user choice, not an automatic upload of everything missed. Preserve previously pending delivery state; disabling does not silently discard it.
 - When a destination's server address changes, explicitly ask whether to send its pending readings to the new address. Also offer a fuller backfill from a selected date, including the beginning of available local history, to support migration to an empty database. Treat pending-reading transfer and additional history selection as explicit choices. Updating only a password/token keeps the same queue.
 
-Still to decide: destination naming/ordering and credential setup, diagnostic-log retention, the fate of old pending work if transfer to an edited address is declined, and handling requests already in flight during cancellation or queue clearing. The delivery design must distinguish a migrated destination's history from acknowledgements for the previous endpoint and avoid duplicate delivery work where selected pending readings and backfill overlap. Manual retries must respect the selected mode and destination state; they must not bypass the Viewer upload pause.
+Still to decide: destination naming/ordering and credential setup, the fate of old pending work if transfer to an edited address is declined, and handling requests already in flight during cancellation or queue clearing. The delivery design must distinguish a migrated destination's history from acknowledgements for the previous endpoint and avoid duplicate delivery work where selected pending readings and backfill overlap. Manual retries must respect the selected mode and destination state; they must not bypass the Viewer upload pause.
 
 ## Mode and data boundaries
 
@@ -148,9 +153,9 @@ The intended outcome is to restore collection from the existing sensor. Reconnec
 ## Open choices by feature
 
 - **Setup:** how unfinished/timed-out setup resumes, NFC reconnection confirmation and manual failure recovery.
-- **Stats:** additional metrics, range settings, variability definition, minimum useful data and the empty state.
-- **Alarms:** threshold margin/defaults, further alarm types and non-glucose rearming.
-- **Uploads:** destination naming/ordering and credential setup, log retention, in-flight cancel/clear behavior and pending work when address-change transfer is declined.
-- **Live Activity:** no-reading presentation, stale threshold, update cadence and recovery when iOS ends or limits an activity.
+- **Stats:** additional metrics, variability definition, minimum useful data and the empty state. Range settings are shared with the graph, including the very-high breakdown.
+- **Alarms:** propose the threshold margin after checking sensor behavior; choose remaining defaults, further alarm types and non-glucose rearming. Make explicit how manual Snooze expiry and automatic repeating interact with the stop-on-recovery opt-out.
+- **Uploads:** destination naming/ordering and credential setup, in-flight cancel/clear behavior and pending work when address-change transfer is declined. Log retention is 30 days by default; pending readings remain visible regardless of age.
+- **Live Activity:** no-reading presentation, update cadence and recovery when iOS ends or limits an activity. The stale threshold is shared with Sensor settings (5 minutes by default, configurable).
 
 Keep sensor management in the Sensor tab and reuse the existing visual system. Store-backed graph work can proceed with the confirmed choices above; remaining alarm, upload and Live Activity decisions concern those features.
