@@ -14,7 +14,7 @@ Point the app at `http://<Mac-LAN-address>:8765/diagnostics`. Check connectivity
 
 The API accepts `POST /diagnostics` with a UTF-8 `text/plain` body up to 1 MiB. A successful request returns HTTP 201 with `{"saved":"<filename>"}`. Other routes do not serve files.
 
-The receiver for the current test is running in tmux `GlucoScope:1` (pane `%52`) at `http://10.0.0.22:8765/diagnostics`. The app's receiver URL is editable if the computer's LAN address changes. Keep the iPhone on a network that can reach this address, and allow GlucoScope's Local Network permission when prompted.
+The development app defaults to `http://10.0.0.22:8765/diagnostics`; start the receiver when needed rather than assuming a previous process is still running. The URL is editable. Keep the iPhone on a network that can reach the host, and allow GlucoScope's Local Network permission when prompted.
 
 The temporary app has a **Send diagnostics** control and a **Send after NFC setup** option. Automatic upload sends one snapshot after each NFC setup result; Bluetooth packet logging does not trigger repeated HTTP requests. Copy/share remain available if the receiver cannot be reached.
 
