@@ -85,6 +85,14 @@ struct ProtocolSmoke {
         try expect(calibration.i3 == -201, "signed i3 extraction")
         try expect(calibration.i4 == 12_345 && calibration.i5 == 9_380 && calibration.i6 == 12_000, "footer calibration bit extraction")
         try expect(calibration.sensorMinute == 0x1234 && calibration.lifecycle == 0x03, "capture metadata")
+        let shiftedFRAM = (Data([0xFF]) + calibrationFRAM).dropFirst()
+        let shiftedUID = (Data([0xFF]) + uid).dropFirst()
+        let shiftedPatch = (Data([0xFF]) + patch).dropFirst()
+        try expect(shiftedFRAM.startIndex != 0 && shiftedUID.startIndex != 0 && shiftedPatch.startIndex != 0,
+                   "shifted capture fixture retains nonzero indices")
+        let shiftedCalibration = try LibreCalibration.capture(fram: shiftedFRAM, uid: shiftedUID,
+                                                              patchInfo: shiftedPatch, capturedAt: capturedAt)
+        try expect(shiftedCalibration == calibration, "capture normalizes shifted Data views")
         try calibration.validateOwnership(uid: uid, patchInfo: patch)
         try calibration.validateOwnership(uid: uid, patchInfo: observedPatch)
         try expectThrows("wrong calibration owner") { try calibration.validateOwnership(uid: wrongUID, patchInfo: patch) }
@@ -92,6 +100,10 @@ struct ProtocolSmoke {
         var badCalibrationFRAM = calibrationFRAM
         badCalibrationFRAM[100] ^= 1
         try expectThrows("calibration CRC") { _ = try LibreCalibration.capture(fram: badCalibrationFRAM, uid: uid, patchInfo: patch) }
+        let shiftedBadFRAM = (Data([0xFF]) + badCalibrationFRAM).dropFirst()
+        try expectCalibrationError(.invalidFRAMCRC, "shifted calibration CRC") {
+            _ = try LibreCalibration.capture(fram: shiftedBadFRAM, uid: uid, patchInfo: shiftedPatch)
+        }
         for rejectedState: UInt8 in [0x01, 0x04, 0x05, 0xFF] {
             var inactiveFRAM = calibrationFRAM
             inactiveFRAM[4] = rejectedState
@@ -102,6 +114,13 @@ struct ProtocolSmoke {
         startingFRAM[4] = 0x02
         refreshFRAMCRCs(&startingFRAM)
         try expect(try LibreCalibration.capture(fram: startingFRAM, uid: uid, patchInfo: patch).lifecycle == 0x02, "starting lifecycle permitted")
+        var shiftedInactiveSource = calibrationFRAM
+        shiftedInactiveSource[4] = 0x04
+        refreshFRAMCRCs(&shiftedInactiveSource)
+        let shiftedInactiveFRAM = (Data([0xFF]) + shiftedInactiveSource).dropFirst()
+        try expectCalibrationError(.unsupportedLifecycle(0x04), "shifted lifecycle rejection") {
+            _ = try LibreCalibration.capture(fram: shiftedInactiveFRAM, uid: uid, patchInfo: shiftedPatch)
+        }
 
         let calibrationRoundTrip = try JSONDecoder().decode(LibreCalibration.self, from: JSONEncoder().encode(calibration))
         try expect(calibrationRoundTrip == calibration, "calibration persistence roundtrip")
@@ -332,6 +351,17 @@ struct ProtocolSmoke {
     }
     static func expectThrows(_ name: String, _ operation: () throws -> Void) throws {
         do { try operation(); throw TestError.failed(name) } catch TestError.failed { throw TestError.failed(name) } catch {}
+    }
+    static func expectCalibrationError(_ expected: LibreCalibrationError, _ name: String,
+                                       _ operation: () throws -> Void) throws {
+        do {
+            try operation()
+            throw TestError.failed(name)
+        } catch let error as LibreCalibrationError {
+            try expect(error == expected, name)
+        } catch {
+            throw error
+        }
     }
     enum TestError: Error { case failed(String) }
 

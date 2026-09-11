@@ -131,6 +131,11 @@ struct DiagnosticDecoderSmoke {
         try expect(decode(payload(minute: 1000, glucose: 1), calibration).slots[0].rejection == .glucoseOutsideDiagnosticRange, "finite nonpositive glucose rejected")
         let extremes = decode(payload(minute: 1000, glucose: 16383, temperature: 16380, adjustment: -124), calibration).slots[0]
         try expect(extremes.rawGlucose == 16383 && extremes.rawTemperature == 16380 && extremes.temperatureAdjustment == -124, "full packed widths and negative sign")
+        let extremeCalibration = try self.calibration(i3: -255, i4: 16383, i6: 16380)
+        let extremeArithmetic = decode(payload(minute: 1000, glucose: 16383, temperature: 16380,
+                                               adjustment: 124), extremeCalibration)
+        try expect(extremeArithmetic.rejection == nil && extremeArithmetic.slots.count == 7,
+                   "packed calibration and sample extremes do not overflow frame decode")
         let positive = decode(payload(minute: 1000, adjustment: 124), calibration).slots[0]
         try expect(positive.temperatureAdjustment == 124, "positive adjustment sign")
         var versionObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(calibration)) as! [String: Any]

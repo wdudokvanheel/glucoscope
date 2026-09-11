@@ -56,16 +56,21 @@ struct LibreCalibration: Codable, Sendable, Equatable {
               capturedAt >= .distantPast, capturedAt <= .distantFuture else {
             throw LibreCalibrationError.invalidCaptureMetadata
         }
-        _ = try Libre2Protocol.classify(patchInfo: patchInfo)
-        guard Libre2Protocol.validateFRAM(fram) else { throw LibreCalibrationError.invalidFRAMCRC }
-        let lifecycle = fram[4]
+        // Foundation Data slices can retain a nonzero start index. Normalize once at
+        // this external capture boundary before fixed protocol offsets are accessed.
+        let normalizedFRAM = Data(Array(fram))
+        let normalizedUID = Data(Array(uid))
+        let normalizedPatchInfo = Data(Array(patchInfo))
+        _ = try Libre2Protocol.classify(patchInfo: normalizedPatchInfo)
+        guard Libre2Protocol.validateFRAM(normalizedFRAM) else { throw LibreCalibrationError.invalidFRAMCRC }
+        let lifecycle = normalizedFRAM[4]
         guard lifecycle == 0x02 || lifecycle == 0x03 else { throw LibreCalibrationError.unsupportedLifecycle(lifecycle) }
 
-        var source = Data(fram[2..<4])
-        source.append(fram[336..<344])
-        return LibreCalibration(ownerUID: uid, ownerPatchInfo: patchInfo,
+        var source = Data(normalizedFRAM[2..<4])
+        source.append(normalizedFRAM[336..<344])
+        return LibreCalibration(ownerUID: normalizedUID, ownerPatchInfo: normalizedPatchInfo,
                                 formatVersion: currentFormatVersion, capturedAt: capturedAt,
-                                sensorMinute: Int(fram[316]) | Int(fram[317]) << 8,
+                                sensorMinute: Int(normalizedFRAM[316]) | Int(normalizedFRAM[317]) << 8,
                                 lifecycle: lifecycle, calibrationSource: source)
     }
 
