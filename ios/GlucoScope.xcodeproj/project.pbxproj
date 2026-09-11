@@ -89,6 +89,8 @@
 		BB2000000000000000000013 /* LibrePersistenceBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000013 /* LibrePersistenceBridge.swift */; };
 		BB2000000000000000000014 /* LibreStorageProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000014 /* LibreStorageProbe.swift */; };
 		BB2000000000000000000015 /* Libre2ProductionDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000015 /* Libre2ProductionDecoder.swift */; };
+		BB2000000000000000000017 /* LibreOrderedIngestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000017 /* LibreOrderedIngestion.swift */; };
+		BB2000000000000000000018 /* LibreCandidateAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000018 /* LibreCandidateAdapter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -175,6 +177,8 @@
 		BB1000000000000000000013 /* LibrePersistenceBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibrePersistenceBridge.swift; sourceTree = "<group>"; };
 		BB1000000000000000000014 /* LibreStorageProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreStorageProbe.swift; sourceTree = "<group>"; };
 		BB1000000000000000000015 /* Libre2ProductionDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2ProductionDecoder.swift; sourceTree = "<group>"; };
+		BB1000000000000000000017 /* LibreOrderedIngestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreOrderedIngestion.swift; sourceTree = "<group>"; };
+		BB1000000000000000000018 /* LibreCandidateAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreCandidateAdapter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -300,6 +304,8 @@
 				BB1000000000000000000011 /* LibreVerifiedFrame.swift */,
 				BB1000000000000000000012 /* LibreCollectionCoordinator.swift */,
 				BB1000000000000000000013 /* LibrePersistenceBridge.swift */,
+				BB1000000000000000000017 /* LibreOrderedIngestion.swift */,
+				BB1000000000000000000018 /* LibreCandidateAdapter.swift */,
 				BB1000000000000000000014 /* LibreStorageProbe.swift */,
 				BB1000000000000000000010 /* ReadingStore.swift */,
 				BB1000000000000000000016 /* ReadingCommitAdmission.swift */,
@@ -492,6 +498,8 @@
 				BB2000000000000000000011 /* LibreVerifiedFrame.swift in Sources */,
 				BB2000000000000000000012 /* LibreCollectionCoordinator.swift in Sources */,
 				BB2000000000000000000013 /* LibrePersistenceBridge.swift in Sources */,
+				BB2000000000000000000017 /* LibreOrderedIngestion.swift in Sources */,
+				BB2000000000000000000018 /* LibreCandidateAdapter.swift in Sources */,
 				BB2000000000000000000014 /* LibreStorageProbe.swift in Sources */,
 				BB2000000000000000000010 /* ReadingStore.swift in Sources */,
 				BB2000000000000000000016 /* ReadingCommitAdmission.swift in Sources */,

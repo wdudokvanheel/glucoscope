@@ -1,6 +1,17 @@
 import CoreData
 import Foundation
 
+/// Bounded recovery identity only; no retained frame, glucose or upload payload.
+struct ReadingRecoverySampleKey: Hashable, Sendable {
+    let sessionID: UUID
+    let sensorMinute: Int64
+    let kind: ReadingSampleKind
+}
+
+struct ReadingRecoveryCheckpoint: Equatable, Sendable {
+    let verifiedSampleCount: Int
+}
+
 public actor ReadingStore {
     public nonisolated let commits: AsyncStream<ReadingCommit>
 
@@ -92,6 +103,7 @@ public actor ReadingStore {
                     if let existing = try Self.fetchStoredSession(id: proposed.id, in: context) {
                         let stored = try Self.makeSessionSnapshot(existing)
                         try Self.verifyIdentity(of: stored, against: proposed)
+                        try Self.verifyLifecycleTransition(from: stored.lifecycleState, to: proposed.lifecycleState)
 
                         guard Self.clocksMatch(stored.clock, proposed.clock) else {
                             return stored
@@ -132,7 +144,7 @@ public actor ReadingStore {
         }
     }
 
-    /// Read-only lookup used solely by deliberate missing-clock repair. The UUID,
+    /// Read-only lookup for candidate preparation and missing-clock repair. The UUID,
     /// fingerprint and revision must all identify the same retained wear.
     public func sessionMetadata(
         id: UUID,
@@ -314,6 +326,7 @@ public actor ReadingStore {
         } catch let error as ReadingStoreError {
             if case .invalidInput = error { throw error }
             if case .ownershipRejected = error { throw error }
+            if case .repairRequired = error { throw error }
             return try failIngest(error, submission: submission, durable: false)
         } catch {
             return try failIngest(error, submission: submission, durable: false)
@@ -477,6 +490,67 @@ public actor ReadingStore {
             throw ReadingStoreError.operationFailed(failure)
         }
     }
+
+    /// Checks only the at-most-seven keys of one durable BLE submission whose
+    /// publication failed. Each lookup uses an existing unique key with LIMIT 2
+    /// and a dictionary projection. It neither scans history nor refreshes any UI.
+    func verifyCommittedSamples(_ keys: [ReadingRecoverySampleKey]) async throws -> ReadingRecoveryCheckpoint {
+        try ensureHealthy()
+        guard (1...7).contains(keys.count), Set(keys).count == keys.count,
+              keys.allSatisfy({ (0...20_880).contains($0.sensorMinute) }) else {
+            throw ReadingStoreError.invalidInput("Invalid bounded recovery keys")
+        }
+        guard let context = writerContext else { throw ReadingStoreError.unavailable(health) }
+        do {
+            return try Self.perform(on: context) {
+                for key in keys {
+                    let readings = NSFetchRequest<NSDictionary>(entityName: ReadingStoreEntity.reading)
+                    readings.resultType = .dictionaryResultType
+                    readings.propertiesToFetch = ["id"]
+                    readings.includesPendingChanges = false
+                    readings.fetchLimit = 2
+                    readings.predicate = NSPredicate(
+                        format: "sessionID == %@ AND sensorMinute == %lld AND sampleKind == %@",
+                        key.sessionID as NSUUID, key.sensorMinute, key.kind.rawValue
+                    )
+                    let matches = try context.fetch(readings)
+                    guard matches.count == 1, let id = matches[0]["id"] as? UUID else {
+                        throw ReadingStoreInternalError.malformedStore
+                    }
+                    let deliveries = NSFetchRequest<NSDictionary>(entityName: ReadingStoreEntity.delivery)
+                    deliveries.resultType = .dictionaryResultType
+                    deliveries.propertiesToFetch = ["readingID", "state"]
+                    deliveries.includesPendingChanges = false
+                    deliveries.fetchLimit = 2
+                    deliveries.predicate = NSPredicate(format: "readingID == %@", id as NSUUID)
+                    let required = try context.fetch(deliveries)
+                    guard required.count == 1, required[0]["readingID"] as? UUID == id,
+                          let state = required[0]["state"] as? String,
+                          ReadingDeliveryState(rawValue: state) != nil else {
+                        throw ReadingStoreInternalError.malformedStore
+                    }
+                }
+                return ReadingRecoveryCheckpoint(verifiedSampleCount: keys.count)
+            }
+        } catch {
+            throw markUnhealthy(operation: .query, error: error, dropped: 0)
+        }
+    }
+
+    #if LIBRE2_CANDIDATE_ADAPTER_FIXTURES
+    /// Deliberate isolated corruption to prove recovery scopes its integrity check
+    /// to the affected keys instead of traversing unrelated retained history.
+    func removeDeliveryForRecoveryFixture(readingID: UUID) async throws {
+        guard let context = writerContext else { throw ReadingStoreError.unavailable(health) }
+        try Self.perform(on: context) {
+            let request = NSFetchRequest<NSManagedObject>(entityName: ReadingStoreEntity.delivery)
+            request.predicate = NSPredicate(format: "readingID == %@", readingID as NSUUID)
+            request.fetchLimit = 2
+            for row in try context.fetch(request) { context.delete(row) }
+            try context.save()
+        }
+    }
+    #endif
 
     public func snapshot() async throws -> ReadingStoreSnapshot {
         guard let context = writerContext else {
@@ -840,6 +914,15 @@ private extension ReadingStore {
         }
     }
 
+    static func verifyLifecycleTransition(
+        from stored: ReadingSessionLifecycle,
+        to proposed: ReadingSessionLifecycle
+    ) throws {
+        guard stored == .active || proposed != .active else {
+            throw ReadingStoreError.repairRequired("Terminal session requires repair")
+        }
+    }
+
     static func clocksMatch(_ lhs: ReadingClockSnapshot, _ rhs: ReadingClockSnapshot) -> Bool {
         lhs.referenceSensorMinute == rhs.referenceSensorMinute &&
         abs(lhs.referenceDate.timeIntervalSince(rhs.referenceDate)) <= 0.001 &&
@@ -878,6 +961,11 @@ private extension ReadingStore {
         guard matches.count <= 1 else { throw ReadingStoreInternalError.duplicateSession }
 
         if let existing = matches.first {
+            guard let lifecycleRaw = existing.value(forKey: "lifecycleState") as? String,
+                  let lifecycle = ReadingSessionLifecycle(rawValue: lifecycleRaw) else {
+                throw ReadingStoreInternalError.malformedStore
+            }
+            try verifyLifecycleTransition(from: lifecycle, to: snapshot.lifecycleState)
             guard existing.value(forKey: "stableIdentityFingerprint") as? Data
                     == snapshot.stableIdentityFingerprint else {
                 throw ReadingStoreInternalError.sessionFingerprintMismatch

@@ -11,6 +11,9 @@ struct PersistenceBridgeSmoke {
         try await staleRepairCompletion()
         try await staleCompletionAfterRepairSave()
         try await capturedOwnershipCannotChange()
+        try await candidatePreparationIsReadOnlyAndPerFrame()
+        try await candidatePreparationRevocationAndMissingIdentity()
+        try await terminalLifecycleCannotReopen()
         try latestPairingRepairGuards()
         print("Libre persistence bridge synthetic metadata and repair checks passed (no hardware validation).")
     }
@@ -186,6 +189,151 @@ struct PersistenceBridgeSmoke {
         try await rejects { _ = try await pending.value }
         try expect(keychain.snapshot().clockAnchor == original.clockAnchor,
                    "stop after lawful repair preserves saved clock while rejecting stale success")
+    }
+
+    static func candidatePreparationIsReadOnlyAndPerFrame() async throws {
+        var captured = try session()
+        captured.uid = (Data([0xFF]) + captured.uid)[1...]
+        captured.patchInfo = (Data([0xFF]) + captured.patchInfo)[1...]
+        let store = try await memoryStore()
+        let bridge = readOnlyBridge(store)
+        let gate = LibreFrameGenerationGate()
+        gate.activate(session: captured, persistenceSessionID: captured.persistenceSessionID)
+        let first = gate.makeFrame(payload: Data([1]), receivedAt: epoch)!
+        let initial = try await bridge.prepareCandidates(frame: first, isCurrent: { gate.isCurrent(first) })
+        try expect(initial.session == captured && initial.session.uid.startIndex == captured.uid.startIndex,
+                   "candidate preparation retains the exact captured session, including sliced identity data")
+        try expect(initial.sessionSnapshot.firstObservedAt == epoch && initial.sessionSnapshot.observedAt == epoch,
+                   "absent wear proposal uses this frame's receipt for both observation dates")
+        let absent = try await store.snapshot()
+        try expect(absent.sessions.isEmpty && absent.readings.isEmpty && absent.deliveries.isEmpty,
+                   "preparation without accepted candidates performs no metadata save")
+
+        _ = try await store.resolveSessionMetadata(initial.sessionSnapshot)
+        let second = gate.makeFrame(payload: Data([2]), receivedAt: epoch.addingTimeInterval(60))!
+        let later = try await bridge.prepareCandidates(frame: second, isCurrent: { gate.isCurrent(second) })
+        try expect(later.sessionSnapshot.firstObservedAt == epoch &&
+                   later.sessionSnapshot.observedAt == second.receivedAt &&
+                   later.sessionSnapshot.clock == initial.sessionSnapshot.clock,
+                   "each frame refreshes observation date while preserving canonical first observation and clock")
+        let unchanged = try await store.snapshot()
+        try expect(unchanged.sessions[0].lastObservedAt == epoch,
+                   "existing wear observation advances only in the eventual writer transaction")
+        _ = try await store.resolveSessionMetadata(later.sessionSnapshot)
+        let older = gate.makeFrame(payload: Data([3]), receivedAt: epoch.addingTimeInterval(20))!
+        let monotonic = try await bridge.prepareCandidates(frame: older, isCurrent: { gate.isCurrent(older) })
+        try expect(monotonic.sessionSnapshot.observedAt == second.receivedAt,
+                   "an older receipt never regresses the proposed observation date")
+    }
+
+    static func candidatePreparationRevocationAndMissingIdentity() async throws {
+        let captured = try session()
+        let store = try await memoryStore()
+        let gate = LibreFrameGenerationGate()
+        gate.activate(session: captured, persistenceSessionID: nil)
+        let missingID = gate.makeFrame(payload: Data([1]), receivedAt: epoch)!
+        do {
+            _ = try await readOnlyBridge(store).prepareCandidates(frame: missingID, isCurrent: { true })
+            throw Failure(message: "frame without durable identity was relabeled")
+        } catch LibreFrameOwnershipError.missingDurableIdentity { }
+
+        gate.activate(session: captured, persistenceSessionID: captured.persistenceSessionID)
+        let frame = gate.makeFrame(payload: Data([2]), receivedAt: epoch)!
+        let latch = Suspension()
+        let bridge = readOnlyBridge(store, beforeQuery: { await latch.pause() })
+        let pending = Task {
+            try await bridge.prepareCandidates(frame: frame, isCurrent: { gate.isCurrent(frame) })
+        }
+        try await eventually { await latch.waiting }
+        let replacement = try session(firstUIDByte: 9)
+        gate.activate(session: replacement, persistenceSessionID: replacement.persistenceSessionID)
+        await latch.release()
+        do {
+            _ = try await pending.value
+            throw Failure(message: "stale preparation after replacement succeeded")
+        } catch LibrePersistenceBridgeError.staleSession { }
+        let unchanged = try await store.snapshot()
+        try expect(unchanged.health == .healthy && unchanged.sessions.isEmpty && unchanged.publishedCommits.isEmpty,
+                   "revocation during absent-session lookup cannot insert metadata")
+
+        gate.activate(session: captured, persistenceSessionID: captured.persistenceSessionID)
+        let admittedFrame = gate.makeFrame(payload: Data([3]), receivedAt: epoch)!
+        let prepared = try await readOnlyBridge(store).prepareCandidates(frame: admittedFrame, isCurrent: { true })
+        let admission = try gate.makeCommitAdmission(for: admittedFrame, session: prepared.sessionSnapshot)
+        gate.invalidate()
+        do {
+            _ = try await store.ingest(candidateSubmission(admittedFrame, prepared.sessionSnapshot), admission: admission)
+            throw Failure(message: "revoked absent-session submission succeeded")
+        } catch ReadingStoreError.ownershipRejected(.staleFrame) { }
+        let rolledBack = try await store.snapshot()
+        try expect(rolledBack.health == .healthy && rolledBack.sessions.isEmpty && rolledBack.readings.isEmpty &&
+                   rolledBack.deliveries.isEmpty && rolledBack.publishedCommits.isEmpty,
+                   "writer revocation rolls back absent metadata, reading and delivery together")
+    }
+
+    static func terminalLifecycleCannotReopen() async throws {
+        for lifecycle in [ReadingSessionLifecycle.ended, .replaced] {
+            let captured = try session()
+            let store = try await memoryStore()
+            let gate = LibreFrameGenerationGate()
+            gate.activate(session: captured, persistenceSessionID: captured.persistenceSessionID)
+            let frame = gate.makeFrame(payload: Data([1]), receivedAt: epoch.addingTimeInterval(60))!
+            let bridge = readOnlyBridge(store)
+            let prepared = try await bridge.prepareCandidates(frame: frame, isCurrent: { true })
+            _ = try await store.resolveSessionMetadata(prepared.sessionSnapshot)
+            let admission = try gate.makeCommitAdmission(for: frame, session: prepared.sessionSnapshot)
+            let active = prepared.sessionSnapshot
+            let terminal = ReadingSessionSnapshot(
+                id: active.id, stableIdentityFingerprint: active.stableIdentityFingerprint,
+                sensorRevision: active.sensorRevision, firstObservedAt: active.firstObservedAt,
+                observedAt: active.observedAt.addingTimeInterval(60), lifecycleState: lifecycle, clock: active.clock
+            )
+            _ = try await store.resolveSessionMetadata(terminal)
+            let baseline = try await store.snapshot()
+            try await expectRepairRequired {
+                _ = try await bridge.prepareCandidates(frame: frame, isCurrent: { true })
+            }
+            try await expectRepairRequired {
+                _ = try await store.ingest(candidateSubmission(frame, active), admission: admission)
+            }
+            try await expectRepairRequired {
+                _ = try await store.resolveSessionMetadata(active)
+            }
+            try await expectRepairRequired {
+                _ = try await makeBridge(Pairing(captured), store).prepare(
+                    session: captured, receivedAt: epoch.addingTimeInterval(180), isCurrent: { true }
+                )
+            }
+            let unchanged = try await store.snapshot()
+            try expect(unchanged == baseline && unchanged.health == .healthy,
+                       "terminal lifecycle blocks preparation, stale prepared writer and metadata-only bypass without mutation")
+        }
+    }
+
+    static func readOnlyBridge(_ store: ReadingStore,
+                               beforeQuery: @escaping @Sendable () async -> Void = {}) -> LibrePersistenceBridge {
+        LibrePersistenceBridge(dependencies: LibrePersistenceBridgeDependencies(
+            loadForIngestion: { _ in throw Failure(message: "candidate path accessed Keychain") },
+            restoreMissingClockAnchor: { _, _ in throw Failure(message: "candidate path repaired Keychain") },
+            resolveSessionMetadata: { _ in throw Failure(message: "candidate path saved metadata") },
+            querySessionMetadata: { id, fingerprint, revision in
+                await beforeQuery()
+                return try await store.sessionMetadata(id: id, stableIdentityFingerprint: fingerprint, sensorRevision: revision)
+            }
+        ))
+    }
+
+    static func candidateSubmission(_ frame: LibreVerifiedFrame, _ session: ReadingSessionSnapshot) -> ReadingSubmission {
+        ReadingSubmission(sequence: frame.sequence, session: session, candidates: [ReadingCandidate(
+            sensorMinute: 1000, kind: .trend, receivedAt: frame.receivedAt, glucoseMGDL: 110,
+            quality: "valid", origin: .bleLive, decoderVersion: "metadata-race-fixture"
+        )])
+    }
+
+    static func expectRepairRequired(_ action: () async throws -> Void) async throws {
+        do { try await action() }
+        catch ReadingStoreError.repairRequired { return }
+        throw Failure(message: "expected repair-required rejection")
     }
 
     static func makeBridge(_ keychain: Pairing, _ store: ReadingStore,

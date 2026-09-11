@@ -113,6 +113,56 @@ actor LibrePersistenceBridge {
         await dependencies.currentStoreHealth()
     }
 
+    /// Read-only, per-frame candidate preparation. Durable identity must already
+    /// belong to this captured frame; this path never loads/migrates Keychain or
+    /// saves metadata. Only a guarded reading transaction may persist the proposal.
+    func prepareCandidates(
+        frame: LibreVerifiedFrame,
+        isCurrent: @escaping () -> Bool
+    ) async throws -> LibrePersistencePreparation {
+        guard isCurrent() else { throw LibrePersistenceBridgeError.staleSession }
+        guard let durableID = frame.persistenceSessionID else {
+            throw LibreFrameOwnershipError.missingDurableIdentity
+        }
+        let captured = frame.sessionSnapshot
+        var normalized = captured
+        normalized.uid = Data(captured.uid)
+        normalized.patchInfo = Data(captured.patchInfo)
+        let proposed = try Self.makeSessionSnapshot(session: normalized, observedAt: frame.receivedAt)
+        guard proposed.id == durableID else { throw LibrePersistenceBridgeError.staleSession }
+        let stored = try await dependencies.querySessionMetadata(
+            durableID, proposed.stableIdentityFingerprint, proposed.sensorRevision
+        )
+        guard isCurrent() else { throw LibrePersistenceBridgeError.staleSession }
+        guard let stored else {
+            return LibrePersistencePreparation(session: captured, sessionSnapshot: proposed)
+        }
+        guard stored.id == proposed.id,
+              stored.stableIdentityFingerprint == proposed.stableIdentityFingerprint,
+              stored.sensorRevision == proposed.sensorRevision else {
+            throw ReadingStoreError.repairRequired("Session identity requires repair")
+        }
+        guard stored.lifecycleState == .active else {
+            throw ReadingStoreError.repairRequired("Terminal session requires repair")
+        }
+        guard Self.clocksMatch(stored.clock, proposed.clock) else {
+            throw LibrePersistenceBridgeError.clockDisagreement
+        }
+        return LibrePersistencePreparation(
+            session: captured,
+            sessionSnapshot: ReadingSessionSnapshot(
+                id: stored.id,
+                stableIdentityFingerprint: stored.stableIdentityFingerprint,
+                sensorRevision: stored.sensorRevision,
+                firstObservedAt: stored.firstObservedAt,
+                observedAt: max(stored.lastObservedAt, frame.receivedAt),
+                lifecycleState: stored.lifecycleState,
+                clock: stored.clock
+            )
+        )
+    }
+
+    /// Existing metadata-only runtime service; not candidate preparation.
     func prepare(
         session capturedSession: LibreSensorSession,
         receivedAt: Date,
