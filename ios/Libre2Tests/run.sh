@@ -149,6 +149,28 @@ compile_ordered_ingestion \
   -D LIBRE2_ORDERED_INGESTION_FIXTURES
 "$tmp/libre2-ordered-ingestion-smoke"
 swiftc \
+  -D LIBRE2_TRANSPORT_HANDOFF_FIXTURES \
+  -D LIBRE2_ORDERED_INGESTION_FIXTURES \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreSessionStore.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2Protocol.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/LibreVerifiedFrame.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2DiagnosticDecoder.swift" \
+  "$root/ios/GlucoScope/Sensor/Libre2/Libre2ProductionDecoder.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingCommitAdmission.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreTypes.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreModel.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStore.swift" \
+  "$root/ios/GlucoScope/Service/LibrePersistenceBridge.swift" \
+  "$root/ios/GlucoScope/Service/LibreOrderedIngestion.swift" \
+  "$root/ios/GlucoScope/Service/LibreCandidateAdapter.swift" \
+  "$root/ios/GlucoScope/Service/LibreTransportHandoff.swift" \
+  "$root/ios/Libre2Tests/TransportHandoffSmoke.swift" \
+  -o "$tmp/libre2-transport-handoff-smoke"
+"$tmp/libre2-transport-handoff-smoke"
+swiftc \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreCalibration.swift" \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorClockAnchor.swift" \
   "$root/ios/GlucoScope/Sensor/Libre2/LibreSensorSession.swift" \
