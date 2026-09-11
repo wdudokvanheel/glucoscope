@@ -14,6 +14,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
 
     @Published private(set) var status = "Starting"
     @Published private(set) var collectionStatus = LibreCollectionCoordinator.Status()
+    @Published private(set) var storageProbeStatus = LibreStorageProbeStatus()
     @Published private(set) var bluetoothState = "Unknown"
     @Published private(set) var sensorSummary = ""
     @Published private(set) var calibrationSummary = "No paired sensor"
@@ -64,8 +65,18 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             if changed { self.appendLog("Storage: \(value.summary)") }
         }
     )
+    private lazy var storageProbe = LibreStorageProbe { [weak self] value in
+        guard let self else { return }
+        let previous = self.storageProbeStatus
+        self.storageProbeStatus = value
+        if !value.isRunning,
+           (previous.phase != value.phase || previous.detail != value.detail) {
+            self.appendLog("Storage probe: \(value.phase) — \(value.detail)")
+        }
+    }
     private var nfcSession: LibreNFCSession?
     private var operationGeneration: UInt64 = 0
+    private var lockedProbeBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var currentSensorSession: LibreSensorSession?
     private lazy var bluetooth = LibreBluetoothCentral(store: store, frameGate: frameGate) { [weak self] event in
         self?.receive(event)
@@ -75,7 +86,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         let formatter = ISO8601DateFormatter()
         let header = [
             "GlucoScope Libre 2 diagnostics",
-            "Diagnostics revision: Experimental glucose decoding v6 (frame ownership and metadata storage)",
+            "Diagnostics revision: v8 locked-device storage-only probe",
             "App: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"))",
             "Device: \(UIDevice.current.model), iOS \(UIDevice.current.systemVersion)",
             "Exported: \(formatter.string(from: Date()))",
@@ -86,6 +97,8 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             "Canonical ingestion: disabled; metadata only; dropped candidates: \(collectionStatus.droppedCandidateCount)",
             "Stale or out-of-order frames rejected: \(collectionStatus.staleFrameCount)",
             "Last accepted process sequence: \(collectionStatus.lastSequence.map(String.init) ?? "none")",
+            "Storage probe: synthetic metadata only; isolated from production readings and delivery",
+            storageProbeStatus.reportLines.joined(separator: "\n"),
             "Sensor: \(sensorSummary)",
             "Calibration: \(calibrationSummary)",
             "Sensor clock: \(clockSummary)",
@@ -106,6 +119,30 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         diagnosticsUploader.send(snapshot: exportText, endpoint: endpoint)
     }
 
+    func startStorageProbe() {
+        precondition(Thread.isMainThread)
+        storageProbe.start()
+    }
+
+    func verifyStorageProbeAfterRelaunch() {
+        precondition(Thread.isMainThread)
+        storageProbe.verifyPreviousRun()
+    }
+
+    func armLockedStorageProbe() {
+        precondition(Thread.isMainThread)
+        guard !isRunning, !isScanningNFC else {
+            appendLog("Locked storage probe was not armed: stop sensor collection and finish NFC first")
+            return
+        }
+        storageProbe.armLockedVerification(environment: lockedProbeEnvironment)
+    }
+
+    func cancelLockedStorageProbe() {
+        precondition(Thread.isMainThread)
+        storageProbe.cancelLockedVerification()
+    }
+
     private override init() {
         super.init()
         collection.start()
@@ -117,6 +154,14 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         )
         NotificationCenter.default.addObserver(
             self, selector: #selector(appEnteredBackground), name: UIApplication.didEnterBackgroundNotification, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(protectedDataAvailabilityChanged),
+            name: UIApplication.protectedDataWillBecomeUnavailableNotification, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(protectedDataAvailabilityChanged),
+            name: UIApplication.protectedDataDidBecomeAvailableNotification, object: nil
         )
         appendLog("Diagnostics coordinator initialized")
     }
@@ -320,6 +365,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     }
 
     @objc private func appBecameActive() {
+        storageProbe.lockedEnvironmentDidChange()
         collection.lifecycleOpportunity()
         bluetooth.appBecameActive()
         isNFCAvailable = LibreNFCSession(store: store).isAvailable
@@ -327,8 +373,46 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     }
 
     @objc private func appEnteredBackground() {
+        storageProbe.lockedEnvironmentDidChange()
         bluetooth.appEnteredBackground()
         appendLog("Application entered background")
+    }
+
+    @objc private func protectedDataAvailabilityChanged() {
+        // willBecomeUnavailable is delivered before protected files necessarily become
+        // inaccessible. The probe reads UIApplication.isProtectedDataAvailable itself.
+        storageProbe.lockedEnvironmentDidChange()
+    }
+
+    private var lockedProbeEnvironment: LibreStorageProbeLockEnvironment {
+        LibreStorageProbeLockEnvironment(
+            isProtectedDataAvailable: { UIApplication.shared.isProtectedDataAvailable },
+            isBackground: { UIApplication.shared.applicationState == .background },
+            beginBackgroundTask: { [weak self] expiration in
+                guard let self, self.lockedProbeBackgroundTask == .invalid else { return false }
+                let identifier = UIApplication.shared.beginBackgroundTask(
+                    withName: "GlucoScope locked storage probe"
+                ) {
+                    // UIKit invokes this handler on the main thread. End the lease in the
+                    // core expiration path, which synchronously calls endBackgroundTask.
+                    MainActor.assumeIsolated {
+                        expiration()
+                    }
+                }
+                guard identifier != .invalid else { return false }
+                self.lockedProbeBackgroundTask = identifier
+                return true
+            },
+            endBackgroundTask: { [weak self] in
+                self?.endLockedProbeBackgroundTask()
+            }
+        )
+    }
+
+    private func endLockedProbeBackgroundTask() {
+        guard lockedProbeBackgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(lockedProbeBackgroundTask)
+        lockedProbeBackgroundTask = .invalid
     }
 
     private func refreshStoredSession() {

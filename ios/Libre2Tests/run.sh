@@ -62,3 +62,11 @@ swiftc \
   "$root/ios/Libre2Tests/PersistenceBridgeSmoke.swift" \
   -o "$tmp/libre2-persistence-bridge-smoke"
 "$tmp/libre2-persistence-bridge-smoke"
+swiftc \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreTypes.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStoreModel.swift" \
+  "$root/ios/GlucoScope/Persistence/ReadingStore.swift" \
+  "$root/ios/GlucoScope/Service/LibreStorageProbe.swift" \
+  "$root/ios/Libre2Tests/StorageProbeSmoke.swift" \
+  -o "$tmp/libre2-storage-probe-smoke"
+"$tmp/libre2-storage-probe-smoke"

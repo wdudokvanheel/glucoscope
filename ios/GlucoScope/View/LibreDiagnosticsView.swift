@@ -16,6 +16,8 @@ struct LibreDiagnosticsView: View {
                 instructionsSection
                 connectionSection
                 storageSection
+                storageProbeSection
+                lockedStorageProbeSection
                 sensorSection
                 experimentalGlucoseSection
                 controlsSection
@@ -91,8 +93,8 @@ struct LibreDiagnosticsView: View {
 
     private var instructionsSection: some View {
         Section {
-            Text("This screen is for Libre 2 hardware testing. Experimental glucose values are transient diagnostics and have not been validated as clinical readings.")
-            Text("Use NFC setup with an already activated EU Libre 2 sensor. Hold the top of the iPhone close to the sensor until the scan finishes. Keep this screen open for the first Bluetooth connection.")
+            Text("For the locked-device storage check, use a passcode-enabled iPhone and keep the sensor with its existing reader. If Collection requested is Enabled, tap Stop connection first. Arm the isolated probe, immediately press the side button, leave it locked for about 20 seconds, then unlock and export diagnostics before closing the app.")
+            Text("Sensor setup and experimental glucose remain separate diagnostic tools. Their calculated values are transient and have not been validated as clinical readings.")
                 .foregroundStyle(.secondary)
         } header: {
             Text("Before you start")
@@ -179,6 +181,91 @@ struct LibreDiagnosticsView: View {
         }
     }
 
+    private var storageProbeSection: some View {
+        Section {
+            Text(coordinator.storageProbeStatus.detail)
+                .foregroundStyle(.secondary)
+            statusRow("Phase", value: coordinator.storageProbeStatus.phase)
+            statusRow("Reopen", value: coordinator.storageProbeStatus.reopenVerified ? "Verified" : "Pending")
+            statusRow("Relaunch", value: coordinator.storageProbeStatus.relaunchVerified ? "Verified" : "Pending")
+
+            ForEach(Array(coordinator.storageProbeStatus.fileObservations.enumerated()), id: \.offset) { _, observation in
+                statusRow("\(observation.fileName) · \(observation.phase)", value: observation.result)
+            }
+
+            Button {
+                coordinator.startStorageProbe()
+            } label: {
+                if coordinator.storageProbeStatus.isRunning {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Running isolated probe…")
+                    }
+                } else {
+                    Label("Run isolated storage probe", systemImage: "externaldrive.badge.checkmark")
+                }
+            }
+            .disabled(coordinator.storageProbeStatus.isRunning || coordinator.storageProbeStatus.lockedVerificationArmed)
+
+            Button {
+                coordinator.verifyStorageProbeAfterRelaunch()
+            } label: {
+                Label("Verify saved probe after relaunch", systemImage: "arrow.clockwise")
+            }
+            .disabled(coordinator.storageProbeStatus.isRunning || coordinator.storageProbeStatus.lockedVerificationArmed)
+        } header: {
+            Text("Isolated storage probe")
+        } footer: {
+            Text("Runs only when tapped and writes synthetic session/clock metadata to a separate test store. It never writes glucose readings or delivery records. Reopen is checked during the run; relaunch stays pending until a later app process verifies the saved probe. Stop the collector before the device check.")
+        }
+    }
+
+    private var lockedStorageProbeSection: some View {
+        Section {
+            Text(coordinator.storageProbeStatus.detail)
+                .foregroundStyle(.secondary)
+            statusRow("Armed", value: coordinator.storageProbeStatus.lockedVerificationArmed ? "Lock iPhone now" : "No")
+            statusRow("Unavailable while backgrounded", value: coordinator.storageProbeStatus.lockedVerificationAttempted ? "Observed" : "Not observed")
+            statusRow("Locked storage", value: coordinator.storageProbeStatus.lockedVerified ? "Verified" : "Not verified")
+
+            ForEach(Array(coordinator.storageProbeStatus.lockedObservations.enumerated()), id: \.offset) { _, observation in
+                Text(observation)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+
+            Button {
+                coordinator.armLockedStorageProbe()
+            } label: {
+                if coordinator.storageProbeStatus.lockedVerificationArmed {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Armed — lock iPhone now")
+                    }
+                } else {
+                    Label("Arm locked-device probe", systemImage: "lock.shield")
+                }
+            }
+            .disabled(
+                coordinator.storageProbeStatus.isRunning ||
+                coordinator.storageProbeStatus.lockedVerificationArmed ||
+                coordinator.isRunning ||
+                coordinator.isScanningNFC
+            )
+
+            if coordinator.storageProbeStatus.lockedVerificationArmed {
+                Button("Cancel locked-device probe", role: .cancel) {
+                    coordinator.cancelLockedStorageProbe()
+                }
+            }
+        } header: {
+            Text("Locked-device storage probe")
+        } footer: {
+            Text("This explicit, bounded check uses a second isolated synthetic-metadata store and a temporary iOS background task. It writes no glucose or delivery records and does not use NFC or Bluetooth. Success requires directly observing protected data unavailable while the app is backgrounded; a notification, cancellation, expiration or missing callback is inconclusive. The verdict is kept in memory, so export it before terminating or relaunching.")
+        }
+    }
+
     private var sensorSection: some View {
         Section("Paired sensor") {
             Text(coordinator.calibrationSummary)
@@ -203,35 +290,35 @@ struct LibreDiagnosticsView: View {
             } label: {
                 Label("Read calibration with NFC", systemImage: "wave.3.right")
             }
-            .disabled(coordinator.isScanningNFC || !coordinator.isNFCAvailable || !coordinator.canCaptureCalibration)
+            .disabled(coordinator.isScanningNFC || !coordinator.isNFCAvailable || !coordinator.canCaptureCalibration || coordinator.storageProbeStatus.lockedVerificationArmed)
 
             Button {
                 coordinator.startNFCSetup()
             } label: {
                 Label(coordinator.isScanningNFC ? "Scanning sensor…" : "Set up with NFC", systemImage: "wave.3.right.circle")
             }
-            .disabled(coordinator.isScanningNFC)
+            .disabled(coordinator.isScanningNFC || coordinator.storageProbeStatus.lockedVerificationArmed)
 
             Button {
                 coordinator.reconnect()
             } label: {
                 Label("Reconnect Bluetooth", systemImage: "antenna.radiowaves.left.and.right")
             }
-            .disabled(coordinator.isScanningNFC || coordinator.sensorSummary.isEmpty)
+            .disabled(coordinator.isScanningNFC || coordinator.sensorSummary.isEmpty || coordinator.storageProbeStatus.lockedVerificationArmed)
 
             Button {
                 coordinator.stop()
             } label: {
                 Label("Stop connection", systemImage: "stop.circle")
             }
-            .disabled(!coordinator.isRunning && !coordinator.isScanningNFC)
+            .disabled((!coordinator.isRunning && !coordinator.isScanningNFC) || coordinator.storageProbeStatus.lockedVerificationArmed)
 
             Button(role: .destructive) {
                 coordinator.forgetSensor()
             } label: {
                 Label("Forget sensor", systemImage: "trash")
             }
-            .disabled(coordinator.sensorSummary.isEmpty || coordinator.isScanningNFC)
+            .disabled(coordinator.sensorSummary.isEmpty || coordinator.isScanningNFC || coordinator.storageProbeStatus.lockedVerificationArmed)
         }
     }
 
