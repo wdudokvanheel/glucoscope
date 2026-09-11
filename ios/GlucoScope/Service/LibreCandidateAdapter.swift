@@ -1,6 +1,6 @@
 import Foundation
 
-/// Disconnected candidate boundary. The ordinary entry point always invokes the
+/// Collector candidate boundary. The ordinary entry point always invokes the
 /// closed production decoder; it has no caller-supplied decoder/result/policy.
 final class LibreCandidateAdapter: @unchecked Sendable {
     private let readingStore: ReadingStore

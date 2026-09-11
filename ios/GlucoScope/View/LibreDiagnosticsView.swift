@@ -174,8 +174,11 @@ struct LibreDiagnosticsView: View {
         Section("Collection storage") {
             Text(coordinator.collectionStatus.summary)
                 .foregroundStyle(.secondary)
+            statusRow("Queued frames", value: "\(coordinator.collectionStatus.queuedFrames)/\(LibreOrderedIngestion.capacity)")
+            statusRow("Decode-rejected frames", value: coordinator.collectionStatus.rejectedFrames.formatted())
+            statusRow("Discarded before decode", value: coordinator.collectionStatus.discardedFrames.formatted())
             statusRow("Stale frames rejected", value: coordinator.collectionStatus.staleFrameCount.formatted())
-            Text("Canonical ingestion is disabled. This version opens protected storage and reconciles sensor metadata only. Experimental glucose remains transient.")
+            Text("Saving readings is disabled by the decoder qualification policy. Incoming frames now pass through the local ingestion worker; experimental glucose remains transient.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

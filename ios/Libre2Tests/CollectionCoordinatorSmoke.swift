@@ -1,268 +1,194 @@
 import Foundation
 
-/// Pure synthetic transport envelopes; no diagnostic decoder or ReadingStore is linked.
+/// One ordinary-source runtime route: composition -> transport handoff -> ordered
+/// ingestion -> production decoder. No decoder, adapter, queue, or writer fixture
+/// flags are enabled for this executable.
 @main
 @MainActor
 struct CollectionCoordinatorSmoke {
     nonisolated static let epoch = Date(timeIntervalSince1970: 1_700_000_000)
+    nonisolated static let uid = Data([1, 2, 3, 4, 5, 6, 7, 8])
+    nonisolated static let patch = Data([0x7F, 0, 0, 0, 0, 0])
 
     static func main() async throws {
-        try capturedEnvelopeAndGeneration()
-        try currentFrameCriticalSection()
-        try await rejectionBeforeDecode()
-        try await failuresRemainDiagnosticOnly()
-        try await delayedPreparationCannotRestoreReadiness()
-        print("Libre collection coordinator synthetic generation checks passed (no hardware validation).")
-    }
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("glucoscope-runtime-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
 
-    static func currentFrameCriticalSection() throws {
+        let store = ReadingStore(configuration: .init(storage: .sqlite(
+            url: directory.appendingPathComponent("readings.sqlite")
+        )))
+        let bridge = LibrePersistenceBridge(dependencies: .init(
+            loadForIngestion: { _ in throw Failure("runtime candidate route touched Keychain") },
+            restoreMissingClockAnchor: { _, _ in throw Failure("runtime candidate route repaired Keychain") },
+            resolveSessionMetadata: { _ in throw Failure("runtime candidate route used the retired metadata writer") },
+            querySessionMetadata: { id, fingerprint, revision in
+                try await store.sessionMetadata(
+                    id: id, stableIdentityFingerprint: fingerprint, sensorRevision: revision
+                )
+            },
+            openStore: { try await store.load() },
+            retryStoreAfterFailure: { _ = try await store.retryAfterFailure() },
+            currentStoreHealth: { await store.currentHealth() }
+        ))
         let gate = LibreFrameGenerationGate()
-        let original = try session()
-        let generation = gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        let frame = gate.makeFrame(payload: Data([1]), receivedAt: epoch)!
-        let entered = DispatchSemaphore(value: 0)
-        let release = DispatchSemaphore(value: 0)
-        let saveFinished = DispatchSemaphore(value: 0)
-        let invalidationStarted = DispatchSemaphore(value: 0)
-        let invalidationFinished = DispatchSemaphore(value: 0)
-        DispatchQueue.global().async {
-            try! gate.withCurrent(frame) {
-                entered.signal()
-                release.wait()
-            }
-            saveFinished.signal()
-        }
-        try expect(entered.wait(timeout: .now() + 2) == .success, "critical-section fixture entered")
-        DispatchQueue.global().async {
-            invalidationStarted.signal()
-            gate.invalidate()
-            invalidationFinished.signal()
-        }
-        _ = invalidationStarted.wait(timeout: .now() + 2)
-        let invalidatedDuringSave = invalidationFinished.wait(timeout: .now() + 0.02) == .success
-        release.signal()
-        _ = saveFinished.wait(timeout: .now() + 2)
-        if !invalidatedDuringSave { _ = invalidationFinished.wait(timeout: .now() + 2) }
-        try expect(!invalidatedDuringSave && !gate.isGenerationCurrent(generation),
-                   "generation invalidation waits for the current frame's short atomic save boundary")
-        var staleBodyCalled = false
-        do {
-            try gate.withCurrent(frame) { staleBodyCalled = true }
-            throw Failure(message: "stale critical-section callback accepted")
-        } catch is LibreFrameOwnershipError { }
-        try expect(!staleBodyCalled, "stale frame is rejected before any compare-and-save body runs")
-    }
-
-    static func rejectionBeforeDecode() async throws {
-        let gate = LibreFrameGenerationGate()
-        var prepared: [LibreVerifiedFrame] = []
-        var decoded: [LibreVerifiedFrame] = []
-        let coordinator = LibreCollectionCoordinator(gate: gate, openStore: {}, prepareSession: { prepared.append($0) })
+        var reported: [LibreCollectionCoordinator.Status] = []
+        let coordinator = LibreCollectionCoordinator(
+            gate: gate, readingStore: store, bridge: bridge,
+            onStatus: { reported.append($0) }
+        )
         coordinator.start()
-        try await eventually { !coordinator.isWorking }
-        let original = try session()
-        gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        let late = gate.makeFrame(payload: Data([1]), receivedAt: epoch)!
-        let current = gate.makeFrame(payload: Data([2]), receivedAt: epoch)!
-        func receive(_ frame: LibreVerifiedFrame) {
-            if coordinator.receive(frame) { decoded.append(frame) }
+        try await waitUntilIdle(coordinator.ingestion)
+        try expect(coordinator.ingestion.snapshot.state == .ready,
+                   "runtime composition did not open its real SQLite store")
+
+        let producer = DispatchQueue(label: "libre2.runtime-smoke.transport")
+        let handoff = LibreTransportHandoff(
+            gate: gate, ingestion: coordinator.ingestion, producerQueue: producer
+        ) { _ in }
+        let sensor = try session()
+        producer.sync {
+            _ = handoff.activate(session: sensor, persistenceSessionID: sensor.persistenceSessionID)
         }
-        receive(current)
-        receive(late)
-        receive(current)
-        try await eventually { !coordinator.isWorking }
-        try expect(decoded.count == 1 && prepared.count == 1 && coordinator.status.lastSequence == current.sequence,
-                   "duplicates and reverse callbacks are rejected before the synthetic decode seam")
-        gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        receive(current)
-        let reconnected = gate.makeFrame(payload: Data([3]), receivedAt: epoch)!
-        receive(reconnected)
-        try await eventually { !coordinator.isWorking }
-        try expect(decoded.count == 2 && prepared.count == 2 && coordinator.status.staleFrameCount == 3,
-                   "a delayed prior-generation frame never reaches decoding or metadata preparation")
-        let replacement = try session(firstUIDByte: 9)
-        gate.activate(session: replacement, persistenceSessionID: replacement.persistenceSessionID)
-        receive(reconnected)
-        let replacementFrame = gate.makeFrame(payload: Data([4]), receivedAt: epoch)!
-        receive(replacementFrame)
-        try await eventually { !coordinator.isWorking }
-        try expect(decoded.last?.sessionSnapshot == replacement && decoded.first?.sessionSnapshot == original,
-                   "accepted callbacks retain the exact wear snapshot that authenticated them")
-        try expect(coordinator.status.readyGeneration == replacementFrame.generation && !coordinator.status.canonicalIngestionEnabled,
-                   "metadata readiness cannot promote diagnostic calculations to ingestion")
+
+        let firstAccepted = producer.sync {
+            handoff.completeFrame(
+                raw: rawFrame(marker: 0x11),
+                verifiedPayload: payload(minute: 1_000, glucose: 1_000),
+                receivedAt: epoch
+            )
+        }
+        try expect(firstAccepted, "runtime handoff did not synchronously reserve the first frame")
+        try await waitUntilIdle(coordinator.ingestion)
+        var queue = coordinator.ingestion.snapshot
+        try expect(queue.rejectedWholeFrames == 1 && queue.completedFrames == 0 &&
+                   queue.lastOfferedSequence != nil,
+                   "actual runtime route did not reach the ordinary closed production decoder")
+
+        let secondAccepted = producer.sync {
+            handoff.completeFrame(
+                raw: rawFrame(marker: 0x22),
+                verifiedPayload: payload(minute: 1_002, glucose: 1_100),
+                receivedAt: epoch.addingTimeInterval(60)
+            )
+        }
+        try expect(secondAccepted, "runtime handoff did not reserve the overlapping frame")
+        try await waitUntilIdle(coordinator.ingestion)
+        queue = coordinator.ingestion.snapshot
+        try expect(queue.rejectedWholeFrames == 2 && queue.completedFrames == 0,
+                   "both real ordered frames must reach the closed decoder exactly once")
+        try await eventually { coordinator.status.rejectedFrames == 2 }
+        try expect(reported.last?.rejectedFrames == 2,
+                   "coalesced runtime state did not reach the coordinator status callback")
+
+        let empty = try await store.snapshot()
+        try expect(empty.sessions.isEmpty && empty.readings.isEmpty && empty.deliveries.isEmpty,
+                   "closed decoder route must not write candidate metadata or readings")
+
+        producer.sync { handoff.invalidate() }
+        let acceptedAfterStop = producer.sync {
+            handoff.completeFrame(
+                raw: rawFrame(marker: 0x33),
+                verifiedPayload: payload(minute: 1_001, glucose: 1_200),
+                receivedAt: epoch.addingTimeInterval(120)
+            )
+        }
+        try expect(!acceptedAfterStop && gate.activeGeneration == nil &&
+                   coordinator.ingestion.snapshot.retainedFrames == 0,
+                   "synchronous stop must revoke ownership and purge runtime work before returning")
+        try await store.close()
+        print("Libre runtime collector route reached the ordinary closed decoder; stop revocation passed.")
     }
 
-    static func failuresRemainDiagnosticOnly() async throws {
-        let gate = LibreFrameGenerationGate()
-        let original = try session()
-        gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        var opens = 0
-        var prepares = 0
-        let coordinator = LibreCollectionCoordinator(gate: gate, openStore: {
-            opens += 1
-            throw SecretFailure()
-        }, prepareSession: { _ in prepares += 1 })
-        coordinator.start()
-        try await eventually { !coordinator.isWorking }
-        for _ in 0..<5 {
-            try expect(coordinator.receive(gate.makeFrame(payload: Data([1]), receivedAt: epoch)!),
-                       "unavailable storage must not stop current experimental diagnostics")
+    nonisolated static func waitUntilIdle(_ queue: LibreOrderedIngestion) async throws {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+        while queue.snapshot.workerScheduled {
+            guard ContinuousClock.now < deadline else { throw Failure("runtime queue did not become idle") }
+            await Task.yield()
         }
-        try expect(opens == 1 && prepares == 0 && coordinator.status.readyGeneration == nil,
-                   "frames cannot repeatedly retry an unavailable store")
-        try expect(!coordinator.status.summary.contains("SENSITIVE") && !coordinator.status.canonicalIngestionEnabled,
-                   "underlying load details remain redacted and ingestion disabled")
-        for _ in 0..<5 {
-            coordinator.lifecycleOpportunity()
-            try await eventually { !coordinator.isWorking }
-        }
-        try expect(opens == 4, "store retries are bounded to three lifecycle opportunities")
-
-        var bridgeCalls = 0
-        let bridgeFailure = LibreCollectionCoordinator(gate: gate, openStore: {}, prepareSession: { _ in
-            bridgeCalls += 1
-            throw SecretFailure()
-        })
-        bridgeFailure.start()
-        try await eventually { !bridgeFailure.isWorking }
-        try expect(bridgeFailure.receive(gate.makeFrame(payload: Data([2]), receivedAt: epoch)!), "bridge failure does not disable diagnostics")
-        try await eventually { !bridgeFailure.isWorking }
-        try expect(bridgeFailure.receive(gate.makeFrame(payload: Data([3]), receivedAt: epoch)!), "diagnostics continue after bridge failure")
-        try expect(bridgeCalls == 1 && bridgeFailure.status.readyGeneration == nil && !bridgeFailure.status.summary.contains("SENSITIVE"),
-                   "failed metadata preparation stays unavailable and redacted without automatic per-frame retry")
-    }
-
-    static func delayedPreparationCannotRestoreReadiness() async throws {
-        let gate = LibreFrameGenerationGate()
-        let original = try session()
-        gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        let first = gate.makeFrame(payload: Data([1]), receivedAt: epoch)!
-        let latch = Suspension()
-        var prepared: [LibreVerifiedFrame] = []
-        let coordinator = LibreCollectionCoordinator(gate: gate, openStore: {}, prepareSession: { frame in
-            prepared.append(frame)
-            if prepared.count == 1 { await latch.pause() }
-        })
-        coordinator.start()
-        try await eventually { !coordinator.isWorking }
-        _ = coordinator.receive(first)
-        try await eventually { latch.waiting }
-        gate.invalidate()
-        coordinator.transportInvalidated()
-        latch.release()
-        try await eventually { !coordinator.isWorking }
-        try expect(coordinator.status.readyGeneration == nil, "completion after stop cannot restore metadata readiness")
-
-        let oldLatch = Suspension()
-        var calls: [UInt64] = []
-        let replacing = LibreCollectionCoordinator(gate: gate, openStore: {}, prepareSession: { frame in
-            calls.append(frame.sequence)
-            if calls.count == 1 { await oldLatch.pause() }
-        })
-        replacing.start()
-        try await eventually { !replacing.isWorking }
-        gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        let delayed = gate.makeFrame(payload: Data([2]), receivedAt: epoch)!
-        _ = replacing.receive(delayed)
-        try await eventually { oldLatch.waiting }
-        let replacement = try session(firstUIDByte: 9)
-        gate.activate(session: replacement, persistenceSessionID: replacement.persistenceSessionID)
-        replacing.transportInvalidated()
-        var latest: LibreVerifiedFrame!
-        for _ in 0..<10 {
-            latest = gate.makeFrame(payload: Data([3]), receivedAt: epoch)!
-            _ = replacing.receive(latest)
-        }
-        oldLatch.release()
-        try await eventually { !replacing.isWorking }
-        try expect(calls == [delayed.sequence, latest.sequence] && replacing.status.readyGeneration == latest.generation,
-                   "only latest pending metadata is prepared after replacement; old completion cannot reactivate old generation")
     }
 
     static func eventually(_ predicate: () -> Bool) async throws {
-        let deadline = Date().addingTimeInterval(5)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
         while !predicate() {
-            guard Date() < deadline else { throw Failure(message: "asynchronous fixture timed out") }
-            try await Task.sleep(nanoseconds: 1_000_000)
+            guard ContinuousClock.now < deadline else { throw Failure("runtime status callback timed out") }
+            await Task.yield()
         }
     }
 
-    final class Suspension {
-        var waiting: Bool { continuation != nil }
-        private var continuation: CheckedContinuation<Void, Never>?
-        func pause() async { await withCheckedContinuation { continuation = $0 } }
-        func release() { let pending = continuation; continuation = nil; pending?.resume() }
+    nonisolated static func session() throws -> LibreSensorSession {
+        let captured = try calibration()
+        return LibreSensorSession(
+            uid: uid, patchInfo: patch, advertisedName: "ABBOTTTEST", unlockCode: 1234,
+            setupComplete: true, sensorKind: .libre2_7F, createdAt: epoch,
+            calibration: captured.calibration, clockAnchor: captured.clock,
+            persistenceSessionID: UUID()
+        )
     }
 
-    struct SecretFailure: LocalizedError {
-        var errorDescription: String? { "SENSITIVE pairing material, credentials, and filesystem path" }
+    nonisolated static func calibration() throws -> (calibration: LibreCalibration, clock: LibreSensorClockAnchor) {
+        var fram = Data(repeating: 0, count: 344)
+        let header = UInt16(1 << 3)
+        fram[2] = UInt8(truncatingIfNeeded: header)
+        fram[3] = UInt8(header >> 8)
+        fram[4] = 3
+        fram[316] = 0xE8
+        fram[317] = 0x03
+        let footer = UInt64(10_000) << 8 | UInt64(8_000 / 4) << 52
+        for index in 0..<8 { fram[336 + index] = UInt8(truncatingIfNeeded: footer >> (index * 8)) }
+        for range in [0..<24, 24..<320, 320..<344] {
+            let checksum = referenceCRC(Array(fram[(range.lowerBound + 2)..<range.upperBound]))
+            fram[range.lowerBound] = UInt8(truncatingIfNeeded: checksum)
+            fram[range.lowerBound + 1] = UInt8(checksum >> 8)
+        }
+        let calibration = try LibreCalibration.capture(
+            fram: fram, uid: uid, patchInfo: patch, capturedAt: epoch
+        )
+        return (calibration, try LibreSensorClockAnchor.capture(from: calibration))
     }
 
-    static func capturedEnvelopeAndGeneration() throws {
-        let gate = LibreFrameGenerationGate()
-        try expect(gate.makeFrame(payload: Data([1]), receivedAt: epoch) == nil,
-                   "inactive transport cannot manufacture a frame")
-        var original = try session()
-        var payload = Data([1, 2, 3, 4])
-        let generation = gate.activate(session: original, persistenceSessionID: original.persistenceSessionID)
-        let first = gate.makeFrame(payload: payload, receivedAt: epoch)!
-        original.nextUnlockCount = 100
-        original.uid[0] = 99
-        payload[0] = 99
-        try expect(first.payload == Data([1, 2, 3, 4]) && first.sessionSnapshot.nextUnlockCount == 1 && first.sessionSnapshot.uid[0] == 1,
-                   "captured payload and authenticated pairing are immutable value snapshots")
-        try expect(first.generation == generation && first.receivedAt == epoch && gate.isCurrent(first),
-                   "frame captures receipt time and active generation")
-
-        let samePairing = first.sessionSnapshot
-        let reconnectGeneration = gate.activate(session: samePairing, persistenceSessionID: samePairing.persistenceSessionID)
-        let reconnect = gate.makeFrame(payload: Data([5]), receivedAt: epoch)!
-        try expect(reconnectGeneration != generation && !gate.isCurrent(first) && gate.isCurrent(reconnect),
-                   "old connection is rejected even when the sensor and pairing are unchanged")
-        try expect(reconnect.sequence > first.sequence, "frame sequence survives a connection generation change")
-
-        var recaptured = samePairing
-        recaptured.calibration = try calibration(minute: 1010, date: epoch.addingTimeInterval(605))
-        _ = gate.activate(session: recaptured, persistenceSessionID: recaptured.persistenceSessionID)
-        let calibrationFrame = gate.makeFrame(payload: Data([6]), receivedAt: epoch)!
-        try expect(!gate.isCurrent(reconnect) && calibrationFrame.sessionSnapshot.calibration == recaptured.calibration,
-                   "calibration change retires the captured earlier calibration")
-        try expect(reconnect.sessionSnapshot.calibration == samePairing.calibration && reconnect.sessionSnapshot.clockAnchor == samePairing.clockAnchor,
-                   "a delayed callback retains its own calibration and clock")
-
-        let replacement = try session(firstUIDByte: 9)
-        _ = gate.activate(session: replacement, persistenceSessionID: replacement.persistenceSessionID)
-        let replacementFrame = gate.makeFrame(payload: Data([7]), receivedAt: epoch)!
-        try expect(!gate.isCurrent(calibrationFrame) && replacementFrame.persistenceSessionID != calibrationFrame.persistenceSessionID,
-                   "a replacement wear never relabels a preceding frame")
-        gate.invalidate()
-        try expect(!gate.isCurrent(replacementFrame) && gate.makeFrame(payload: Data([8]), receivedAt: epoch) == nil,
-                   "stop invalidates in-flight callbacks")
-        _ = gate.activate(session: replacement, persistenceSessionID: nil)
-        let diagnosticOnly = gate.makeFrame(payload: Data([9]), receivedAt: epoch)!
-        try expect(diagnosticOnly.persistenceSessionID == nil && gate.isCurrent(diagnosticOnly),
-                   "failed durable identity leaves transport diagnostics available without an ingestion identity")
-        try expect(diagnosticOnly.sequence > replacementFrame.sequence, "stop cannot reset process-local sequence")
+    nonisolated static func rawFrame(marker: UInt8) -> Data {
+        Data(repeating: marker, count: 46)
     }
 
-    static func session(firstUIDByte: UInt8 = 1) throws -> LibreSensorSession {
-        let uid = Data([firstUIDByte, 2, 3, 4, 5, 6, 7, 8])
-        return LibreSensorSession(uid: uid, patchInfo: Data([0x9D, 0, 0, 0, 0, 0]), advertisedName: "fixture",
-                                  unlockCode: 42, setupComplete: true, sensorKind: .libre2_9D,
-                                  createdAt: epoch, calibration: try calibration(uid: uid))
+    nonisolated static func payload(minute: Int, glucose: Int) -> Data {
+        var bytes = Data(repeating: 0, count: 44)
+        for index in 0..<7 {
+            let word = UInt32(glucose) | UInt32(6_000 / 4) << 14
+            let start = index * 4
+            bytes[start] = UInt8(truncatingIfNeeded: word)
+            bytes[start + 1] = UInt8(truncatingIfNeeded: word >> 8)
+            bytes[start + 2] = UInt8(truncatingIfNeeded: word >> 16)
+            bytes[start + 3] = UInt8(truncatingIfNeeded: word >> 24)
+        }
+        bytes[40] = UInt8(truncatingIfNeeded: minute)
+        bytes[41] = UInt8(truncatingIfNeeded: minute >> 8)
+        let checksum = referenceCRC(Array(bytes.prefix(42)))
+        bytes[42] = UInt8(truncatingIfNeeded: checksum)
+        bytes[43] = UInt8(checksum >> 8)
+        return bytes
     }
 
-    static func calibration(minute: Int = 1000, date: Date = epoch,
-                            uid: Data = Data([1, 2, 3, 4, 5, 6, 7, 8])) throws -> LibreCalibration {
-        let object: [String: Any] = ["ownerUID": uid.base64EncodedString(),
-            "ownerPatchInfo": Data([0x9D, 0, 0, 0, 0, 0]).base64EncodedString(),
-            "formatVersion": 1, "capturedAt": date.timeIntervalSinceReferenceDate, "sensorMinute": minute,
-            "lifecycle": 3, "calibrationSource": Data(repeating: 0, count: 10).base64EncodedString()]
-        return try JSONDecoder().decode(LibreCalibration.self, from: JSONSerialization.data(withJSONObject: object))
+    nonisolated static func referenceCRC(_ bytes: [UInt8]) -> UInt16 {
+        var remainder: UInt16 = 0xFFFF
+        for byte in bytes {
+            for bit in 0..<8 {
+                let feedback = ((remainder >> 15) ^ UInt16((byte >> bit) & 1)) != 0
+                remainder <<= 1
+                if feedback { remainder ^= 0x1021 }
+            }
+        }
+        return remainder
     }
 
-    static func expect(_ condition: Bool, _ message: String) throws {
-        if !condition { throw Failure(message: message) }
+    nonisolated static func expect(_ condition: @autoclosure () -> Bool,
+                                   _ message: String) throws {
+        if !condition() { throw Failure(message) }
     }
-    struct Failure: Error { let message: String }
+
+    struct Failure: Error, CustomStringConvertible {
+        let description: String
+        init(_ description: String) { self.description = description }
+    }
 }

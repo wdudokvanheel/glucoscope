@@ -54,9 +54,8 @@ struct LibreOrderedFrameContext: Sendable {
     #endif
 }
 
-/// Disconnected canonical mailbox. The transport's serial producer must call offer
+/// Canonical mailbox owned by the app collector. The transport's serial producer must call offer
 /// immediately after makeFrame, BEFORE dispatching anything that captures the frame.
-/// This type is deliberately not connected to the existing diagnostic/main relay.
 final class LibreOrderedIngestion: @unchecked Sendable {
     static let capacity = 8
     enum State: String, Sendable { case idle, opening, ready, unavailable, repair, invariant }
@@ -107,6 +106,8 @@ final class LibreOrderedIngestion: @unchecked Sendable {
     private let refetch: @Sendable () async throws -> Void
     private let process: @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome
     private var status = Snapshot()
+    private var stateDeliveryScheduled = false
+    private let onStateChange: @Sendable (Snapshot) -> Void
     private var pending: [Item] = []
     private var active = false
     private var invalidationEpoch: UInt64 = 0
@@ -121,23 +122,25 @@ final class LibreOrderedIngestion: @unchecked Sendable {
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
     #endif
 
-    convenience init(adapter: LibreCandidateAdapter, gate: LibreFrameGenerationGate) {
+    convenience init(adapter: LibreCandidateAdapter, gate: LibreFrameGenerationGate,
+                     onStateChange: @escaping @Sendable (Snapshot) -> Void = { _ in }) {
         let origin = ContinuousClock.now
         self.init(gate: gate, now: {
             let duration = origin.duration(to: ContinuousClock.now).components
             return Double(duration.seconds) + Double(duration.attoseconds) / 1e18
         }, open: { try await adapter.open() }, recover: { try await adapter.recover() },
            refetch: { try await adapter.refetchCommitted() },
-           process: { await adapter.process($0, context: $1) })
+           process: { await adapter.process($0, context: $1) }, onStateChange: onStateChange)
     }
 
     private init(gate: LibreFrameGenerationGate, now: @escaping @Sendable () -> Double,
                  open: @escaping @Sendable () async throws -> Void,
                  recover: @escaping @Sendable () async throws -> Void,
                  refetch: @escaping @Sendable () async throws -> Void,
-                 process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome) {
+                 process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome,
+                 onStateChange: @escaping @Sendable (Snapshot) -> Void = { _ in }) {
         self.gate = gate; self.now = now; self.open = open; self.recover = recover
-        self.refetch = refetch; self.process = process
+        self.refetch = refetch; self.process = process; self.onStateChange = onStateChange
         #if LIBRE2_ORDERED_INGESTION_FIXTURES
         self.references = nil; self.afterFrameCompletion = {}
         self.beforeOfferCurrentnessCheck = { _ in }; self.afterOfferCurrentnessCheck = { _, _ in }
@@ -153,6 +156,7 @@ final class LibreOrderedIngestion: @unchecked Sendable {
             requestedWork = .open
             return reserveWorker()
         }
+        publishState()
         launchWorker(if: launch)
     }
 
@@ -191,6 +195,7 @@ final class LibreOrderedIngestion: @unchecked Sendable {
             launch = reserveWorker()
             return true
         }
+        publishState()
         launchWorker(if: launch)
         return accepted
     }
@@ -203,6 +208,7 @@ final class LibreOrderedIngestion: @unchecked Sendable {
             purge(.staleOwnership)
             status.readyGeneration = nil
         }
+        publishState()
     }
 
     /// Only deliberate successful supported repair followed by a fresh activation
@@ -217,6 +223,7 @@ final class LibreOrderedIngestion: @unchecked Sendable {
             status.state = .ready
             repairGeneration = nil
         }
+        publishState()
     }
 
     func lifecycleOpportunity(_ opportunity: Opportunity) {
@@ -228,6 +235,7 @@ final class LibreOrderedIngestion: @unchecked Sendable {
             requestedWork = .recover(requiresRefetch)
             return reserveWorker()
         }
+        publishState()
         launchWorker(if: launch)
     }
 
@@ -266,6 +274,7 @@ final class LibreOrderedIngestion: @unchecked Sendable {
                     return true
                 }
                 if done {
+                    publishState()
                     #if LIBRE2_ORDERED_INGESTION_FIXTURES
                     resumeIdleWaiters()
                     #endif
@@ -357,13 +366,16 @@ final class LibreOrderedIngestion: @unchecked Sendable {
             status.operation = status.state == .ready ? "waiting" : status.state.rawValue
             status.updatedAt = Date()
         }
+        publishState()
     }
 
     private func storeRecovered() {
         locked { status.state = .ready; requiresRefetch = false; status.operation = "waiting"; status.updatedAt = Date() }
+        publishState()
     }
     private func storeUnavailable() {
         locked { status.state = .unavailable; purge(.flushedAfterStorageFailure); status.operation = "storage"; status.updatedAt = Date() }
+        publishState()
     }
     private func purge(_ reason: LibreOrderedDiscardReason) {
         let count = pending.count
@@ -380,6 +392,24 @@ final class LibreOrderedIngestion: @unchecked Sendable {
         let (sum, overflow) = lhs.addingReportingOverflow(rhs)
         return overflow ? .max : sum
     }
+    /// At most one queued main-thread wakeup, retaining only the mailbox. The
+    /// callback samples current redacted state; it never captures a frame.
+    private func publishState() {
+        let schedule = locked {
+            guard !stateDeliveryScheduled else { return false }
+            stateDeliveryScheduled = true
+            return true
+        }
+        guard schedule else { return }
+        DispatchQueue.main.async { [self] in
+            let value = locked {
+                stateDeliveryScheduled = false
+                return status
+            }
+            onStateChange(value)
+        }
+    }
+
     private func locked<T>(_ body: () -> T) -> T {
         lock.lock(); defer { lock.unlock() }; return body()
     }
@@ -420,9 +450,10 @@ final class LibreOrderedIngestion: @unchecked Sendable {
                  open: @escaping @Sendable () async throws -> Void,
                  recover: @escaping @Sendable () async throws -> Void,
                  refetch: @escaping @Sendable () async throws -> Void,
-                 process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome) {
+                 process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome,
+                 onStateChange: @escaping @Sendable (Snapshot) -> Void = { _ in }) {
         self.gate = gate; self.now = now; self.open = open; self.recover = recover
-        self.refetch = refetch; self.process = process
+        self.refetch = refetch; self.process = process; self.onStateChange = onStateChange
         self.references = references; self.afterFrameCompletion = afterFrameCompletion
         self.beforeOfferCurrentnessCheck = beforeOfferCurrentnessCheck
         self.afterOfferCurrentnessCheck = afterOfferCurrentnessCheck

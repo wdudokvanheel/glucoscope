@@ -10,9 +10,6 @@ final class LibreBluetoothCentral: NSObject {
         case status(String)
         case log(String)
         case sessionChanged(LibreSensorSession)
-        case rawFrame(Data, Date)
-        case verifiedPayload(LibreVerifiedFrame)
-        case transportInvalidated
         case error(String)
     }
 
@@ -24,8 +21,11 @@ final class LibreBluetoothCentral: NSObject {
 
     private let queue = DispatchQueue(label: "nl.glucoscope.libre2.bluetooth", qos: .userInitiated)
     private let frameGate: LibreFrameGenerationGate
+    private let ingestion: LibreOrderedIngestion
+    private var repairAfterNextActivation = false
     private let store: LibreSessionStore
     private let onEvent: (Event) -> Void
+    private var handoff: LibreTransportHandoff!
     private var central: CBCentralManager!
     private var session: LibreSensorSession?
     private var peripheral: CBPeripheral?
@@ -46,11 +46,17 @@ final class LibreBluetoothCentral: NSObject {
     private var loggedCandidateNames = Set<String>()
     private static let enabledDefaultsKey = "libre2.collectionEnabled"
 
-    init(store: LibreSessionStore, frameGate: LibreFrameGenerationGate, onEvent: @escaping (Event) -> Void) {
+    init(store: LibreSessionStore, frameGate: LibreFrameGenerationGate,
+         ingestion: LibreOrderedIngestion,
+         onTransport: @escaping @Sendable (LibreTransportHandoff.Snapshot) -> Void,
+         onEvent: @escaping (Event) -> Void) {
         self.store = store
         self.frameGate = frameGate
+        self.ingestion = ingestion
         self.onEvent = onEvent
         super.init()
+        handoff = LibreTransportHandoff(gate: frameGate, ingestion: ingestion,
+                                        producerQueue: queue, onDiagnostics: onTransport)
         queue.sync {
             do {
                 session = try store.load()
@@ -62,11 +68,21 @@ final class LibreBluetoothCentral: NSObject {
         }
     }
 
+    /// User lifecycle actions revoke the commit epoch and purge queued frames
+    /// before returning to the main actor. BLE owns every activation/invalidation.
+    func invalidateTransportSynchronously() {
+        queue.sync {
+            shouldRun = false
+            invalidateFrames()
+        }
+    }
+
     func use(_ newSession: LibreSensorSession, connect: Bool = true) {
         queue.async { [weak self] in
             guard let self else { return }
             self.stopCurrentConnection(forgetPeripheral: true)
             self.session = newSession
+            self.repairAfterNextActivation = true
             self.shouldRun = connect && newSession.setupComplete
             UserDefaults.standard.set(self.shouldRun, forKey: Self.enabledDefaultsKey)
             self.emit(.sessionChanged(newSession))
@@ -88,6 +104,7 @@ final class LibreBluetoothCentral: NSObject {
                 let merged = try latest.mergingCalibration(calibration, expectedSession: expectedSession)
                 try self.store.save(merged)
                 self.session = merged
+                self.repairAfterNextActivation = true
                 self.invalidateFrames()
                 self.activateFrameContext()
                 self.emit(.sessionChanged(self.session ?? merged))
@@ -132,6 +149,7 @@ final class LibreBluetoothCentral: NSObject {
         queue.async { [weak self] in
             guard let self else { return }
             self.shouldRun = false
+            self.repairAfterNextActivation = false
             UserDefaults.standard.set(false, forKey: Self.enabledDefaultsKey)
             self.stopCurrentConnection(forgetPeripheral: false)
             self.emit(.status("Stopped"))
@@ -146,6 +164,7 @@ final class LibreBluetoothCentral: NSObject {
             UserDefaults.standard.set(false, forKey: Self.enabledDefaultsKey)
             self.stopCurrentConnection(forgetPeripheral: true)
             self.session = nil
+            self.repairAfterNextActivation = false
             do {
                 try self.store.clear()
                 self.emit(.status("No sensor configured"))
@@ -334,19 +353,19 @@ final class LibreBluetoothCentral: NSObject {
         case .frame(let frame):
             resetFrameBuffer()
             let receivedAt = Date()
-            guard let frameGeneration = frameGate.activeGeneration else { return }
-            emit(.rawFrame(frame, receivedAt), generation: frameGeneration)
+            guard frameGate.activeGeneration != nil else { return }
             guard let uid = session?.uid else {
+                handoff.completeFrame(raw: frame, verifiedPayload: nil, receivedAt: receivedAt)
                 emit(.error("Received a frame without a configured sensor identity"))
                 return
             }
             do {
                 let payload = try Libre2Protocol.decryptFrame(frame, uid: uid)
                 lastVerifiedFrameAt = receivedAt
-                if let envelope = frameGate.makeFrame(payload: payload, receivedAt: receivedAt) {
-                    emit(.verifiedPayload(envelope), generation: frameGeneration)
-                }
+                // Offer synchronously on the BLE producer before any diagnostic relay.
+                handoff.completeFrame(raw: frame, verifiedPayload: payload, receivedAt: receivedAt)
             } catch {
+                handoff.completeFrame(raw: frame, verifiedPayload: nil, receivedAt: receivedAt)
                 emit(.error("Frame verification failed: \(error.localizedDescription)"))
             }
         case .incomplete: break
@@ -391,15 +410,14 @@ final class LibreBluetoothCentral: NSObject {
 
     private func invalidateFrames() {
         generation &+= 1
-        frameGate.invalidate()
+        handoff.invalidate()
         resetFrameBuffer()
-        emit(.transportInvalidated)
     }
 
     /// Resolve legacy wear identity on the BLE queue before an envelope can claim it.
     /// A Keychain failure leaves transport and experimental decoding available.
     private func activateFrameContext() {
-        guard let current = session else { return }
+        guard shouldRun, let current = session else { return }
         var snapshot = current
         var durableID: UUID?
         var identityUnavailable = false
@@ -415,18 +433,28 @@ final class LibreBluetoothCentral: NSObject {
             // Identity errors are redacted and do not disclose a Keychain payload.
             identityUnavailable = true
         }
-        frameGate.activate(session: snapshot, persistenceSessionID: durableID)
-        emit(.transportInvalidated)
-        if identityUnavailable { emit(.log("Wear identity unavailable; frames remain experimental diagnostics only")) }
+        handoff.activate(session: snapshot, persistenceSessionID: durableID)
+        if repairAfterNextActivation, durableID != nil {
+            repairAfterNextActivation = false
+            ingestion.repairSucceededAndActivated()
+        }
+        if identityUnavailable { emit(.log("Wear identity unavailable; local ingestion requires repair")) }
     }
+
+    func isCurrent(_ snapshot: LibreTransportHandoff.Snapshot) -> Bool { handoff.isCurrent(snapshot) }
 
     private func emit(_ event: Event, generation: UInt64? = nil) {
         if case .error = event { discoveryInProgress = false }
         let eventGeneration = generation ?? frameGate.currentGeneration
-        DispatchQueue.main.async { [onEvent, frameGate] in
+        let sourceSequence = handoff.stats.sourceSequence
+        DispatchQueue.main.async { [onEvent, frameGate, handoff] in
             switch event {
             case .bluetoothState, .log:
                 // Global radio state and historical traces survive ownership changes.
+                onEvent(event)
+            case .status:
+                guard frameGate.isGenerationCurrent(eventGeneration),
+                      handoff?.stats.sourceSequence == sourceSequence else { return }
                 onEvent(event)
             default:
                 guard frameGate.isGenerationCurrent(eventGeneration) else { return }
@@ -593,7 +621,7 @@ extension LibreBluetoothCentral: CBPeripheralDelegate {
         guard shouldRun, peripheral === self.peripheral, characteristic === notifyCharacteristic else { return }
         if let error { emit(.error("Notification failed: \(error.localizedDescription)")); return }
         guard let value = characteristic.value else { emit(.error("Sensor sent an empty notification")); return }
-        emit(.log("F002 notification (\(value.count) bytes): " + value.map { String(format: "%02X", $0) }.joined()))
+        handoff.notification(data: value, receivedAt: Date())
         appendNotification(value)
     }
 

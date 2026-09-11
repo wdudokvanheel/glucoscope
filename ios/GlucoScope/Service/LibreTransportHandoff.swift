@@ -1,10 +1,10 @@
 import Foundation
 
-/// DISCONNECTED engineering boundary: no app or BLE owner instantiates this type.
+/// App BLE-to-ingestion boundary with a bounded main-thread diagnostic relay.
 /// All producer calls, including lifecycle calls, belong to the supplied SERIAL queue.
 /// The producer must decrypt the actual raw/plain pair under that same activation.
 /// CRC is checked here, but CRC alone cannot prove that cryptographic association.
-/// This seam does not qualify decoding, receipt clocks, freshness, or runtime wiring.
+/// Runtime wiring does not qualify decoding, receipt clocks or freshness.
 /// Relay retention: one pending aggregate plus one in-flight snapshot, each with
 /// at most 46 raw + 44 plaintext bytes (180 total payload-body bytes). Captured
 /// session storage, producer transients and consumer-retained copies are separate.
