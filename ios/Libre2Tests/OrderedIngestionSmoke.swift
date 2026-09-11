@@ -8,6 +8,7 @@ struct OrderedIngestionSmoke {
         try await boundedFIFOAndHighWater()
         try await residenceBoundaries()
         try await invalidationKeepsActiveReservation()
+        try await concurrentOfferAndPurge()
         try await storageFailureAndRecoveryBudget()
         try await publicationRequiresRefetch()
         try await repairAndInvariantPauses()
@@ -133,6 +134,115 @@ struct OrderedIngestionSmoke {
         try expect(queue.snapshot.knownAcceptedCandidatesNotCommitted == 2 && queue.snapshot.readyGeneration == nil,
                    "old mapped work discarded without restoring old readiness")
         try expect(references.counts.live == 0 && references.counts.peak == 8, "invalidation preserves real reference bound")
+    }
+
+    /// An offer's cached currentness is deliberately not an atomic admission:
+    /// the mailbox must reject a raced stale item at its next ownership check.
+    static func concurrentOfferAndPurge() async throws {
+        enum Ordering: CaseIterable { case admittedBeforePurge, invalidatedBeforeCheck, cachedTrueAfterPurge }
+        for ordering in Ordering.allCases {
+            // Bound processor and idle continuation waits as well as the offer
+            // barriers. This watchdog only fails a stuck fixture; barriers alone
+            // establish every successful interleaving.
+            let deadline = DispatchWorkItem {
+                preconditionFailure("concurrent offer/purge fixture timed out: \(ordering)")
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 15, execute: deadline)
+            defer { deadline.cancel() }
+            let gate = try activeGate()
+            let active = frame(gate)
+            let pending = (0..<6).map { _ in frame(gate) }
+            let raced = frame(gate)
+            let racedSequence = raced.sequence
+            let offerBarrier = SynchronousOfferBarrier()
+            let processorBarrier = Barrier()
+            let processed = Trace()
+            let commitEligible = Trace()
+            let references = LibreOrderedIngestion.ReferenceProbe()
+            let queue = LibreOrderedIngestion.fixture(gate: gate, references: references,
+                beforeOfferCurrentnessCheck: { frame in
+                    if frame.sequence == racedSequence && ordering == .invalidatedBeforeCheck {
+                        offerBarrier.pause()
+                    }
+                }, afterOfferCurrentnessCheck: { frame, current in
+                    if frame.sequence == racedSequence && ordering != .invalidatedBeforeCheck {
+                        precondition(current, "fixture must suspend a cached true currentness result")
+                        offerBarrier.pause()
+                    }
+                }) { frame, context in
+                    await processed.record(Int(frame.sequence))
+                    if frame.sequence == active.sequence { await processorBarrier.pause() }
+                    if let reason = context.check() {
+                        return .init(disposition: .discarded(reason), acceptedCandidates: 2)
+                    }
+                    // Reaching the processor and this check is prerequisite to any
+                    // adapter/writer call; the raced stale frame must reach neither.
+                    await commitEligible.record(Int(frame.sequence))
+                    return .init(disposition: .completed, acceptedCandidates: 2)
+                }
+            queue.start(); await queue.waitUntilIdle()
+            try expect(queue.offer(active), "race fixture active frame admitted")
+            await processorBarrier.waitUntilReached()
+            for frame in pending { try expect(queue.offer(frame), "race fixture pending admitted") }
+            let offered = ConcurrentOffer(queue: queue, frame: raced)
+            defer { offerBarrier.release() }
+            try offerBarrier.waitUntilReached()
+
+            if ordering == .admittedBeforePurge {
+                offerBarrier.release()
+                try expect(try offered.result(), "offer completes admission before purge")
+                try expect(references.counts.live == 8, "pre-purge admission reaches eight real references")
+            }
+            gate.invalidate(); queue.transportInvalidated()
+            let purged = ordering == .admittedBeforePurge ? 7 : 6
+            try expect(references.counts.live == 1 && references.counts.released == purged &&
+                       queue.snapshot.retainedFrames == 1 && queue.snapshot.discardedFrames[.staleOwnership] == UInt64(purged),
+                       "direct purge releases and counts pending exactly once while active stays reserved")
+            try expect(queue.snapshot.lastOfferedSequence ==
+                       (ordering == .admittedBeforePurge ? raced.sequence : pending.last!.sequence),
+                       "purge preserves process sequence high water")
+
+            if ordering != .admittedBeforePurge {
+                offerBarrier.release()
+                let accepted = try offered.result()
+                try expect(accepted == (ordering == .cachedTrueAfterPurge),
+                           "cached true permits queue admission only; invalidate-before-check rejects synchronously")
+            }
+            let staleRetained = ordering == .cachedTrueAfterPurge ? 2 : 1
+            try expect(references.counts.live == staleRetained && queue.snapshot.retainedFrames == staleRetained,
+                       "cached stale item retains its reservation until the next ownership check")
+            let replacement = try session(firstUIDByte: 9)
+            gate.activate(session: replacement, persistenceSessionID: replacement.persistenceSessionID)
+            var newSequences: [Int] = []
+            for _ in 0..<(8 - staleRetained) {
+                let next = frame(gate)
+                newSequences.append(Int(next.sequence))
+                try expect(queue.offer(next), "replacement generation fills remaining capacity")
+            }
+            try expect(!queue.offer(frame(gate)), "replacement overflow rejected at actual eight-reference bound")
+            let suspendedSequences = await processed.values
+            try expect(references.counts.live == 8 && references.counts.peak == 8 &&
+                       queue.snapshot.retainedFrames == 8 && queue.snapshot.peakRetainedFrames == 8 &&
+                       queue.snapshot.workerScheduled && queue.snapshot.wakeups == 2 &&
+                       suspendedSequences == [Int(active.sequence)],
+                       "replacement generation cannot schedule or enter a second worker while old work is suspended")
+            await processorBarrier.release(); await queue.waitUntilIdle()
+            let processedSequences = await processed.values
+            let eligibleSequences = await commitEligible.values
+            try expect(processedSequences == [Int(active.sequence)] + newSequences && eligibleSequences == newSequences,
+                       "raced stale item never enters processor or commit eligibility; replacement remains FIFO")
+            let snapshot = queue.snapshot
+            let counts = references.counts
+            let totalAdmitted = 7 + (ordering == .invalidatedBeforeCheck ? 0 : 1) + newSequences.count
+            try expect(counts.live == 0 && counts.retained == totalAdmitted && counts.released == totalAdmitted &&
+                       snapshot.retainedFrames == 0 && !snapshot.workerScheduled && snapshot.wakeups == 2,
+                       "every admitted item disposes exactly once and one coalesced drain handles both generations")
+            try expect(snapshot.discardedFrames[.staleOwnership] == 8 && snapshot.discardedFrames[.backlogFull] == 1 &&
+                       snapshot.discardedFrames.values.reduce(0, +) == 9 && snapshot.undecodedDiscardedFrames == 8 &&
+                       snapshot.knownAcceptedCandidatesNotCommitted == 2 &&
+                       snapshot.completedFrames == UInt64(newSequences.count) && snapshot.readyGeneration == nil,
+                       "purged, synchronously rejected or dequeued stale work is counted once with no stale completion")
+        }
     }
 
     static func storageFailureAndRecoveryBudget() async throws {
@@ -275,6 +385,37 @@ struct OrderedIngestionSmoke {
         var values: [Int] = []
         var count: Int { values.count }
         func record(_ value: Int) { values.append(value) }
+    }
+    /// The offer runs on a Dispatch thread because its synchronous ingress hook
+    /// must stop between the gate and mailbox locks. Deadlines detect deadlock;
+    /// they never choose the interleaving or require scheduler timing guesses.
+    final class SynchronousOfferBarrier: @unchecked Sendable {
+        private let reached = DispatchSemaphore(value: 0)
+        private let resume = DispatchSemaphore(value: 0)
+        func pause() {
+            reached.signal()
+            precondition(resume.wait(timeout: .now() + 10) == .success, "concurrent offer barrier timed out")
+        }
+        func waitUntilReached() throws {
+            try expect(reached.wait(timeout: .now() + 10) == .success, "offer did not reach currentness hook")
+        }
+        func release() { resume.signal() }
+    }
+    final class ConcurrentOffer: @unchecked Sendable {
+        private let completed = DispatchSemaphore(value: 0)
+        private let lock = NSLock()
+        private var accepted = false
+        init(queue: LibreOrderedIngestion, frame: LibreVerifiedFrame) {
+            DispatchQueue.global().async { [self] in
+                let result = queue.offer(frame)
+                lock.lock(); accepted = result; lock.unlock()
+                completed.signal()
+            }
+        }
+        func result() throws -> Bool {
+            try expect(completed.wait(timeout: .now() + 10) == .success, "concurrent offer did not finish")
+            lock.lock(); defer { lock.unlock() }; return accepted
+        }
     }
     actor Barrier {
         private var reached = false

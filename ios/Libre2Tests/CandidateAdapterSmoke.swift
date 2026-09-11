@@ -19,6 +19,7 @@ struct CandidateAdapterSmoke {
         try await ordinaryClosedBoundary()
         #if LIBRE2_CANDIDATE_ADAPTER_FIXTURES && LIBRE2_ENGINEERING_DECODER_FIXTURES && LIBRE2_ORDERED_INGESTION_FIXTURES
         try await mappingAndDuplicates()
+        try await orderedReversedMinutesAndConflicts()
         try await malformedBindings()
         try await rejectionAndResidence()
         try await preparationRevocation()
@@ -34,15 +35,16 @@ struct CandidateAdapterSmoke {
     }
 
     static func rig(glucose: Int = 1000, date: Date = epoch,
+                    calibrationMinute: Int = 1000, frameMinute: Int = 1000,
                     suspendQuery: Suspension? = nil) async throws -> Rig {
-        let sensorCalibration = try calibration(capturedAt: date)
+        let sensorCalibration = try calibration(minute: calibrationMinute, capturedAt: date)
         let session = LibreSensorSession(uid: uid, patchInfo: patch7F, advertisedName: "ABBOTTTEST",
                                          unlockCode: 1234, setupComplete: true, sensorKind: .libre2_7F,
                                          createdAt: date, calibration: sensorCalibration,
                                          persistenceSessionID: UUID())
         let gate = LibreFrameGenerationGate()
         gate.activate(session: session, persistenceSessionID: session.persistenceSessionID)
-        let frame = gate.makeFrame(payload: payload(minute: 1000, glucose: glucose), receivedAt: date)!
+        let frame = gate.makeFrame(payload: payload(minute: frameMinute, glucose: glucose), receivedAt: date)!
         let faults = ReadingStoreFaultInjector()
         let store = ReadingStore(configuration: ReadingStoreConfiguration(
             storage: .inMemory(identifier: UUID().uuidString)), faultInjector: faults)
@@ -124,6 +126,92 @@ struct CandidateAdapterSmoke {
             try expect(duplicate.readings.count == 7 && duplicate.deliveries.count == 7 &&
                        duplicate.publishedCommits.count == 1, "duplicate no-change is success without new publication")
         }
+    }
+
+    static func orderedReversedMinutesAndConflicts() async throws {
+        let firstReceived = epoch.addingTimeInterval(120)
+        let secondReceived = firstReceived.addingTimeInterval(60)
+        let rig = try await rig(glucose: 1000, date: firstReceived,
+                                calibrationMinute: 980, frameMinute: 1000)
+        guard let second = rig.gate.makeFrame(
+            payload: payload(minute: 998, glucose: 1100), receivedAt: secondReceived
+        ) else { throw Failure(message: "second current frame was not created") }
+        let first = rig.frame
+        let anchorFloor = first.sessionSnapshot.clockAnchor!.referenceSensorMinute
+        try expect(first.sequence < second.sequence &&
+                   payloadMinute(first.payload) == 1000 && payloadMinute(second.payload) == 998 &&
+                   payloadMinute(first.payload) >= anchorFloor && payloadMinute(second.payload) >= anchorFloor,
+                   "process sequence increases while both valid frame minutes reverse above the anchor floor")
+
+        let firstPaused = Suspension()
+        let trace = AdapterStoreTrace()
+        let queue = LibreOrderedIngestion.fixture(gate: rig.gate) { frame, context in
+            if frame.sequence == first.sequence { await firstPaused.pause() }
+            let outcome = await rig.adapter.processFixture(frame, context: context)
+            await trace.record(sequence: frame.sequence, snapshot: try? await rig.store.snapshot())
+            return outcome
+        }
+        queue.start()
+        try await waitIdle(queue)
+        try expect(queue.offer(first), "first newer-minute frame enters the combined fixture")
+        try await firstPaused.waitReached()
+        try expect(queue.offer(second), "second older-minute frame queues behind the suspended head")
+        await firstPaused.resume()
+        try await waitIdle(queue)
+
+        let sequences = await trace.sequences
+        let batches = await trace.snapshots
+        try expect(sequences == [first.sequence, second.sequence] && batches.count == 2 &&
+                   queue.snapshot.completedFrames == 2 &&
+                   queue.snapshot.knownAcceptedCandidatesNotCommitted == 0,
+                   "ordered queue processes each frame once in increasing process sequence")
+
+        let firstBatch = batches[0]
+        let final = batches[1]
+        let firstMinutes: [Int64] = [985, 988, 993, 994, 996, 998, 1000]
+        let secondNewMinutes: [Int64] = [983, 986, 991, 992]
+        let overlap: Set<Int64> = [994, 996, 998]
+        let expectedFinalMinutes: [Int64] = [983, 985, 986, 988, 991, 992, 993, 994, 996, 998, 1000]
+        let meaningfulGaps: Set<Int64> = [984, 987, 989, 990, 995, 997, 999]
+        try expect(firstBatch.readings.map(\.sensorMinute) == firstMinutes &&
+                   final.readings.map(\.sensorMinute) == expectedFinalMinutes &&
+                   meaningfulGaps.isDisjoint(with: Set(final.readings.map(\.sensorMinute))),
+                   "older sparse slots insert uniquely while every unreported minute remains a gap")
+
+        let firstByMinute = Dictionary(uniqueKeysWithValues: firstBatch.readings.map { ($0.sensorMinute, $0) })
+        let finalByMinute = Dictionary(uniqueKeysWithValues: final.readings.map { ($0.sensorMinute, $0) })
+        try expect(overlap.allSatisfy { finalByMinute[$0] == firstByMinute[$0] } &&
+                   overlap.allSatisfy { firstByMinute[$0]?.glucoseMGDL == 112 },
+                   "conflicting overlap retains the first committed canonical values and provenance")
+        try expect(secondNewMinutes.allSatisfy {
+            finalByMinute[$0]?.glucoseMGDL == 125 &&
+            finalByMinute[$0]?.receivedAt == secondReceived &&
+            finalByMinute[$0]?.primaryOrigin == .bleHistory
+        }, "the second frame contributes valid distinct numerical values only at its unique older slots")
+
+        let readingIDs = Set(final.readings.map(\.id))
+        try expect(Set(final.deliveries.map(\.readingID)) == readingIDs &&
+                   final.deliveries.count == expectedFinalMinutes.count &&
+                   final.deliveries.allSatisfy { $0.state == .unassigned },
+                   "every unique reading key has exactly one required delivery")
+        let conflictIDs = Set(final.conflicts.map(\.readingID))
+        let overlapIDs = Set(overlap.compactMap { firstByMinute[$0]?.id })
+        try expect(final.conflicts.count == overlap.count && conflictIDs == overlapIDs &&
+                   final.conflicts.allSatisfy { $0.discrepancyFlags == ["canonicalValue"] },
+                   "each conflicting numerical overlap records one redacted conflict")
+
+        let minuteByID = Dictionary(uniqueKeysWithValues: final.readings.map { ($0.id, $0.sensorMinute) })
+        try expect(final.publishedCommits.count == 2 &&
+                   final.publishedCommits.map(\.submissionSequence) == [first.sequence, second.sequence] &&
+                   final.publishedCommits[0].readingIDs.compactMap { minuteByID[$0] } == firstMinutes &&
+                   final.publishedCommits[1].readingIDs.compactMap { minuteByID[$0] } == secondNewMinutes,
+                   "each batch publishes its new reading IDs in chronological order")
+        try expect(firstBatch.sessions.count == 1 && final.sessions.count == 1 &&
+                   firstBatch.sessions[0].firstObservedAt == firstReceived &&
+                   firstBatch.sessions[0].lastObservedAt == firstReceived &&
+                   final.sessions[0].firstObservedAt == firstReceived &&
+                   final.sessions[0].lastObservedAt == secondReceived,
+                   "each processed frame advances only its own monotonic observation metadata")
     }
 
     static func malformedBindings() async throws {
@@ -320,6 +408,15 @@ struct CandidateAdapterSmoke {
         }
     }
 
+    actor AdapterStoreTrace {
+        private(set) var sequences: [UInt64] = []
+        private(set) var snapshots: [ReadingStoreSnapshot] = []
+        func record(sequence: UInt64, snapshot: ReadingStoreSnapshot?) {
+            sequences.append(sequence)
+            if let snapshot { snapshots.append(snapshot) }
+        }
+    }
+
     static func calibration(index: Int = 1, i3: Int = 0, i4: Int = 10_000, i6: Int = 8_000,
                             minute: Int = 1000, state: UInt8 = 3, capturedAt: Date = epoch,
                             uid: Data = uid, patch: Data = patch7F) throws -> LibreCalibration {
@@ -351,6 +448,10 @@ struct CandidateAdapterSmoke {
         bytes[41] = UInt8(truncatingIfNeeded: minute >> 8)
         refreshCRC(&bytes)
         return bytes
+    }
+
+    static func payloadMinute(_ payload: Data) -> Int {
+        Int(payload[40]) | Int(payload[41]) << 8
     }
 
     static func writeWord(_ bytes: inout Data, slot: Int, glucose: Int,

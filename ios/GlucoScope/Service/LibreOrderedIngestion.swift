@@ -114,8 +114,10 @@ final class LibreOrderedIngestion: @unchecked Sendable {
     private var requiresRefetch = false
     private var repairGeneration: UInt64?
     #if LIBRE2_ORDERED_INGESTION_FIXTURES
-    private var references: ReferenceProbe?
-    private var afterFrameCompletion: @Sendable () async -> Void = {}
+    private let references: ReferenceProbe?
+    private let afterFrameCompletion: @Sendable () async -> Void
+    private let beforeOfferCurrentnessCheck: @Sendable (LibreVerifiedFrame) -> Void
+    private let afterOfferCurrentnessCheck: @Sendable (LibreVerifiedFrame, Bool) -> Void
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
     #endif
 
@@ -136,6 +138,10 @@ final class LibreOrderedIngestion: @unchecked Sendable {
                  process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome) {
         self.gate = gate; self.now = now; self.open = open; self.recover = recover
         self.refetch = refetch; self.process = process
+        #if LIBRE2_ORDERED_INGESTION_FIXTURES
+        self.references = nil; self.afterFrameCompletion = {}
+        self.beforeOfferCurrentnessCheck = { _ in }; self.afterOfferCurrentnessCheck = { _, _ in }
+        #endif
     }
 
     var snapshot: Snapshot { locked { status } }
@@ -154,7 +160,13 @@ final class LibreOrderedIngestion: @unchecked Sendable {
     /// per-offer closure. Even state/overflow rejection advances current high water.
     @discardableResult
     func offer(_ frame: LibreVerifiedFrame) -> Bool {
+        #if LIBRE2_ORDERED_INGESTION_FIXTURES
+        beforeOfferCurrentnessCheck(frame)
+        #endif
         let current = gate.isCurrent(frame) // Never acquire the generation gate under mailbox lock.
+        #if LIBRE2_ORDERED_INGESTION_FIXTURES
+        afterOfferCurrentnessCheck(frame, current)
+        #endif
         let instant = now()
         var launch = false
         let accepted = locked {
@@ -378,21 +390,42 @@ final class LibreOrderedIngestion: @unchecked Sendable {
         private let lock = NSLock()
         private var live = 0
         private var peak = 0
-        fileprivate func retain() { lock.lock(); live += 1; peak = max(peak, live); lock.unlock() }
-        fileprivate func release() { lock.lock(); live -= 1; lock.unlock() }
-        var counts: (live: Int, peak: Int) { lock.lock(); defer { lock.unlock() }; return (live, peak) }
+        private var retained = 0
+        private var released = 0
+        fileprivate func retain() { lock.lock(); live += 1; retained += 1; peak = max(peak, live); lock.unlock() }
+        fileprivate func release() { lock.lock(); live -= 1; released += 1; lock.unlock() }
+        var counts: (live: Int, peak: Int, retained: Int, released: Int) {
+            lock.lock(); defer { lock.unlock() }; return (live, peak, retained, released)
+        }
     }
     static func fixture(gate: LibreFrameGenerationGate, now: @escaping @Sendable () -> Double = { 0 },
                         references: ReferenceProbe? = nil,
                         afterFrameCompletion: @escaping @Sendable () async -> Void = {},
+                        beforeOfferCurrentnessCheck: @escaping @Sendable (LibreVerifiedFrame) -> Void = { _ in },
+                        afterOfferCurrentnessCheck: @escaping @Sendable (LibreVerifiedFrame, Bool) -> Void = { _, _ in },
                         open: @escaping @Sendable () async throws -> Void = {},
                         recover: @escaping @Sendable () async throws -> Void = {},
                         refetch: @escaping @Sendable () async throws -> Void = {},
                         process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome) -> LibreOrderedIngestion {
-        let mailbox = LibreOrderedIngestion(gate: gate, now: now, open: open, recover: recover, refetch: refetch, process: process)
-        mailbox.references = references
-        mailbox.afterFrameCompletion = afterFrameCompletion
-        return mailbox
+        LibreOrderedIngestion(gate: gate, now: now, references: references,
+                              afterFrameCompletion: afterFrameCompletion,
+                              beforeOfferCurrentnessCheck: beforeOfferCurrentnessCheck,
+                              afterOfferCurrentnessCheck: afterOfferCurrentnessCheck,
+                              open: open, recover: recover, refetch: refetch, process: process)
+    }
+    private init(gate: LibreFrameGenerationGate, now: @escaping @Sendable () -> Double,
+                 references: ReferenceProbe?, afterFrameCompletion: @escaping @Sendable () async -> Void,
+                 beforeOfferCurrentnessCheck: @escaping @Sendable (LibreVerifiedFrame) -> Void,
+                 afterOfferCurrentnessCheck: @escaping @Sendable (LibreVerifiedFrame, Bool) -> Void,
+                 open: @escaping @Sendable () async throws -> Void,
+                 recover: @escaping @Sendable () async throws -> Void,
+                 refetch: @escaping @Sendable () async throws -> Void,
+                 process: @escaping @Sendable (LibreVerifiedFrame, LibreOrderedFrameContext) async -> LibreOrderedFrameOutcome) {
+        self.gate = gate; self.now = now; self.open = open; self.recover = recover
+        self.refetch = refetch; self.process = process
+        self.references = references; self.afterFrameCompletion = afterFrameCompletion
+        self.beforeOfferCurrentnessCheck = beforeOfferCurrentnessCheck
+        self.afterOfferCurrentnessCheck = afterOfferCurrentnessCheck
     }
     func waitUntilIdle() async {
         await withCheckedContinuation { continuation in
