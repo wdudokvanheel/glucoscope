@@ -26,7 +26,7 @@ Connecting saved local readings to the existing graph, mode selection, standalon
 
 Workflow preference: use Sol/Astra child agents for implementation and testing; agents may compile, while the user owns app and physical-device runs.
 
-1. Exercise real BLE → saved readings on the phone, including reopening the app and a short locked-screen interval. Inspect the saved timestamps and sparse overlap. The development database may be reset as needed.
+1. Exercise real BLE → saved readings during a short locked-screen interval. Inspect the saved timestamps and sparse overlap. The development database may be reset as needed.
 2. Connect a local `DataSource` to the existing graph and add Viewer/standalone selection. Preserve Viewer behavior and stop obsolete polling/results when switching sources. Collection and graphs must work with no server or credentials.
 3. Build first-time skippable onboarding, Sensor management, Stats and standalone Settings from [the app experience decisions](ios-ble-app-experience-plan.md). Resolve feature-specific open choices when implementing that feature.
 4. Add multiple upload destinations with independent queues and the agreed newest-first history controls. Implement and test each backend's actual write contract, including authentication, units, retries and duplicate handling.
@@ -52,7 +52,7 @@ For the custom backend, uploads will require authenticated writes and server sta
 
 The local-saving change (`fe91b37`) passed all 14 portable runs and an unsigned iPhone 16 / iOS 18.5 simulator Debug build under Xcode 26.2. The runtime test saved two overlapping frames as 11 unique readings and delivery rows, stopped collection, reopened SQLite with stable IDs/values/timestamps, and loaded saved values in a fresh coordinator before new packets. The build's only warning was the existing AppIntents skip because that framework is absent. Initial validation was software-only.
 
-The first v10 phone run exposed a fractional-timestamp comparison bug. v11 uses the same `Date` arithmetic in decoding, adapter checks and storage. The regression fails on the old code and passes with the fix; all 14 portable tests and the unsigned simulator Debug build pass. The user reports that live and recovered frames now commit; the phone relaunch check remains.
+The first v10 phone run exposed a fractional-timestamp comparison bug. v11 uses the same `Date` arithmetic in decoding, adapter checks and storage. The regression fails on the old code and passes with the fix; all 14 portable tests and the unsigned simulator Debug build pass. The user reports that live and recovered frames now commit, recovered historical readings match xDrip/Zukka at the corresponding times, and saved readings remain after force-quitting and relaunching the app.
 
 ```sh
 ./ios/Libre2Tests/run.sh
