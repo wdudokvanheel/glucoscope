@@ -206,17 +206,37 @@ public enum ReadingStoreError: Error, Equatable, Sendable {
     case repairRequired(String)
     case retriesExhausted
     case operationFailed(ReadingStoreFailure)
+    case ownershipRejected(ReadingCommitRejection)
+}
+
+/// Expected cancellation or binding rejection, not a persistence health failure.
+public enum ReadingCommitRejection: Equatable, Sendable {
+    case staleFrame
+    case submissionMismatch
 }
 
 public enum ReadingStoreFaultPoint: String, CaseIterable, Sendable {
     case beforeLoad
     case beforeSave
+    case beforeCommitAdmission
+    case afterCommitAdmission
     case afterSaveBeforePublication
 }
 
 public final class ReadingStoreFaultInjector: @unchecked Sendable {
     private let lock = NSLock()
     private var failures: [ReadingStoreFaultPoint: [String]] = [:]
+    #if LIBRE2_COMMIT_OWNERSHIP_FIXTURES
+    private var pauses: [ReadingStoreFaultPoint: [ReadingStoreTestBarrier]] = [:]
+
+    func pauseNext(at point: ReadingStoreFaultPoint) -> ReadingStoreTestBarrier {
+        let barrier = ReadingStoreTestBarrier()
+        lock.lock()
+        pauses[point, default: []].append(barrier)
+        lock.unlock()
+        return barrier
+    }
+    #endif
 
     public init() {}
 
@@ -227,6 +247,12 @@ public final class ReadingStoreFaultInjector: @unchecked Sendable {
     }
 
     func check(_ point: ReadingStoreFaultPoint) throws {
+        #if LIBRE2_COMMIT_OWNERSHIP_FIXTURES
+        lock.lock()
+        let barrier = pauses[point]?.isEmpty == false ? pauses[point]?.removeFirst() : nil
+        lock.unlock()
+        try barrier?.arriveAndWait(at: point)
+        #endif
         lock.lock()
         defer { lock.unlock() }
         guard var messages = failures[point], !messages.isEmpty else { return }
@@ -235,6 +261,29 @@ public final class ReadingStoreFaultInjector: @unchecked Sendable {
         throw ReadingStoreInjectedFault(point: point, message: message)
     }
 }
+
+#if LIBRE2_COMMIT_OWNERSHIP_FIXTURES
+/// Portable race fixtures only. Bounded semaphore waits cannot run application
+/// callbacks or ship in the app target, which never defines this compilation flag.
+final class ReadingStoreTestBarrier: @unchecked Sendable {
+    private let reached = DispatchSemaphore(value: 0)
+    private let released = DispatchSemaphore(value: 0)
+
+    func waitUntilReached(timeout: TimeInterval = 5) -> Bool {
+        reached.wait(timeout: .now() + timeout) == .success
+    }
+
+    func resume() { released.signal() }
+
+    fileprivate func arriveAndWait(at point: ReadingStoreFaultPoint) throws {
+        reached.signal()
+        guard released.wait(timeout: .now() + 10) == .success else {
+            throw ReadingStoreInjectedFault(point: point,
+                                            message: "ownership fixture barrier timed out")
+        }
+    }
+}
+#endif
 
 public struct ReadingStoreInjectedFault: Error, Equatable, Sendable {
     public let point: ReadingStoreFaultPoint

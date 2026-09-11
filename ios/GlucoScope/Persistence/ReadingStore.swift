@@ -174,8 +174,25 @@ public actor ReadingStore {
         }
     }
 
+    /// General/synthetic ingestion has no transport ownership authority. Future
+    /// BLE candidate adapters must use ingest(_:admission:) instead.
     public func ingest(_ submission: ReadingSubmission) async throws -> ReadingCommit {
+        try ingest(submission, commitAdmission: nil)
+    }
+
+    func ingest(
+        _ submission: ReadingSubmission,
+        admission: ReadingCommitAdmission
+    ) async throws -> ReadingCommit {
+        try ingest(submission, commitAdmission: admission)
+    }
+
+    private func ingest(
+        _ submission: ReadingSubmission,
+        commitAdmission: ReadingCommitAdmission?
+    ) throws -> ReadingCommit {
         try ensureHealthy()
+        try commitAdmission?.validateSubmission(submission)
         try validate(submission)
         guard let context = writerContext else {
             throw ReadingStoreError.unavailable(health)
@@ -262,7 +279,14 @@ public actor ReadingStore {
                     }
 
                     let saved = context.hasChanges
-                    if saved {
+                    if let commitAdmission {
+                        if saved {
+                            try context.obtainPermanentIDs(for: insertedReadingObjects)
+                        }
+                        try self.faultInjector?.check(.beforeCommitAdmission)
+                        try commitAdmission.save(context, submission: submission,
+                                                 faultInjector: self.faultInjector)
+                    } else if saved {
                         try self.faultInjector?.check(.beforeSave)
                         try context.obtainPermanentIDs(for: insertedReadingObjects)
                         try context.save()
@@ -289,6 +313,7 @@ public actor ReadingStore {
             }
         } catch let error as ReadingStoreError {
             if case .invalidInput = error { throw error }
+            if case .ownershipRejected = error { throw error }
             return try failIngest(error, submission: submission, durable: false)
         } catch {
             return try failIngest(error, submission: submission, durable: false)
@@ -675,6 +700,8 @@ private extension ReadingStore {
                 return "Store unavailable"
             case .operationFailed(let failure):
                 return failure.redactedReason
+            case .ownershipRejected:
+                return "Frame ownership rejected"
             }
         }
         if let internalError = error as? ReadingStoreInternalError {
