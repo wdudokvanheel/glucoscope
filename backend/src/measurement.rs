@@ -12,8 +12,11 @@ pub struct GlucoseMeasurement {
     pub value: f64,
 }
 
-/// One app-owned sample. `id` is retained as an Influx tag so retrying the same
-/// sample writes the same series/timestamp instead of creating duplicate points.
+/// One app-owned sample. `id` is retained as diagnostic provenance. Influx point
+/// identity remains measurement + timestamp: retries overwrite the same point,
+/// and two app records for the same sample time deliberately coalesce. This
+/// matches the server's existing one-value-per-timestamp Viewer data model while
+/// avoiding an unbounded series tag for every reading.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct UploadedGlucoseMeasurement {
     pub id: String,
@@ -45,7 +48,7 @@ impl UploadedGlucoseMeasurement {
 
     pub fn to_write_query(&self) -> WriteQuery {
         WriteQuery::new(self.time.into(), "bloodglucose")
-            .add_tag("source_id", self.id.clone())
+            .add_field("source_id", self.id.clone())
             .add_field("value", self.value)
     }
 }

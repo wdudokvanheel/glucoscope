@@ -23,7 +23,12 @@ fn routes(
     let conn_filter = warp::any().map(move || connection.clone());
     let base_path = warp::path("api")
         .and(warp::path("s1"))
-        .and(with_auth(api_token));
+        .and(with_auth(api_token.clone()));
+    // Writes are never anonymous. A server without api_token keeps its legacy
+    // public read behavior, but rejects uploads until the operator configures one.
+    let upload_base_path = warp::path("api")
+        .and(warp::path("s1"))
+        .and(with_required_auth(api_token));
 
     let status_route = base_path
         .clone()
@@ -43,7 +48,7 @@ fn routes(
 
     // POST /api/s1/entries. The small explicit cap is enough for one reading and
     // prevents this public route from buffering arbitrary request bodies.
-    let upload_route = base_path
+    let upload_route = upload_base_path
         .and(warp::path("entries"))
         .and(warp::path::end())
         .and(warp::post())
@@ -57,6 +62,16 @@ fn routes(
         .or(upload_route)
         .recover(handle_rejection)
         .with(warp::cors().allow_any_origin())
+}
+
+fn with_required_auth(api_token: Option<String>) -> BoxedFilter<()> {
+    match api_token {
+        Some(token) => with_auth(Some(token)),
+        None => warp::any()
+            .and_then(|| async { Err::<(), Rejection>(warp::reject::custom(Unauthorized)) })
+            .untuple_one()
+            .boxed(),
+    }
 }
 
 fn with_auth(api_token: Option<String>) -> BoxedFilter<()> {
@@ -201,10 +216,11 @@ mod tests {
 
     #[tokio::test]
     async fn upload_rejects_invalid_values_before_database_access() {
-        let api = routes(connection(), None);
+        let api = routes(connection(), Some("correct-token".into()));
         let response = warp::test::request()
             .method("POST")
             .path("/api/s1/entries")
+            .header("authorization", "Bearer correct-token")
             .json(&json!({"id":"reading-1","time":1742644800,"value":0}))
             .reply(&api)
             .await;
@@ -213,6 +229,23 @@ mod tests {
             response.body(),
             "value must be a finite mmol/L value from 1.0 through 33.3"
         );
+    }
+
+    #[tokio::test]
+    async fn tokenless_legacy_server_remains_read_only() {
+        let api = routes(connection(), None);
+        let status = warp::test::request()
+            .path("/api/s1/status")
+            .reply(&api)
+            .await;
+        assert_eq!(status.status(), StatusCode::OK);
+        let upload = warp::test::request()
+            .method("POST")
+            .path("/api/s1/entries")
+            .json(&json!({"id":"reading-1","time":1742644800,"value":5.5}))
+            .reply(&api)
+            .await;
+        assert_eq!(upload.status(), StatusCode::UNAUTHORIZED);
     }
 
     #[tokio::test]
