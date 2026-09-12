@@ -1,4 +1,30 @@
 import Foundation
+
+/// Reconnection is constrained to the saved physical sensor before any streaming
+/// command or pairing write. Replacement setup deliberately has no such constraint.
+enum LibreNFCScanPurpose {
+    case setup
+    case reconnect(LibreSensorSession)
+    case calibration(LibreSensorSession)
+    case history(LibreSensorSession)
+
+    var pairedSensor: LibreSensorSession? {
+        switch self {
+        case .setup: return nil
+        case .reconnect(let sensor), .calibration(let sensor), .history(let sensor): return sensor
+        }
+    }
+
+    func acceptsDetectedIdentity(uid: Data, patchInfo: Data? = nil) -> Bool {
+        guard let sensor = pairedSensor else { return true }
+        guard sensor.uid == uid else { return false }
+        guard let patchInfo else { return true }
+        return Libre2Protocol.hasSameStableIdentity(uid: sensor.uid, patchInfo: sensor.patchInfo,
+                                                    otherUID: uid, otherPatchInfo: patchInfo)
+    }
+}
+
+#if os(iOS)
 import CoreNFC
 
 enum LibreNFCError: LocalizedError {
@@ -36,18 +62,7 @@ final class LibreNFCSession: NSObject {
         case history(fram: Data, expectedSession: LibreSensorSession, receivedAt: Date)
     }
 
-    private enum Purpose {
-        case setup
-        case calibration(LibreSensorSession)
-        case history(LibreSensorSession)
-
-        var pairedSensor: LibreSensorSession? {
-            switch self {
-            case .setup: return nil
-            case .calibration(let sensor), .history(let sensor): return sensor
-            }
-        }
-    }
+    private typealias Purpose = LibreNFCScanPurpose
 
     var onLog: ((String) -> Void)?
     var onCompletion: ((Result<CaptureResult, Error>) -> Void)?
@@ -74,6 +89,10 @@ final class LibreNFCSession: NSObject {
 
     func start() {
         start(purpose: .setup)
+    }
+
+    func startReconnection(for sensor: LibreSensorSession) {
+        start(purpose: .reconnect(sensor))
     }
 
     /// Reads calibration only. It neither writes sensor commands nor saves pairing state.
@@ -106,6 +125,7 @@ final class LibreNFCSession: NSObject {
         session.alertMessage = "Hold the top of your iPhone near the Libre 2 sensor."
         switch purpose {
         case .setup: log("NFC setup scan started")
+        case .reconnect: log("NFC reconnection scan started; only the paired sensor is accepted")
         case .calibration: log("Read-only NFC calibration scan started; streaming setup will be preserved")
         case .history: log("Read-only NFC history scan started; Bluetooth collection continues")
         }
@@ -124,7 +144,7 @@ final class LibreNFCSession: NSObject {
         var step = "tag detection"
         do {
             let uid = Data(tag.identifier.reversed())
-            if let sensor = purpose.pairedSensor, sensor.uid != uid {
+            if !purpose.acceptsDetectedIdentity(uid: uid) {
                 throw LibreNFCError.differentSensor
             }
             if let expectedUID, expectedUID != uid {
@@ -153,9 +173,7 @@ final class LibreNFCSession: NSObject {
             }
             log("Patch query A1 returned \(patchInfo.count) bytes: \(patchInfo.hexString)")
             let kind = try Libre2Protocol.classify(patchInfo: patchInfo)
-            if let sensor = purpose.pairedSensor,
-               !Libre2Protocol.hasSameStableIdentity(uid: sensor.uid, patchInfo: sensor.patchInfo,
-                                                     otherUID: uid, otherPatchInfo: patchInfo) {
+            if !purpose.acceptsDetectedIdentity(uid: uid, patchInfo: patchInfo) {
                 throw LibreNFCError.differentSensor
             }
             log("Supported sensor: \(kind.rawValue), UID \(uid.hexString), patch \(patchInfo.hexString)")
@@ -401,3 +419,4 @@ extension LibreNFCSession: NFCTagReaderSessionDelegate {
 private extension Data {
     var hexString: String { map { String(format: "%02X", $0) }.joined() }
 }
+#endif
