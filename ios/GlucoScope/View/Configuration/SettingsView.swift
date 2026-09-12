@@ -11,6 +11,7 @@ struct SettingsTab: Identifiable, Equatable {
 ///  SwiftUI's TabView is hard to customize with dynamic colors, which the theming requires, so the SettingsView uses a custom tab view
 struct SettingsView: View {
     @EnvironmentObject var prefs: PreferenceService
+    @EnvironmentObject private var runtime: AppRuntime
     @Environment(\.presentationMode) var presentationMode: Binding
     @State private var selectedTab: SettingsTab
     
@@ -18,7 +19,8 @@ struct SettingsView: View {
         SettingsTab(id: "theme", label: "Themes", icon: "paintpalette.fill"),
         SettingsTab(id: "bgvalues", label: "Glucose values", icon: "drop.fill"),
         SettingsTab(id: "connection", label: "Connection", icon: "network"),
-        SettingsTab(id: "about", label: "About", icon: "info.circle")
+        SettingsTab(id: "about", label: "About", icon: "info.circle"),
+        SettingsTab(id: "mode", label: "Mode", icon: "arrow.triangle.2.circlepath")
     ]
 
     init() {
@@ -38,6 +40,8 @@ struct SettingsView: View {
                         ConnectionSettingsView()
                     case "about":
                         AboutView()
+                    case "mode":
+                        ViewerModeSettingsView(switchToStandalone: runtime.switchToStandalone)
                     default:
                         Text("Select a setting below")
                     }

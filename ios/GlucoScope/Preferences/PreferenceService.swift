@@ -14,6 +14,7 @@ enum GlucoScopePreferenceKey: String {
     case staleReadingMinutes
     case setupTimeoutNotifications
     case keepTryingAfterSetupTimeout
+    case standaloneSetupRecord
 }
 
 enum AppMode: String, Codable, CaseIterable, Identifiable {
@@ -84,6 +85,9 @@ class PreferenceService: ObservableObject {
     @Preference(key: .keepTryingAfterSetupTimeout, defaultValue: true)
     var keepTryingAfterSetupTimeout: Bool
 
+    @Preference(key: .standaloneSetupRecord, defaultValue: nil)
+    var standaloneSetupRecord: StandaloneSetupRecord?
+
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -91,7 +95,7 @@ class PreferenceService: ObservableObject {
         self.listenForChanges(
             _connection, _graph, _theme, _bgLow, _bgHigh, _bgUpper,
             _appMode, _standaloneOnboardingCompleted, _staleReadingMinutes,
-            _setupTimeoutNotifications, _keepTryingAfterSetupTimeout
+            _setupTimeoutNotifications, _keepTryingAfterSetupTimeout, _standaloneSetupRecord
         )
     }
 

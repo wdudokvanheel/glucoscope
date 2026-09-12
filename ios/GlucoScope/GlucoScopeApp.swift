@@ -9,10 +9,15 @@ struct GlucoScopeApp: App {
     
 
     @UIApplicationDelegateAdaptor(GlucoScopeAppDelegate.self) private var appDelegate
+    @StateObject private var runtime = AppRuntime()
 
     var body: some Scene {
         WindowGroup {
-            AppView()
+            AppView(runtime: runtime)
+                .environmentObject(runtime)
+                .environmentObject(runtime.preferences)
+                .environmentObject(runtime.viewerDataSource)
+                .environmentObject(runtime.viewerRealtime)
         }
     }
 }

@@ -67,32 +67,47 @@
 		2BAA50FC2DAE9716003981B0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */; };
 		2BAA50FE2DAE9883003981B0 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAA50FD2DAE9883003981B0 /* Theme.swift */; };
 		2BDAE3282DD4CC8C001A833E /* ConnectionTypeGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */; };
-		BB2000000000000000000000 /* Libre2Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000000 /* Libre2Protocol.swift */; };
-		BB2000000000000000000001 /* LibreNFCSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000001 /* LibreNFCSession.swift */; };
-		BB2000000000000000000002 /* LibreSensorSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000002 /* LibreSensorSession.swift */; };
-		BB200000000000000000000B /* LibreCalibration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000B /* LibreCalibration.swift */; };
-		BB200000000000000000000C /* Libre2DiagnosticDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */; };
-		BB200000000000000000000D /* LibreSensorClockAnchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000D /* LibreSensorClockAnchor.swift */; };
-		BB2000000000000000000003 /* LibreSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000003 /* LibreSessionStore.swift */; };
-		BB2000000000000000000004 /* LibreBluetoothCentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000004 /* LibreBluetoothCentral.swift */; };
-		BB2000000000000000000005 /* LibreDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */; };
-		BB2000000000000000000006 /* LibreDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000006 /* LibreDiagnosticsView.swift */; };
-		BB2000000000000000000007 /* LibreFrameAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000007 /* LibreFrameAssembler.swift */; };
-		BB2000000000000000000008 /* LibreReadRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000008 /* LibreReadRetry.swift */; };
-		BB2000000000000000000009 /* LibreDiagnosticsUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000009 /* LibreDiagnosticsUploader.swift */; };
-		BB200000000000000000000E /* ReadingStoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000E /* ReadingStoreTypes.swift */; };
-		BB200000000000000000000F /* ReadingStoreModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000F /* ReadingStoreModel.swift */; };
-		BB2000000000000000000010 /* ReadingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000010 /* ReadingStore.swift */; };
-		BB2000000000000000000016 /* ReadingCommitAdmission.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000016 /* ReadingCommitAdmission.swift */; };
-		BB2000000000000000000011 /* LibreVerifiedFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000011 /* LibreVerifiedFrame.swift */; };
-		BB2000000000000000000012 /* LibreCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000012 /* LibreCollectionCoordinator.swift */; };
-		BB2000000000000000000013 /* LibrePersistenceBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000013 /* LibrePersistenceBridge.swift */; };
-		BB2000000000000000000014 /* LibreStorageProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000014 /* LibreStorageProbe.swift */; };
-		BB2000000000000000000015 /* Libre2ProductionDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000015 /* Libre2ProductionDecoder.swift */; };
-		BB2000000000000000000020 /* Libre2NFCHistoryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000020 /* Libre2NFCHistoryDecoder.swift */; };
-		BB2000000000000000000017 /* LibreOrderedIngestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000017 /* LibreOrderedIngestion.swift */; };
-		BB2000000000000000000019 /* LibreTransportHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000019 /* LibreTransportHandoff.swift */; };
-		BB2000000000000000000018 /* LibreCandidateAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000018 /* LibreCandidateAdapter.swift */; };
+		BB2000000000000000000000 /* Sensor/Libre2/Libre2Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000000 /* Sensor/Libre2/Libre2Protocol.swift */; };
+		BB2000000000000000000001 /* Sensor/Libre2/LibreNFCSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000001 /* Sensor/Libre2/LibreNFCSession.swift */; };
+		BB2000000000000000000002 /* Sensor/Libre2/LibreSensorSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000002 /* Sensor/Libre2/LibreSensorSession.swift */; };
+		BB2000000000000000000003 /* Sensor/Libre2/LibreSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000003 /* Sensor/Libre2/LibreSessionStore.swift */; };
+		BB2000000000000000000004 /* Sensor/Libre2/LibreBluetoothCentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000004 /* Sensor/Libre2/LibreBluetoothCentral.swift */; };
+		BB2000000000000000000005 /* Service/LibreDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000005 /* Service/LibreDiagnosticsCoordinator.swift */; };
+		BB2000000000000000000006 /* View/LibreDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000006 /* View/LibreDiagnosticsView.swift */; };
+		BB2000000000000000000007 /* Sensor/Libre2/LibreFrameAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000007 /* Sensor/Libre2/LibreFrameAssembler.swift */; };
+		BB2000000000000000000008 /* Sensor/Libre2/LibreReadRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000008 /* Sensor/Libre2/LibreReadRetry.swift */; };
+		BB2000000000000000000009 /* Service/LibreDiagnosticsUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000009 /* Service/LibreDiagnosticsUploader.swift */; };
+		BB200000000000000000000B /* Sensor/Libre2/LibreCalibration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000B /* Sensor/Libre2/LibreCalibration.swift */; };
+		BB200000000000000000000C /* Sensor/Libre2/Libre2DiagnosticDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000C /* Sensor/Libre2/Libre2DiagnosticDecoder.swift */; };
+		BB200000000000000000000D /* Sensor/Libre2/LibreSensorClockAnchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000D /* Sensor/Libre2/LibreSensorClockAnchor.swift */; };
+		BB200000000000000000000E /* Persistence/ReadingStoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000E /* Persistence/ReadingStoreTypes.swift */; };
+		BB200000000000000000000F /* Persistence/ReadingStoreModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000000000000000000F /* Persistence/ReadingStoreModel.swift */; };
+		BB2000000000000000000010 /* Persistence/ReadingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000010 /* Persistence/ReadingStore.swift */; };
+		BB2000000000000000000011 /* Sensor/Libre2/LibreVerifiedFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000011 /* Sensor/Libre2/LibreVerifiedFrame.swift */; };
+		BB2000000000000000000012 /* Service/LibreCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000012 /* Service/LibreCollectionCoordinator.swift */; };
+		BB2000000000000000000013 /* Service/LibrePersistenceBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000013 /* Service/LibrePersistenceBridge.swift */; };
+		BB2000000000000000000014 /* Service/LibreStorageProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000014 /* Service/LibreStorageProbe.swift */; };
+		BB2000000000000000000015 /* Sensor/Libre2/Libre2ProductionDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000015 /* Sensor/Libre2/Libre2ProductionDecoder.swift */; };
+		BB2000000000000000000016 /* Persistence/ReadingCommitAdmission.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000016 /* Persistence/ReadingCommitAdmission.swift */; };
+		BB2000000000000000000017 /* Service/LibreOrderedIngestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000017 /* Service/LibreOrderedIngestion.swift */; };
+		BB2000000000000000000018 /* Service/LibreCandidateAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000018 /* Service/LibreCandidateAdapter.swift */; };
+		BB2000000000000000000019 /* Service/LibreTransportHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000019 /* Service/LibreTransportHandoff.swift */; };
+		BB2000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift */; };
+		CC2000000000000000000000 /* AppRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000000 /* AppRuntime.swift */; };
+		CC2000000000000000000001 /* StandaloneGlucoseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000001 /* StandaloneGlucoseService.swift */; };
+		CC2000000000000000000002 /* StandaloneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000002 /* StandaloneViews.swift */; };
+		CC2000000000000000000003 /* StandaloneSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000003 /* StandaloneSettingsView.swift */; };
+		CC2000000000000000000004 /* AlarmSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000004 /* AlarmSettingsView.swift */; };
+		CC2000000000000000000005 /* StandaloneAlarmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000005 /* StandaloneAlarmService.swift */; };
+		CC2000000000000000000006 /* GlucoseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000006 /* GlucoseActivityAttributes.swift */; };
+		CC2000000000000000000007 /* StandaloneLiveActivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000007 /* StandaloneLiveActivityService.swift */; };
+		CC2000000000000000000008 /* ServerUploadTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000008 /* ServerUploadTypes.swift */; };
+		CC2000000000000000000009 /* ServerUploadStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000009 /* ServerUploadStore.swift */; };
+		CC200000000000000000000A /* ServerUploadCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000A /* ServerUploadCredentialStore.swift */; };
+		CC200000000000000000000B /* ServerUploadTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000B /* ServerUploadTransport.swift */; };
+		CC200000000000000000000C /* ServerUploadCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000C /* ServerUploadCoordinator.swift */; };
+		CC200000000000000000000D /* ServerUploadsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000D /* ServerUploadsView.swift */; };
+		CC200000000000000000000E /* AlarmModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000E /* AlarmModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -157,32 +172,47 @@
 		2BAA50FB2DAE9716003981B0 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
 		2BAA50FD2DAE9883003981B0 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		2BDAE3272DD4CC84001A833E /* ConnectionTypeGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionTypeGraphic.swift; sourceTree = "<group>"; };
-		BB1000000000000000000000 /* Libre2Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2Protocol.swift; sourceTree = "<group>"; };
-		BB1000000000000000000001 /* LibreNFCSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreNFCSession.swift; sourceTree = "<group>"; };
-		BB1000000000000000000002 /* LibreSensorSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSensorSession.swift; sourceTree = "<group>"; };
-		BB100000000000000000000B /* LibreCalibration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreCalibration.swift; sourceTree = "<group>"; };
-		BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2DiagnosticDecoder.swift; sourceTree = "<group>"; };
-		BB100000000000000000000D /* LibreSensorClockAnchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSensorClockAnchor.swift; sourceTree = "<group>"; };
-		BB1000000000000000000003 /* LibreSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSessionStore.swift; sourceTree = "<group>"; };
-		BB1000000000000000000004 /* LibreBluetoothCentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreBluetoothCentral.swift; sourceTree = "<group>"; };
-		BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
-		BB1000000000000000000006 /* LibreDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/LibreDiagnosticsView.swift; sourceTree = "<group>"; };
-		BB1000000000000000000007 /* LibreFrameAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreFrameAssembler.swift; sourceTree = "<group>"; };
-		BB1000000000000000000008 /* LibreReadRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreReadRetry.swift; sourceTree = "<group>"; };
-		BB1000000000000000000009 /* LibreDiagnosticsUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreDiagnosticsUploader.swift; sourceTree = "<group>"; };
-		BB100000000000000000000E /* ReadingStoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStoreTypes.swift; sourceTree = "<group>"; };
-		BB100000000000000000000F /* ReadingStoreModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStoreModel.swift; sourceTree = "<group>"; };
-		BB1000000000000000000010 /* ReadingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStore.swift; sourceTree = "<group>"; };
-		BB1000000000000000000016 /* ReadingCommitAdmission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingCommitAdmission.swift; sourceTree = "<group>"; };
-		BB1000000000000000000011 /* LibreVerifiedFrame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreVerifiedFrame.swift; sourceTree = "<group>"; };
-		BB1000000000000000000012 /* LibreCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreCollectionCoordinator.swift; sourceTree = "<group>"; };
-		BB1000000000000000000013 /* LibrePersistenceBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibrePersistenceBridge.swift; sourceTree = "<group>"; };
-		BB1000000000000000000014 /* LibreStorageProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreStorageProbe.swift; sourceTree = "<group>"; };
-		BB1000000000000000000015 /* Libre2ProductionDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2ProductionDecoder.swift; sourceTree = "<group>"; };
-		BB1000000000000000000020 /* Libre2NFCHistoryDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2NFCHistoryDecoder.swift; sourceTree = "<group>"; };
-		BB1000000000000000000017 /* LibreOrderedIngestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreOrderedIngestion.swift; sourceTree = "<group>"; };
-		BB1000000000000000000019 /* LibreTransportHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreTransportHandoff.swift; sourceTree = "<group>"; };
-		BB1000000000000000000018 /* LibreCandidateAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreCandidateAdapter.swift; sourceTree = "<group>"; };
+		BB1000000000000000000000 /* Sensor/Libre2/Libre2Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2Protocol.swift; sourceTree = "<group>"; };
+		BB1000000000000000000001 /* Sensor/Libre2/LibreNFCSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreNFCSession.swift; sourceTree = "<group>"; };
+		BB1000000000000000000002 /* Sensor/Libre2/LibreSensorSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSensorSession.swift; sourceTree = "<group>"; };
+		BB1000000000000000000003 /* Sensor/Libre2/LibreSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSessionStore.swift; sourceTree = "<group>"; };
+		BB1000000000000000000004 /* Sensor/Libre2/LibreBluetoothCentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreBluetoothCentral.swift; sourceTree = "<group>"; };
+		BB1000000000000000000005 /* Service/LibreDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
+		BB1000000000000000000006 /* View/LibreDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/LibreDiagnosticsView.swift; sourceTree = "<group>"; };
+		BB1000000000000000000007 /* Sensor/Libre2/LibreFrameAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreFrameAssembler.swift; sourceTree = "<group>"; };
+		BB1000000000000000000008 /* Sensor/Libre2/LibreReadRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreReadRetry.swift; sourceTree = "<group>"; };
+		BB1000000000000000000009 /* Service/LibreDiagnosticsUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreDiagnosticsUploader.swift; sourceTree = "<group>"; };
+		BB100000000000000000000B /* Sensor/Libre2/LibreCalibration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreCalibration.swift; sourceTree = "<group>"; };
+		BB100000000000000000000C /* Sensor/Libre2/Libre2DiagnosticDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2DiagnosticDecoder.swift; sourceTree = "<group>"; };
+		BB100000000000000000000D /* Sensor/Libre2/LibreSensorClockAnchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreSensorClockAnchor.swift; sourceTree = "<group>"; };
+		BB100000000000000000000E /* Persistence/ReadingStoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStoreTypes.swift; sourceTree = "<group>"; };
+		BB100000000000000000000F /* Persistence/ReadingStoreModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStoreModel.swift; sourceTree = "<group>"; };
+		BB1000000000000000000010 /* Persistence/ReadingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingStore.swift; sourceTree = "<group>"; };
+		BB1000000000000000000011 /* Sensor/Libre2/LibreVerifiedFrame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/LibreVerifiedFrame.swift; sourceTree = "<group>"; };
+		BB1000000000000000000012 /* Service/LibreCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreCollectionCoordinator.swift; sourceTree = "<group>"; };
+		BB1000000000000000000013 /* Service/LibrePersistenceBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibrePersistenceBridge.swift; sourceTree = "<group>"; };
+		BB1000000000000000000014 /* Service/LibreStorageProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreStorageProbe.swift; sourceTree = "<group>"; };
+		BB1000000000000000000015 /* Sensor/Libre2/Libre2ProductionDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2ProductionDecoder.swift; sourceTree = "<group>"; };
+		BB1000000000000000000016 /* Persistence/ReadingCommitAdmission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ReadingCommitAdmission.swift; sourceTree = "<group>"; };
+		BB1000000000000000000017 /* Service/LibreOrderedIngestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreOrderedIngestion.swift; sourceTree = "<group>"; };
+		BB1000000000000000000018 /* Service/LibreCandidateAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreCandidateAdapter.swift; sourceTree = "<group>"; };
+		BB1000000000000000000019 /* Service/LibreTransportHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/LibreTransportHandoff.swift; sourceTree = "<group>"; };
+		BB1000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2NFCHistoryDecoder.swift; sourceTree = "<group>"; };
+		CC1000000000000000000000 /* AppRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/AppRuntime.swift; sourceTree = "<group>"; };
+		CC1000000000000000000001 /* StandaloneGlucoseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/StandaloneGlucoseService.swift; sourceTree = "<group>"; };
+		CC1000000000000000000002 /* StandaloneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/Standalone/StandaloneViews.swift; sourceTree = "<group>"; };
+		CC1000000000000000000003 /* StandaloneSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/Standalone/StandaloneSettingsView.swift; sourceTree = "<group>"; };
+		CC1000000000000000000004 /* AlarmSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms/AlarmSettingsView.swift; sourceTree = "<group>"; };
+		CC1000000000000000000005 /* StandaloneAlarmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms/StandaloneAlarmService.swift; sourceTree = "<group>"; };
+		CC1000000000000000000006 /* GlucoseActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivity/GlucoseActivityAttributes.swift; sourceTree = "<group>"; };
+		CC1000000000000000000007 /* StandaloneLiveActivityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivity/StandaloneLiveActivityService.swift; sourceTree = "<group>"; };
+		CC1000000000000000000008 /* ServerUploadTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ServerUploadTypes.swift; sourceTree = "<group>"; };
+		CC1000000000000000000009 /* ServerUploadStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/ServerUploadStore.swift; sourceTree = "<group>"; };
+		CC100000000000000000000A /* ServerUploadCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/ServerUploadCredentialStore.swift; sourceTree = "<group>"; };
+		CC100000000000000000000B /* ServerUploadTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/ServerUploadTransport.swift; sourceTree = "<group>"; };
+		CC100000000000000000000C /* ServerUploadCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/ServerUploadCoordinator.swift; sourceTree = "<group>"; };
+		CC100000000000000000000D /* ServerUploadsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/Configuration/ServerUploadsView.swift; sourceTree = "<group>"; };
+		CC100000000000000000000E /* AlarmModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms/AlarmModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -295,32 +325,47 @@
 		2B2853FF2D57A2CE009E86E9 /* GlucoScope */ = {
 			isa = PBXGroup;
 			children = (
-				BB1000000000000000000007 /* LibreFrameAssembler.swift */,
-				BB1000000000000000000008 /* LibreReadRetry.swift */,
-				BB1000000000000000000009 /* LibreDiagnosticsUploader.swift */,
-				BB1000000000000000000000 /* Libre2Protocol.swift */,
-				BB1000000000000000000001 /* LibreNFCSession.swift */,
-				BB1000000000000000000002 /* LibreSensorSession.swift */,
-				BB100000000000000000000B /* LibreCalibration.swift */,
-				BB100000000000000000000C /* Libre2DiagnosticDecoder.swift */,
-				BB1000000000000000000015 /* Libre2ProductionDecoder.swift */,
-				BB1000000000000000000020 /* Libre2NFCHistoryDecoder.swift */,
-				BB100000000000000000000D /* LibreSensorClockAnchor.swift */,
-				BB1000000000000000000011 /* LibreVerifiedFrame.swift */,
-				BB1000000000000000000012 /* LibreCollectionCoordinator.swift */,
-				BB1000000000000000000013 /* LibrePersistenceBridge.swift */,
-				BB1000000000000000000017 /* LibreOrderedIngestion.swift */,
-				BB1000000000000000000019 /* LibreTransportHandoff.swift */,
-				BB1000000000000000000018 /* LibreCandidateAdapter.swift */,
-				BB1000000000000000000014 /* LibreStorageProbe.swift */,
-				BB1000000000000000000010 /* ReadingStore.swift */,
-				BB1000000000000000000016 /* ReadingCommitAdmission.swift */,
-				BB100000000000000000000F /* ReadingStoreModel.swift */,
-				BB100000000000000000000E /* ReadingStoreTypes.swift */,
-				BB1000000000000000000003 /* LibreSessionStore.swift */,
-				BB1000000000000000000004 /* LibreBluetoothCentral.swift */,
-				BB1000000000000000000005 /* LibreDiagnosticsCoordinator.swift */,
-				BB1000000000000000000006 /* LibreDiagnosticsView.swift */,
+				CC1000000000000000000000 /* AppRuntime.swift */,
+				CC1000000000000000000001 /* StandaloneGlucoseService.swift */,
+				CC1000000000000000000002 /* StandaloneViews.swift */,
+				CC1000000000000000000003 /* StandaloneSettingsView.swift */,
+				CC1000000000000000000004 /* AlarmSettingsView.swift */,
+				CC1000000000000000000005 /* StandaloneAlarmService.swift */,
+				CC1000000000000000000006 /* GlucoseActivityAttributes.swift */,
+				CC1000000000000000000007 /* StandaloneLiveActivityService.swift */,
+				CC1000000000000000000008 /* ServerUploadTypes.swift */,
+				CC1000000000000000000009 /* ServerUploadStore.swift */,
+				CC100000000000000000000A /* ServerUploadCredentialStore.swift */,
+				CC100000000000000000000B /* ServerUploadTransport.swift */,
+				CC100000000000000000000C /* ServerUploadCoordinator.swift */,
+				CC100000000000000000000D /* ServerUploadsView.swift */,
+				CC100000000000000000000E /* AlarmModels.swift */,
+				BB1000000000000000000007 /* Sensor/Libre2/LibreFrameAssembler.swift */,
+				BB1000000000000000000008 /* Sensor/Libre2/LibreReadRetry.swift */,
+				BB1000000000000000000009 /* Service/LibreDiagnosticsUploader.swift */,
+				BB1000000000000000000000 /* Sensor/Libre2/Libre2Protocol.swift */,
+				BB1000000000000000000001 /* Sensor/Libre2/LibreNFCSession.swift */,
+				BB1000000000000000000002 /* Sensor/Libre2/LibreSensorSession.swift */,
+				BB100000000000000000000B /* Sensor/Libre2/LibreCalibration.swift */,
+				BB100000000000000000000C /* Sensor/Libre2/Libre2DiagnosticDecoder.swift */,
+				BB1000000000000000000015 /* Sensor/Libre2/Libre2ProductionDecoder.swift */,
+				BB1000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift */,
+				BB100000000000000000000D /* Sensor/Libre2/LibreSensorClockAnchor.swift */,
+				BB1000000000000000000011 /* Sensor/Libre2/LibreVerifiedFrame.swift */,
+				BB1000000000000000000012 /* Service/LibreCollectionCoordinator.swift */,
+				BB1000000000000000000013 /* Service/LibrePersistenceBridge.swift */,
+				BB1000000000000000000017 /* Service/LibreOrderedIngestion.swift */,
+				BB1000000000000000000019 /* Service/LibreTransportHandoff.swift */,
+				BB1000000000000000000018 /* Service/LibreCandidateAdapter.swift */,
+				BB1000000000000000000014 /* Service/LibreStorageProbe.swift */,
+				BB1000000000000000000010 /* Persistence/ReadingStore.swift */,
+				BB1000000000000000000016 /* Persistence/ReadingCommitAdmission.swift */,
+				BB100000000000000000000F /* Persistence/ReadingStoreModel.swift */,
+				BB100000000000000000000E /* Persistence/ReadingStoreTypes.swift */,
+				BB1000000000000000000003 /* Sensor/Libre2/LibreSessionStore.swift */,
+				BB1000000000000000000004 /* Sensor/Libre2/LibreBluetoothCentral.swift */,
+				BB1000000000000000000005 /* Service/LibreDiagnosticsCoordinator.swift */,
+				BB1000000000000000000006 /* View/LibreDiagnosticsView.swift */,
 				2BAA51032DAE9B97003981B0 /* Resources */,
 				2B4BAB4E2DAAB6DB00D81158 /* Preferences */,
 				2B1C9E7E2D5A16EE00CA7861 /* Data */,
@@ -452,8 +497,12 @@
 					2B2853FC2D57A2CE009E86E9 = {
 						CreatedOnToolsVersion = 15.2;
 						SystemCapabilities = {
-							com.apple.BackgroundModes = { enabled = 1; };
-							com.apple.NearFieldCommunicationTagReading = { enabled = 1; };
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+							com.apple.NearFieldCommunicationTagReading = {
+								enabled = 1;
+							};
 						};
 					};
 				};
@@ -491,32 +540,47 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB2000000000000000000007 /* LibreFrameAssembler.swift in Sources */,
-				BB2000000000000000000008 /* LibreReadRetry.swift in Sources */,
-				BB2000000000000000000009 /* LibreDiagnosticsUploader.swift in Sources */,
-				BB2000000000000000000000 /* Libre2Protocol.swift in Sources */,
-				BB2000000000000000000001 /* LibreNFCSession.swift in Sources */,
-				BB2000000000000000000002 /* LibreSensorSession.swift in Sources */,
-				BB200000000000000000000B /* LibreCalibration.swift in Sources */,
-				BB200000000000000000000C /* Libre2DiagnosticDecoder.swift in Sources */,
-				BB2000000000000000000015 /* Libre2ProductionDecoder.swift in Sources */,
-				BB2000000000000000000020 /* Libre2NFCHistoryDecoder.swift in Sources */,
-				BB200000000000000000000D /* LibreSensorClockAnchor.swift in Sources */,
-				BB2000000000000000000011 /* LibreVerifiedFrame.swift in Sources */,
-				BB2000000000000000000012 /* LibreCollectionCoordinator.swift in Sources */,
-				BB2000000000000000000013 /* LibrePersistenceBridge.swift in Sources */,
-				BB2000000000000000000017 /* LibreOrderedIngestion.swift in Sources */,
-				BB2000000000000000000019 /* LibreTransportHandoff.swift in Sources */,
-				BB2000000000000000000018 /* LibreCandidateAdapter.swift in Sources */,
-				BB2000000000000000000014 /* LibreStorageProbe.swift in Sources */,
-				BB2000000000000000000010 /* ReadingStore.swift in Sources */,
-				BB2000000000000000000016 /* ReadingCommitAdmission.swift in Sources */,
-				BB200000000000000000000F /* ReadingStoreModel.swift in Sources */,
-				BB200000000000000000000E /* ReadingStoreTypes.swift in Sources */,
-				BB2000000000000000000003 /* LibreSessionStore.swift in Sources */,
-				BB2000000000000000000004 /* LibreBluetoothCentral.swift in Sources */,
-				BB2000000000000000000005 /* LibreDiagnosticsCoordinator.swift in Sources */,
-				BB2000000000000000000006 /* LibreDiagnosticsView.swift in Sources */,
+				CC2000000000000000000000 /* AppRuntime.swift in Sources */,
+				CC2000000000000000000001 /* StandaloneGlucoseService.swift in Sources */,
+				CC2000000000000000000002 /* StandaloneViews.swift in Sources */,
+				CC2000000000000000000003 /* StandaloneSettingsView.swift in Sources */,
+				CC2000000000000000000004 /* AlarmSettingsView.swift in Sources */,
+				CC2000000000000000000005 /* StandaloneAlarmService.swift in Sources */,
+				CC2000000000000000000006 /* GlucoseActivityAttributes.swift in Sources */,
+				CC2000000000000000000007 /* StandaloneLiveActivityService.swift in Sources */,
+				CC2000000000000000000008 /* ServerUploadTypes.swift in Sources */,
+				CC2000000000000000000009 /* ServerUploadStore.swift in Sources */,
+				CC200000000000000000000A /* ServerUploadCredentialStore.swift in Sources */,
+				CC200000000000000000000B /* ServerUploadTransport.swift in Sources */,
+				CC200000000000000000000C /* ServerUploadCoordinator.swift in Sources */,
+				CC200000000000000000000D /* ServerUploadsView.swift in Sources */,
+				CC200000000000000000000E /* AlarmModels.swift in Sources */,
+				BB2000000000000000000007 /* Sensor/Libre2/LibreFrameAssembler.swift in Sources */,
+				BB2000000000000000000008 /* Sensor/Libre2/LibreReadRetry.swift in Sources */,
+				BB2000000000000000000009 /* Service/LibreDiagnosticsUploader.swift in Sources */,
+				BB2000000000000000000000 /* Sensor/Libre2/Libre2Protocol.swift in Sources */,
+				BB2000000000000000000001 /* Sensor/Libre2/LibreNFCSession.swift in Sources */,
+				BB2000000000000000000002 /* Sensor/Libre2/LibreSensorSession.swift in Sources */,
+				BB200000000000000000000B /* Sensor/Libre2/LibreCalibration.swift in Sources */,
+				BB200000000000000000000C /* Sensor/Libre2/Libre2DiagnosticDecoder.swift in Sources */,
+				BB2000000000000000000015 /* Sensor/Libre2/Libre2ProductionDecoder.swift in Sources */,
+				BB2000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift in Sources */,
+				BB200000000000000000000D /* Sensor/Libre2/LibreSensorClockAnchor.swift in Sources */,
+				BB2000000000000000000011 /* Sensor/Libre2/LibreVerifiedFrame.swift in Sources */,
+				BB2000000000000000000012 /* Service/LibreCollectionCoordinator.swift in Sources */,
+				BB2000000000000000000013 /* Service/LibrePersistenceBridge.swift in Sources */,
+				BB2000000000000000000017 /* Service/LibreOrderedIngestion.swift in Sources */,
+				BB2000000000000000000019 /* Service/LibreTransportHandoff.swift in Sources */,
+				BB2000000000000000000018 /* Service/LibreCandidateAdapter.swift in Sources */,
+				BB2000000000000000000014 /* Service/LibreStorageProbe.swift in Sources */,
+				BB2000000000000000000010 /* Persistence/ReadingStore.swift in Sources */,
+				BB2000000000000000000016 /* Persistence/ReadingCommitAdmission.swift in Sources */,
+				BB200000000000000000000F /* Persistence/ReadingStoreModel.swift in Sources */,
+				BB200000000000000000000E /* Persistence/ReadingStoreTypes.swift in Sources */,
+				BB2000000000000000000003 /* Sensor/Libre2/LibreSessionStore.swift in Sources */,
+				BB2000000000000000000004 /* Sensor/Libre2/LibreBluetoothCentral.swift in Sources */,
+				BB2000000000000000000005 /* Service/LibreDiagnosticsCoordinator.swift in Sources */,
+				BB2000000000000000000006 /* View/LibreDiagnosticsView.swift in Sources */,
 				2B7CCCCC2DCB674200A1AED5 /* ThemedScreen.swift in Sources */,
 				2BA6FCF72E1EA69B00B93FAF /* NumberFormatter.swift in Sources */,
 				2B7CCCBD2DCA0EEF00A1AED5 /* ConnectionTypeView.swift in Sources */,
