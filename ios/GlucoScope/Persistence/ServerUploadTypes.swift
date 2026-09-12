@@ -121,6 +121,9 @@ enum ServerUploadError: Error, LocalizedError, Equatable, Sendable {
     case destinationDisabled
     case persistence(String)
     case authentication
+    case uploadsNotConfigured
+    case writePermissionDenied
+    case writePermissionUnavailable
     case server(status: Int, message: String)
     case network(String)
     case invalidResponse
@@ -133,6 +136,9 @@ enum ServerUploadError: Error, LocalizedError, Equatable, Sendable {
         case .destinationDisabled: return "Enable this destination before retrying."
         case .persistence: return "Upload data could not be saved."
         case .authentication: return "Authentication failed. Check the token and server permissions."
+        case .uploadsNotConfigured: return "The server is reachable, but uploads are disabled. Configure its API token first."
+        case .writePermissionDenied: return "The token is valid but cannot create glucose entries. Give it entries create permission."
+        case .writePermissionUnavailable: return "The server is reachable, but this version cannot verify write permission without creating data."
         case .server(let status, let message): return "Server error \(status): \(message)"
         case .network(let message): return "Could not reach the server: \(message)"
         case .invalidResponse: return "The server returned an unexpected response."

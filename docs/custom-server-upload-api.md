@@ -18,6 +18,10 @@ The request uses `application/json`, is limited to 4 KiB, and has this shape:
 Success returns HTTP 201 with `{"saved":"<id>"}`. Authentication failures return 401, invalid
 JSON or values return 400, oversized requests return 413, and storage failures return 500.
 
+`GET /api/s1/status` includes `uploadsEnabled`. The app's Test connection action requires this to
+be true as well as requiring successful bearer authentication, so a tokenless read-only deployment
+is not reported as writable.
+
 Influx identifies these points by measurement and timestamp. Retrying a reading therefore updates
 the same point. If two local record variants have exactly the same sample second, the later request
 coalesces with the earlier point; the server's Viewer format represents one value per timestamp.

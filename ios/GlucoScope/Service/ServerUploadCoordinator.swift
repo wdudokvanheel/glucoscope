@@ -18,6 +18,7 @@ final class ServerUploadCoordinator: ObservableObject {
     private let credentialStore: ServerUploadCredentialStore
     private let transport: ServerUploadTransport
     private var standaloneActive = false
+    private var isLoading = false
     private var commitTask: Task<Void, Never>?
     private var drainTask: Task<Void, Never>?
     private var retryWakeTask: Task<Void, Never>?
@@ -41,7 +42,9 @@ final class ServerUploadCoordinator: ObservableObject {
     }
 
     func load() async {
-        guard !isLoaded else { return }
+        guard !isLoaded, !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
         do {
             try await uploadStore.load()
             // Subscribe before the snapshot reconciliation so a commit racing
@@ -76,6 +79,8 @@ final class ServerUploadCoordinator: ObservableObject {
     }
 
     func refresh() async {
+        if !isLoaded { await load() }
+        guard isLoaded else { return }
         do {
             try await uploadStore.performMaintenance()
             try await reconcileCommittedReadings()
@@ -90,6 +95,8 @@ final class ServerUploadCoordinator: ObservableObject {
         endpoint: String,
         secret: String
     ) async throws -> UUID {
+        let secret = normalizedSecret(secret, backend: backend)
+        guard !secret.isEmpty else { throw ServerUploadError.authentication }
         let reference = UUID().uuidString
         try await credentialStore.save(secret, reference: reference)
         do {
@@ -122,10 +129,11 @@ final class ServerUploadCoordinator: ObservableObject {
             throw ServerUploadError.destinationNotFound
         }
         let normalized = try ServerUploadEndpoint.normalize(endpoint)
-        let replacesCredential = !secret.isEmpty
+        let cleanedSecret = normalizedSecret(secret, backend: backend)
+        let replacesCredential = !cleanedSecret.isEmpty
         let replacementReference = replacesCredential ? UUID().uuidString : old.credentialReference
         if replacesCredential {
-            try await credentialStore.save(secret, reference: replacementReference)
+            try await credentialStore.save(cleanedSecret, reference: replacementReference)
         }
         do {
             if normalized == old.endpoint && backend == old.backend {
@@ -302,5 +310,13 @@ final class ServerUploadCoordinator: ObservableObject {
 
     private func display(_ error: Error) -> String {
         ServerUploadRedactor.message(error.localizedDescription)
+    }
+
+    private func normalizedSecret(_ secret: String, backend: ServerUploadBackend) -> String {
+        var value = secret.trimmingCharacters(in: .whitespacesAndNewlines)
+        if backend == .nightscout, value.lowercased().hasPrefix("token=") {
+            value.removeFirst("token=".count)
+        }
+        return value
     }
 }

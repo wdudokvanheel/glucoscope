@@ -33,23 +33,78 @@ enum ServerUploadTransportSmoke {
             expect(request.httpMethod == "GET", "test connection must not drain the queue")
             expect(request.url?.path == "/api/s1/status", "custom status route mismatch")
             expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer private-token", "custom bearer token missing")
-            return (response(request, 200), Data(#"{"status":"ok"}"#.utf8))
+            return (response(request, 200), Data(#"{"status":"ok","uploadsEnabled":true}"#.utf8))
         }
         guard case .success(200) = await transport.test(destination: custom, secret: "private-token") else {
             fatalError("custom connection test failed")
         }
+        RequestRecorder.handler = { request in
+            (response(request, 200), Data(#"{"status":"ok","uploadsEnabled":false}"#.utf8))
+        }
+        guard case .failure(.uploadsNotConfigured) = await transport.test(destination: custom, secret: "private-token") else {
+            fatalError("read-only custom server must not pass a write configuration test")
+        }
 
         let nightscout = destination(.nightscout, "https://nightscout.example")
+        var testStep = 0
+        RequestRecorder.handler = { request in
+            testStep += 1
+            switch testStep {
+            case 1:
+                expect(request.url?.path == "/api/v1/status.json", "Nightscout connectivity route mismatch")
+                expect(request.url?.query == nil, "public status check must not expose token")
+                return (response(request, 200), Data(#"{"status":"ok","apiEnabled":true}"#.utf8))
+            case 2:
+                expect(request.url?.path.contains("/api/v2/authorization/request/token=access-token") == true, "Nightscout token validation route mismatch")
+                return (response(request, 200), Data(#"{"token":"short-lived-jwt"}"#.utf8))
+            default:
+                expect(request.url?.path == "/api/v3/status", "Nightscout permission route mismatch")
+                expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer short-lived-jwt", "JWT missing")
+                return (response(request, 200), Data(#"{"result":{"apiPermissions":{"entries":"crud"}}}"#.utf8))
+            }
+        }
+        guard case .success(200) = await transport.test(destination: nightscout, secret: "access-token") else {
+            fatalError("Nightscout connection and write-permission test failed")
+        }
+        expect(testStep == 3, "Nightscout test must verify connectivity, token, and create permission")
+
+        testStep = 0
+        RequestRecorder.handler = { request in
+            testStep += 1
+            if testStep == 1 {
+                return (response(request, 200), Data(#"{"status":"ok","apiEnabled":true}"#.utf8))
+            }
+            return (response(request, 404), Data())
+        }
+        guard case .failure(.writePermissionUnavailable) = await transport.test(destination: nightscout, secret: "access-token") else {
+            fatalError("Nightscout without permission introspection must report write verification unavailable")
+        }
+
+        testStep = 0
+        RequestRecorder.handler = { request in
+            testStep += 1
+            switch testStep {
+            case 1: return (response(request, 200), Data(#"{"status":"ok","apiEnabled":true}"#.utf8))
+            case 2: return (response(request, 200), Data(#"{"token":"short-lived-jwt"}"#.utf8))
+            default: return (response(request, 200), Data(#"{"result":{"apiPermissions":{"entries":"r"}}}"#.utf8))
+            }
+        }
+        guard case .failure(.writePermissionDenied) = await transport.test(destination: nightscout, secret: "access-token") else {
+            fatalError("read-only Nightscout token must fail a write configuration test")
+        }
+
         RequestRecorder.handler = { request in
             expect(request.url?.path == "/api/v1/entries.json", "Nightscout upload route mismatch")
             expect(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first?.value == "access-token", "Nightscout token missing")
             let object = try JSONSerialization.jsonObject(with: bodyData(request)) as! [[String: Any]]
             expect(object[0]["sgv"] as? Int == 126, "Nightscout must upload mg/dL")
-            expect((object[0]["_id"] as? String)?.count == 24, "Nightscout idempotency id mismatch")
-            return (response(request, 201), Data())
+            expect((object[0]["_id"] as? String)?.count == 36, "Nightscout idempotency UUID mismatch")
+            // The v1 handler echoes stored entries. A nonempty success body is
+            // affirmative acceptance, not a list of rejected records.
+            return (response(request, 200), Data(#"[{"_id":"507f1f77bcf86cd799439011","sgv":126}]"#.utf8))
         }
-        guard case .success(201) = await transport.send(delivery(), to: nightscout, secret: "access-token") else {
-            fatalError("Nightscout send failed")
+        guard case .success(200) = await transport.send(delivery(), to: nightscout, secret: "access-token") else {
+            fatalError("Nightscout stored-entry response must complete the delivery")
         }
 
         RequestRecorder.handler = { request in

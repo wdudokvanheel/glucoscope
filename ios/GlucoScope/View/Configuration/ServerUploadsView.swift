@@ -328,7 +328,7 @@ private struct ServerUploadEditorView: View {
 
     var body: some View {
         Form {
-            Section("Destination") {
+            Section {
                 TextField("Name", text: $name)
                 Picker("Server type", selection: $backend) {
                     ForEach(ServerUploadBackend.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -337,8 +337,14 @@ private struct ServerUploadEditorView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.URL)
-                SecureField(destination == nil ? "Token (optional)" : "New token (leave blank to keep current)", text: $secret)
+                SecureField(destination == nil ? "Access token" : "New token (leave blank to keep current)", text: $secret)
                     .textInputAutocapitalization(.never)
+            } header: {
+                Text("Destination")
+            } footer: {
+                Text(backend == .nightscout
+                    ? "Use a Nightscout access token with permission to create entries. It is kept in the iOS Keychain."
+                    : "Use the API token configured on your GlucoScope Server. It is kept in the iOS Keychain.")
             }
             if destination == nil {
                 Section {
@@ -366,7 +372,12 @@ private struct ServerUploadEditorView: View {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { Task { await save() } }
-                    .disabled(saving || name.trimmingCharacters(in: .whitespaces).isEmpty || endpoint.isEmpty)
+                    .disabled(
+                        saving ||
+                        name.trimmingCharacters(in: .whitespaces).isEmpty ||
+                        endpoint.isEmpty ||
+                        (destination == nil && secret.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    )
             }
         }
         .alert("Couldn’t save destination", isPresented: errorBinding) {

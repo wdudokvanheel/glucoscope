@@ -113,6 +113,8 @@ actor ServerUploadStore {
         guard let index = destinationIndex(destinationID) else {
             throw ServerUploadError.destinationNotFound
         }
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { throw ServerUploadError.invalidName }
         let normalized = try ServerUploadEndpoint.normalize(endpoint)
         let oldRevision = state.destinations[index].endpointRevision
         let pending = state.deliveries.filter {
@@ -130,7 +132,7 @@ actor ServerUploadStore {
             reason: transferPending ? "Pending work transferred to edited address" : "Pending work declined for edited address",
             now: now
         )
-        state.destinations[index].name = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80))
+        state.destinations[index].name = String(trimmedName.prefix(80))
         state.destinations[index].backend = backend
         state.destinations[index].endpoint = normalized
         state.destinations[index].credentialReference = credentialReference

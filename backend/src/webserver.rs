@@ -20,6 +20,7 @@ fn routes(
     connection: Arc<InfluxConnection>,
     api_token: Option<String>,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    let uploads_enabled = api_token.is_some();
     let conn_filter = warp::any().map(move || connection.clone());
     let base_path = warp::path("api")
         .and(warp::path("s1"))
@@ -35,7 +36,12 @@ fn routes(
         .and(warp::path("status"))
         .and(warp::path::end())
         .and(warp::get())
-        .map(|| warp::reply::json(&json!({ "status": "ok" })));
+        .map(move || {
+            warp::reply::json(&json!({
+                "status": "ok",
+                "uploadsEnabled": uploads_enabled
+            }))
+        });
 
     let graph_route = base_path
         .clone()
@@ -239,6 +245,8 @@ mod tests {
             .reply(&api)
             .await;
         assert_eq!(status.status(), StatusCode::OK);
+        let status_body: serde_json::Value = serde_json::from_slice(status.body()).unwrap();
+        assert_eq!(status_body["uploadsEnabled"], false);
         let upload = warp::test::request()
             .method("POST")
             .path("/api/s1/entries")
@@ -262,5 +270,7 @@ mod tests {
             .reply(&api)
             .await;
         assert_eq!(allowed.status(), StatusCode::OK);
+        let status_body: serde_json::Value = serde_json::from_slice(allowed.body()).unwrap();
+        assert_eq!(status_body["uploadsEnabled"], true);
     }
 }

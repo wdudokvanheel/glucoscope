@@ -7,9 +7,35 @@ enum ServerUploadStoreSmoke {
         try await multipleTargetsAndNewestFirstHistory()
         try await disabledCatchUpRequiresConsent()
         try await migrationKeepsEndpointProvenanceAndDeduplicatesOverlap()
+        try await credentialOnlyEditPreservesQueue()
         try await clearWaitsForInflightOutcome()
         try await diagnosticsExpireWithoutRemovingPendingWork()
         print("ServerUploadStoreSmoke: PASS")
+    }
+
+    private static func credentialOnlyEditPreservesQueue() async throws {
+        let store = try await makeStore("credential-edit")
+        let destination = try await store.addDestination(
+            name: "Target", backend: .nightscout, endpoint: "target.example",
+            credentialReference: "old-secret", now: date(450)
+        )
+        try await store.enqueueHistory(
+            destinationID: destination.id,
+            selection: .allAvailable,
+            readings: [reading(1, sample: 440, committed: 440)],
+            now: date(451)
+        )
+        let before = await store.snapshot()
+        try await store.updateCredentialReference(
+            destinationID: destination.id,
+            reference: "new-secret",
+            name: "Renamed"
+        )
+        let after = await store.snapshot()
+        let edited = after.destinations.first { $0.id == destination.id }!
+        expect(edited.endpointRevision == destination.endpointRevision, "credential edit must preserve endpoint revision")
+        expect(edited.credentialReference == "new-secret", "credential reference should be replaced")
+        expect(after.deliveries == before.deliveries, "credential-only edit must preserve every queue row")
     }
 
     private static func newOnlyCursorSurvivesRestart() async throws {

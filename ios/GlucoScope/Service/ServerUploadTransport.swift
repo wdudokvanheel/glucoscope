@@ -21,23 +21,25 @@ struct URLSessionServerUploadTransport: ServerUploadTransport {
         secret: String?
     ) async -> Result<Int, ServerUploadError> {
         do {
-            let url: URL
             switch destination.backend {
             case .nightscout:
-                url = try nightscoutURL(destination: destination, path: "/api/v1/status.json", secret: secret)
+                return try await testNightscout(destination: destination, secret: secret)
             case .glucoScope:
-                url = try customURL(destination: destination, path: "/api/s1/status")
+                let url = try customURL(destination: destination, path: "/api/s1/status")
+                var request = URLRequest(url: url)
+                request.timeoutInterval = 15
+                applyBearer(secret, to: &request, backend: destination.backend)
+                let (data, response) = try await session.data(for: request)
+                let code = try validate(response: response, data: data)
+                guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      (object["status"] as? String)?.lowercased() == "ok" else {
+                    return .failure(.invalidResponse)
+                }
+                guard object["uploadsEnabled"] as? Bool == true else {
+                    return .failure(.uploadsNotConfigured)
+                }
+                return .success(code)
             }
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 15
-            applyBearer(secret, to: &request, backend: destination.backend)
-            let (data, response) = try await session.data(for: request)
-            let code = try validate(response: response, data: data)
-            guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  (object["status"] as? String)?.lowercased() == "ok" else {
-                return .failure(.invalidResponse)
-            }
-            return .success(code)
         } catch let error as ServerUploadError {
             return .failure(error)
         } catch {
@@ -57,7 +59,7 @@ struct URLSessionServerUploadTransport: ServerUploadTransport {
             case .nightscout:
                 url = try nightscoutURL(destination: destination, path: "/api/v1/entries.json", secret: secret)
                 body = try JSONSerialization.data(withJSONObject: [[
-                    "_id": Self.nightscoutID(delivery.readingID),
+                    "_id": delivery.readingID.uuidString.lowercased(),
                     "device": "GlucoScope",
                     "type": "sgv",
                     "sgv": delivery.glucoseMGDL,
@@ -85,6 +87,63 @@ struct URLSessionServerUploadTransport: ServerUploadTransport {
         } catch {
             return .failure(.network(Self.safeNetworkMessage(error)))
         }
+    }
+
+    private func testNightscout(
+        destination: ServerUploadDestination,
+        secret: String?
+    ) async throws -> Result<Int, ServerUploadError> {
+        let statusURL = try nightscoutURL(
+            destination: destination,
+            path: "/api/v1/status.json",
+            secret: nil
+        )
+        let (statusData, statusResponse) = try await session.data(from: statusURL)
+        _ = try validate(response: statusResponse, data: statusData)
+        guard let status = try JSONSerialization.jsonObject(with: statusData) as? [String: Any],
+              (status["status"] as? String)?.lowercased() == "ok" else {
+            return .failure(.invalidResponse)
+        }
+        if let enabled = status["apiEnabled"] as? Bool, !enabled {
+            return .failure(.server(status: 405, message: "Nightscout REST API is disabled"))
+        }
+        guard let secret, !secret.isEmpty else { return .failure(.authentication) }
+
+        let token = secret.hasPrefix("token=") ? secret : "token=\(secret)"
+        guard let base = URL(string: destination.endpoint + "/api/v2/authorization/request/") else {
+            throw ServerUploadError.invalidEndpoint
+        }
+        let authURL = base.appendingPathComponent(token)
+        let (authData, authResponse) = try await session.data(from: authURL)
+        guard let http = authResponse as? HTTPURLResponse else {
+            return .failure(.invalidResponse)
+        }
+        if http.statusCode == 404 { return .failure(.writePermissionUnavailable) }
+        _ = try validate(response: authResponse, data: authData)
+        guard let auth = try JSONSerialization.jsonObject(with: authData) as? [String: Any],
+              let jwt = auth["token"] as? String, !jwt.isEmpty else {
+            return .failure(.authentication)
+        }
+
+        let permissionURL = try customURL(destination: destination, path: "/api/v3/status")
+        var permissionRequest = URLRequest(url: permissionURL)
+        permissionRequest.setValue("Bearer \(jwt)", forHTTPHeaderField: "Authorization")
+        let (permissionData, permissionResponse) = try await session.data(for: permissionRequest)
+        guard let permissionHTTP = permissionResponse as? HTTPURLResponse else {
+            return .failure(.invalidResponse)
+        }
+        if permissionHTTP.statusCode == 404 { return .failure(.writePermissionUnavailable) }
+        let code = try validate(response: permissionResponse, data: permissionData)
+        guard let wrapper = try JSONSerialization.jsonObject(with: permissionData) as? [String: Any],
+              let result = wrapper["result"] as? [String: Any],
+              let permissions = result["apiPermissions"] as? [String: Any],
+              let entries = permissions["entries"] as? String else {
+            return .failure(.writePermissionUnavailable)
+        }
+        guard entries.lowercased().contains("c") else {
+            return .failure(.writePermissionDenied)
+        }
+        return .success(code)
     }
 
     private func nightscoutURL(
@@ -133,10 +192,6 @@ struct URLSessionServerUploadTransport: ServerUploadTransport {
             )
         }
         return response.statusCode
-    }
-
-    private static func nightscoutID(_ id: UUID) -> String {
-        String(id.uuidString.replacingOccurrences(of: "-", with: "").lowercased().prefix(24))
     }
 
     private static func safeNetworkMessage(_ error: Error) -> String {
