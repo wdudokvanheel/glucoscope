@@ -167,7 +167,11 @@ struct LiveActivitySettingsView: View {
                 Picker("Graph window", selection: binding(\.graphHours)) {
                     ForEach([1, 2, 3, 6, 12], id: \.self) { Text("\($0) hours").tag($0) }
                 }
-                Toggle("Hide glucose until unlocked", isOn: binding(\.hideWhenLocked))
+                Toggle("Protect glucose on Lock Screen", isOn: binding(\.hideWhenLocked))
+                if service.settings.hideWhenLocked {
+                    Text("Marks glucose, trend and graph as private. iOS controls when they are hidden. In iPhone Settings → Face ID & Passcode → Allow Access When Locked, review widget and Live Activity access. Confirm the result on your locked device.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             Section {
                 Toggle("Follow app theme", isOn: Binding(get: { service.settings.separateTheme == nil }, set: {
@@ -187,7 +191,7 @@ struct LiveActivitySettingsView: View {
                         }
                     }
                 }
-            } header: { Text("Theme") } footer: { Text("Uses the same theme collection as the app. Lock-screen privacy applies to the value, trend and entire mini graph. iOS controls redaction and lock-screen access; verify your device’s privacy settings.") }
+            } header: { Text("Theme") } footer: { Text("Uses the same theme collection as the app. Privacy protection requests system redaction; the app alone cannot guarantee hiding until unlock independently of iOS settings.") }
             Section("How iOS handles Live Activities") {
                 Text("Updates arrive when GlucoScope receives readings and can run. iOS limits an activity to eight hours and may end it earlier. Open GlucoScope to restore it. Switching to Viewer ends it while keeping your preference for next time.")
                 Text("A Live Activity does not keep Bluetooth collection running and cannot guarantee continuous updates. The stale-reading threshold follows Sensor settings.")

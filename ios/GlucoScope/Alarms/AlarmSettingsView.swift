@@ -13,6 +13,7 @@ struct AlarmSettingsView: View {
                 Label(service.permissionDescription, systemImage: "bell.badge")
                     .font(.footnote)
                 Text(service.schedulingDescription).font(.caption).foregroundStyle(.secondary)
+                Button("Enable notifications") { Task { await service.requestNotificationPermission() } }
                 Button("Notification settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                 }
@@ -52,7 +53,7 @@ struct AlarmSettingsView: View {
                 NavigationLink { AlarmGeneralSettingsView(service: service) } label: { Label("General settings", systemImage: "slider.horizontal.3") }
                 NavigationLink { AlarmHistoryView(service: service) } label: { Label("Alarm history", systemImage: "clock.arrow.circlepath") }
             } footer: {
-                Text("Alarms use current Bluetooth readings only. Up to four upcoming reminders per rule (48 total) are prepared for background delivery; glucose reminders never extend beyond the current reading’s freshness. iOS can delay delivery. Further reminders need new readings or the app to run. Check notification and Focus settings on your device.")
+                Text("Alarms use current Bluetooth readings only. A limited number of upcoming reminders are prepared for background delivery while readings remain fresh. Further reminders need new readings or the app to run. iOS can delay delivery; check notification and Focus settings on your device.")
             }
         }
         .navigationTitle("Alarms")

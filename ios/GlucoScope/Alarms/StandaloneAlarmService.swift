@@ -13,6 +13,7 @@ private struct ScheduledAlarmNotification: Codable {
     let identifier: String
     let ruleID: UUID
     let date: Date
+    let mmol: Double?
 }
 
 @MainActor
@@ -34,6 +35,10 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
     private var ruleRevisions: [UUID: Int] = [:]
     private var notificationIDs: [UUID: [String]]
     private var scheduled: [ScheduledAlarmNotification]
+    private var lastProjectionEngine: StandaloneAlarmEngine?
+    private var lastProjectionConfiguration: AlarmConfiguration?
+    private var lastProjectionStaleAfter: TimeInterval?
+    private var lastProjectionTimeZone: TimeZone?
     private static let prefix = "standalone.alarm."
 
     init(preferences: PreferenceService, defaults: UserDefaults = .standard,
@@ -55,12 +60,12 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
             .flatMap { try? JSONDecoder().decode(StandaloneAlarmEngine.self, from: $0) } ?? StandaloneAlarmEngine()
         super.init()
         center.delegate = self
-        let actions = [UNNotificationAction(identifier: "alarm.snooze", title: "Snooze"),
-                       UNNotificationAction(identifier: "alarm.dismiss", title: "Dismiss", options: .destructive)]
-        let category = UNNotificationCategory(identifier: "standalone.glucose.alarm", actions: actions,
-                                               intentIdentifiers: [], options: .customDismissAction)
-        center.getNotificationCategories { existing in
-            var categories = existing
+        Task {
+            var categories = await center.notificationCategories()
+            let actions = [UNNotificationAction(identifier: "alarm.snooze", title: "Snooze"),
+                           UNNotificationAction(identifier: "alarm.dismiss", title: "Dismiss", options: .destructive)]
+            let category = UNNotificationCategory(identifier: "standalone.glucose.alarm", actions: actions,
+                                                   intentIdentifiers: [], options: .customDismissAction)
             categories.insert(category)
             center.setNotificationCategories(categories)
         }
@@ -86,7 +91,7 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refresh() }
             }
-            Task { await requestNotificationPermission() }
+            Task { await refreshPermission() }
         } else {
             activeRuleIDs = []
             removeAllAlarmNotifications()
@@ -250,10 +255,17 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
     }
 
     private func reconcileScheduledNotifications(now: Date) {
+        guard lastProjectionEngine != engine || lastProjectionConfiguration != configuration
+                || lastProjectionStaleAfter != staleAfter || lastProjectionTimeZone != .current
+                || scheduled.contains(where: { $0.date <= now }) else { return }
+        lastProjectionEngine = engine
+        lastProjectionConfiguration = configuration
+        lastProjectionStaleAfter = staleAfter
+        lastProjectionTimeZone = .current
         let projected = engine.projectedNotifications(rules: configuration.rules, general: configuration.general,
                                                        staleAfter: staleAfter, now: now, limit: 48)
         let removed = scheduled.filter { pending in
-            pending.date > now && !projected.contains { $0.ruleID == pending.ruleID && $0.date == pending.date }
+            pending.date > now && !projected.contains { $0.ruleID == pending.ruleID && $0.date == pending.date && $0.mmol == pending.mmol }
         }
         let expired = scheduled.filter { $0.date <= now }
         var added = false
@@ -264,11 +276,11 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
         }
         scheduled.removeAll { item in item.date <= now || removed.contains { $0.identifier == item.identifier } }
         for emission in projected {
-            guard !scheduled.contains(where: { $0.ruleID == emission.ruleID && $0.date == emission.date }),
+            guard !scheduled.contains(where: { $0.ruleID == emission.ruleID && $0.date == emission.date && $0.mmol == emission.mmol }),
                   let rule = configuration.rules.first(where: { $0.id == emission.ruleID }) else { continue }
             let identifier = Self.prefix + rule.id.uuidString + "." + UUID().uuidString
             added = true
-            scheduled.append(ScheduledAlarmNotification(identifier: identifier, ruleID: rule.id, date: emission.date))
+            scheduled.append(ScheduledAlarmNotification(identifier: identifier, ruleID: rule.id, date: emission.date, mmol: emission.mmol))
             notificationIDs[rule.id, default: []].append(identifier)
             let content = notificationContent(rule: rule, mmol: emission.mmol)
             let expectedGeneration = generation
@@ -287,6 +299,7 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
                 } catch {
                     scheduled.removeAll { $0.identifier == identifier }
                     notificationIDs[rule.id]?.removeAll { $0 == identifier }
+                    lastProjectionEngine = nil
                     schedulingDescription = "A background reminder could not be scheduled. Check iOS notification settings."
                 }
             }
@@ -300,13 +313,14 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
             notificationIDs[ruleID] = (notificationIDs[ruleID] ?? []).filter { keep.contains($0) }
         }
         let description = scheduled.count == 48
-            ? "48 background reminders prepared. Later reminders are refreshed when the app runs."
-            : "\(scheduled.count) background reminders prepared. Up to four per alarm, refreshed with new readings."
+            ? "Background reminder capacity reached. Open the app regularly so later reminders can be prepared."
+            : "Upcoming reminders are prepared as current readings allow. Open the app regularly to keep them refreshed."
         if schedulingDescription != description { schedulingDescription = description }
         if !removed.isEmpty || !expired.isEmpty || added { persist() }
     }
 
     private func removeNotifications(for id: UUID) {
+        lastProjectionEngine = nil
         ruleRevisions[id, default: 0] += 1
         let identifiers = (notificationIDs.removeValue(forKey: id) ?? []) + [Self.prefix + id.uuidString]
         scheduled.removeAll { $0.ruleID == id }
@@ -315,6 +329,7 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
     }
 
     private func removeAllAlarmNotifications() {
+        lastProjectionEngine = nil
         let ids = notificationIDs.values.flatMap { $0 } + configuration.rules.map { Self.prefix + $0.id.uuidString }
         notificationIDs.removeAll()
         scheduled.removeAll()

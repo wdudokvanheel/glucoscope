@@ -1,8 +1,10 @@
-import ActivityKit
 import Foundation
+#if os(iOS)
+import ActivityKit
+#endif
 
 /// Shared by the app and Widget extension. Keep the encoded state below ActivityKit's 4 KB limit.
-struct GlucoseActivityAttributes: ActivityAttributes {
+struct GlucoseActivityAttributes: Codable {
     struct Point: Codable, Hashable {
         let offset: Int
         let value: Int
@@ -25,3 +27,7 @@ struct GlucoseActivityAttributes: ActivityAttributes {
     }
     var name = "GlucoScope"
 }
+
+#if os(iOS)
+extension GlucoseActivityAttributes: ActivityAttributes {}
+#endif

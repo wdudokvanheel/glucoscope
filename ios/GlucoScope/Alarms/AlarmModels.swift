@@ -105,7 +105,7 @@ struct GlucoseAlarmRule: Codable, Equatable, Identifiable {
     func stopOnRecovery(_ general: AlarmGeneralSettings) -> Bool { stopOnRecoveryOverride ?? general.stopRepeatingOnRecovery }
 }
 
-struct AlarmConfiguration: Codable {
+struct AlarmConfiguration: Codable, Equatable {
     var general = AlarmGeneralSettings()
     var rules: [GlucoseAlarmRule]
 }
@@ -134,7 +134,7 @@ struct AlarmEmission: Equatable {
 
 /// Pure temporal state machine. Only observed current samples establish glucose conditions.
 /// Call evaluate on fresh commits and clock ticks; backfills never enter this engine.
-struct StandaloneAlarmEngine: Codable {
+struct StandaloneAlarmEngine: Codable, Equatable {
     private(set) var episodes: [UUID: AlarmEpisode] = [:]
     private(set) var latestReading: AlarmReading?
     private(set) var startedAt: Date?
