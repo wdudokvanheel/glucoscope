@@ -276,6 +276,9 @@ final class ServerUploadCoordinator: ObservableObject {
                 }
             }
             guard let (destination, delivery) = claimed else { return }
+            // Publish the claimed row before awaiting the network so the queue UI
+            // can show the sample currently in flight.
+            await publishSnapshot()
             let secret: String?
             do {
                 secret = try await credentialStore.secret(reference: destination.credentialReference)

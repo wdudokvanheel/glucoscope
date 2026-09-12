@@ -43,7 +43,7 @@ enum ServerUploadCoordinatorSmoke {
             transport: transport
         )
         await coordinator.load()
-        _ = try await coordinator.addDestination(
+        let destinationID = try await coordinator.addDestination(
             name: "Test", backend: .glucoScope, endpoint: "server.example", secret: "private"
         )
         await coordinator.setStandaloneActive(true)
@@ -51,6 +51,10 @@ enum ServerUploadCoordinatorSmoke {
         let session = makeSession()
         _ = try await readingStore.ingest(submission(1, minute: 100, session: session))
         try await waitUntil("first upload did not start") { await transport.callCount() == 1 }
+        precondition(
+            coordinator.snapshot.progress(for: destinationID).currentSampleDate != nil,
+            "in-flight sample should be visible in queue progress"
+        )
 
         // Viewer transition while a URL request is active lets that request finish,
         // records its result, and prevents the next committed row from starting.
