@@ -2,6 +2,13 @@ import Foundation
 import SwiftUI
 import UIKit
 
+struct LibreSetupAttempt: Equatable {
+    let id: UUID
+    let sessionID: UUID
+    let sensorFingerprint: Data
+    let startedAt: Date
+}
+
 @MainActor
 final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     struct LogEntry: Identifiable {
@@ -34,16 +41,24 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var isScanningNFC = false
     @Published private(set) var isNFCAvailable = false
+    @Published private(set) var sensorName: String?
+    @Published private(set) var sensorPairedAt: Date?
+    @Published private(set) var sensorSessionID: UUID?
+    @Published private(set) var latestSetupAttempt: LibreSetupAttempt?
+    @Published private(set) var latestSetupFailure: String?
     let diagnosticsUploader = LibreDiagnosticsUploader()
 
     private static let maximumLogEntries = 500
+    static let readingsStorageURL = FileManager.default.urls(
+        for: .applicationSupportDirectory, in: .userDomainMask
+    )[0]
+        .appendingPathComponent("LibreReadings", isDirectory: true)
+        .appendingPathComponent("readings.sqlite")
     private let store = LibreSessionStore()
     private let frameGate = LibreFrameGenerationGate()
-    private let readingStore = ReadingStore(configuration: ReadingStoreConfiguration(storage: .sqlite(
-        url: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("LibreReadings", isDirectory: true)
-            .appendingPathComponent("readings.sqlite")
-    )))
+    let readingStore = ReadingStore(configuration: ReadingStoreConfiguration(
+        storage: .sqlite(url: readingsStorageURL)
+    ))
     private lazy var persistenceBridge = LibrePersistenceBridge(readingStore: readingStore, sessionStore: store)
     private lazy var collection = LibreCollectionCoordinator(
         gate: frameGate,
@@ -178,6 +193,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     /// callbacks from two sensors cannot be mixed.
     func startNFCSetup() {
         precondition(Thread.isMainThread)
+        latestSetupFailure = nil
         bluetooth.invalidateTransportSynchronously()
         operationGeneration &+= 1
         let generation = operationGeneration
@@ -257,6 +273,15 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
             case .success(.setup(let sensor)):
                 self.resetFrames()
                 self.updateSensorSummary(sensor)
+                if let sessionID = sensor.persistenceSessionID,
+                   let fingerprint = try? sensor.stableIdentityFingerprint() {
+                    self.latestSetupAttempt = LibreSetupAttempt(
+                        id: UUID(),
+                        sessionID: sessionID,
+                        sensorFingerprint: fingerprint,
+                        startedAt: Date()
+                    )
+                }
                 self.appendLog("NFC setup complete for \(sensor.advertisedName)")
                 self.status = "Sensor configured; connecting"
                 self.isRunning = true
@@ -327,6 +352,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
                 else {
                     self.refreshStoredSession()
                     self.status = "NFC setup failed"
+                    self.latestSetupFailure = error.localizedDescription
                 }
                 self.appendLog("ERROR: NFC scan failed: \(error.localizedDescription)")
             }
@@ -405,6 +431,9 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         isRunning = false
         bluetooth.forget()
         currentSensorSession = nil
+        sensorName = nil
+        sensorPairedAt = nil
+        sensorSessionID = nil
         resetFrames()
         sensorSummary = ""
         calibrationSummary = "No paired sensor"
@@ -542,6 +571,9 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         let calibrationChanged = previous?.calibration != session.calibration
         let clockChanged = previous?.clockAnchor != session.clockAnchor
         currentSensorSession = session
+        sensorName = session.advertisedName
+        sensorPairedAt = session.createdAt
+        sensorSessionID = session.persistenceSessionID
         if pairingChanged || calibrationChanged || clockChanged {
             diagnosticFrame = nil
             diagnosticGlucoseStatus = waitingStatus(for: session, newFrame: true)

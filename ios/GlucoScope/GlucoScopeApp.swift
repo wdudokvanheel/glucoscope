@@ -21,6 +21,14 @@ struct GlucoScopeApp: App {
 final class GlucoScopeAppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        // Core Bluetooth restoration can construct the collector before SwiftUI.
+        // Gate it from the persisted product mode first so Viewer never resumes
+        // standalone collection or recording during launch.
+        let mode = UserDefaults.standard.data(forKey: GlucoScopePreferenceKey.appMode.rawValue)
+            .flatMap { try? JSONDecoder().decode(AppMode?.self, from: $0) } ?? nil
+        if mode != .standalone {
+            UserDefaults.standard.set(false, forKey: "libre2.collectionEnabled")
+        }
         _ = LibreDiagnosticsCoordinator.shared
         return true
     }

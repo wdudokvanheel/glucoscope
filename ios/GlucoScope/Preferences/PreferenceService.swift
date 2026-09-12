@@ -9,6 +9,18 @@ enum GlucoScopePreferenceKey: String {
     case bgLow
     case bgHigh
     case bgUpper
+    case appMode
+    case standaloneOnboardingCompleted
+    case staleReadingMinutes
+    case setupTimeoutNotifications
+    case keepTryingAfterSetupTimeout
+}
+
+enum AppMode: String, Codable, CaseIterable, Identifiable {
+    case viewer
+    case standalone
+
+    var id: String { rawValue }
 }
 
 struct GraphSettings: Encodable, Decodable, Equatable {
@@ -57,11 +69,30 @@ class PreferenceService: ObservableObject {
     @Preference(key: .bgUpper, defaultValue: 10.0)
     var bgUpper: Double
 
+    @Preference(key: .appMode, defaultValue: nil)
+    var appMode: AppMode?
+
+    @Preference(key: .standaloneOnboardingCompleted, defaultValue: false)
+    var standaloneOnboardingCompleted: Bool
+
+    @Preference(key: .staleReadingMinutes, defaultValue: 5)
+    var staleReadingMinutes: Int
+
+    @Preference(key: .setupTimeoutNotifications, defaultValue: true)
+    var setupTimeoutNotifications: Bool
+
+    @Preference(key: .keepTryingAfterSetupTimeout, defaultValue: true)
+    var keepTryingAfterSetupTimeout: Bool
+
     private var cancellables = Set<AnyCancellable>()
 
     init() {
         // Propegate any changes to prefences to the observers of this service
-        self.listenForChanges(_connection, _graph, _theme, _bgLow, _bgHigh, _bgUpper)
+        self.listenForChanges(
+            _connection, _graph, _theme, _bgLow, _bgHigh, _bgUpper,
+            _appMode, _standaloneOnboardingCompleted, _staleReadingMinutes,
+            _setupTimeoutNotifications, _keepTryingAfterSetupTimeout
+        )
     }
 
     func listenForChanges<each V>(
