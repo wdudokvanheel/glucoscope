@@ -24,6 +24,7 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
     @Published private(set) var permissionDescription = "Checking notification permission…"
     @Published private(set) var criticalAlertsAvailable = false
     @Published private(set) var schedulingDescription = "Background reminders are prepared as current readings allow."
+    @Published private(set) var testNotificationStatus: String?
     private let defaults: UserDefaults
     private let center: UNUserNotificationCenter
     private let prefersStandalone: () -> Bool
@@ -203,6 +204,40 @@ final class StandaloneAlarmService: NSObject, ObservableObject, UNUserNotificati
         case .denied: permissionDescription = "Notifications are off. Enable them in iOS Settings."
         case .notDetermined: permissionDescription = "Notification permission has not been requested"
         default: permissionDescription = "Notification availability is controlled by iOS"
+        }
+    }
+
+    func scheduleTestNotification() async {
+        testNotificationStatus = "Checking notification permission…"
+        let settings = await center.notificationSettings()
+        criticalAlertsAvailable = settings.criticalAlertSetting == .enabled
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional || settings.authorizationStatus == .ephemeral else {
+            testNotificationStatus = settings.authorizationStatus == .notDetermined
+                ? "Enable notifications before scheduling a test."
+                : "Notifications are off. Enable them in iOS Settings before scheduling a test."
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Test alarm notification"
+        content.body = "This is a test of your alarm notification settings."
+        let sound = configuration.general.sound
+        let critical = configuration.general.overrideDoNotDisturb && criticalAlertsAvailable
+        if critical {
+            content.interruptionLevel = .critical
+            content.sound = sound == .silent ? nil : sound.filename.map { .criticalSoundNamed(UNNotificationSoundName(rawValue: $0)) } ?? .defaultCritical
+        } else {
+            content.interruptionLevel = .active
+            content.sound = sound == .silent ? nil : sound.filename.map { UNNotificationSound(named: UNNotificationSoundName(rawValue: $0)) } ?? .default
+        }
+
+        let identifier = "standalone.test-notification"
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        do {
+            try await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+            testNotificationStatus = "Test scheduled in 5 seconds. You can lock your phone now."
+        } catch {
+            testNotificationStatus = "Test notification could not be scheduled: \(error.localizedDescription)"
         }
     }
 

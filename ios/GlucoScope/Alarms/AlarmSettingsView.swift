@@ -17,6 +17,12 @@ struct AlarmSettingsView: View {
                 Button("Notification settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                 }
+                Button("Schedule test notification (5 seconds)") {
+                    Task { await service.scheduleTestNotification() }
+                }
+                if let status = service.testNotificationStatus {
+                    Text(status).font(.caption).foregroundStyle(.secondary)
+                }
             }
             Section("Your alarms") {
                 ForEach(service.configuration.rules) { rule in
