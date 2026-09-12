@@ -28,17 +28,34 @@ struct GlucoseLiveActivityWidget: Widget {
                         .privacySensitive(context.state.hideWhenLocked)
                 }
             } compactLeading: {
-                Image(systemName: context.isStale ? "clock.badge.exclamationmark" : "drop.fill")
-                    .foregroundStyle(context.isStale ? .orange : Color(activityHex: context.state.accent))
+                GlucoseActivityCompactValue(state: context.state, stale: context.isStale)
             } compactTrailing: {
-                Text(context.state.glucoseMGDL.map { String(format: "%.1f", Double($0) / 18.0182) } ?? "—")
+                Text(context.state.glucoseMGDL == nil ? "—" : context.state.trend)
                     .fontWeight(.semibold)
-                    .strikethrough(context.isStale)
+                    .foregroundStyle(context.isStale ? .orange : Color(activityHex: context.state.accent))
                     .privacySensitive(context.state.hideWhenLocked)
             } minimal: {
-                Image(systemName: context.isStale ? "clock.badge.exclamationmark" : "drop.fill")
+                GlucoseActivityCompactValue(state: context.state, stale: context.isStale)
             }
         }
+    }
+}
+
+private struct GlucoseActivityCompactValue: View {
+    let state: GlucoseActivityAttributes.ContentState
+    let stale: Bool
+    private var value: String {
+        state.glucoseMGDL.map { String(format: "%.1f", Double($0) / 18.0182) } ?? "—"
+    }
+    var body: some View {
+        Text("\(Text(value).strikethrough(stale))\(stale ? "!" : "")")
+            .font(.system(size: 16, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+            .foregroundStyle(stale ? .orange : Color(activityHex: state.accent))
+            .accessibilityLabel(state.glucoseMGDL == nil ? "Waiting for a reading" : "\(value) millimoles per liter\(stale ? ", outdated" : "")")
+            .privacySensitive(state.hideWhenLocked)
     }
 }
 
