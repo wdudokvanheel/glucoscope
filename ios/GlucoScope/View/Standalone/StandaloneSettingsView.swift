@@ -48,12 +48,11 @@ struct StandaloneSettingsView: View {
                 Button {
                     runtime.standaloneTab = .sensor
                 } label: {
-                    settingsRow("Manage sensor", "Setup, connection and redacted logs", "sensor")
-                }
-                NavigationLink {
-                    SensorSettingsView()
-                } label: {
-                    settingsRow("Sensor settings", "Freshness and setup timeout", "slider.horizontal.3")
+                    settingsRow(
+                        "Sensor & Bluetooth",
+                        "Setup, connection, freshness and redacted logs",
+                        "sensor"
+                    )
                 }
             }
 

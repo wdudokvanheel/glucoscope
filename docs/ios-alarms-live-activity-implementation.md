@@ -22,6 +22,15 @@ Implemented against the confirmed [app experience plan](ios-ble-app-experience-p
 
 The portable regression suite is `bash ios/StandaloneTests/run-alarms.sh`. It currently checks 93 temporal behaviors, including sustained hysteresis, stale gaps without clock callbacks, ordinary and overridden repeats, manual snooze, dismissal/rearming, weekday and overnight windows, immediate window-opening evaluation, history exclusion, independent simultaneous rules, restart persistence, mode shutdown and bounded native-notification projections.
 
+The same runner also checks that a full 36-point / 12-hour Live Activity state round-trips between app and extension and remains under Apple's content budget (1,344 bytes including attributes in the fixture).
+
+Two further independent portable suites exercise shared production policies:
+
+- `bash ios/StandaloneTests/run-experience.sh`: 34 setup and statistics checks. Exact current-attempt/session, fresh live origin, new receipt and creation timestamps, Viewer exclusion, timeout/retry boundaries, restored timeout opt-out, canonical trend/history deduplication, initial 14-day window, Today boundary, all range fractions, time-weighted average/CV, and incomplete/empty coverage.
+- `bash ios/StandaloneTests/run-reconnection.sh`: nine NFC intent identity checks. Reconnection rejects a different UID or stable patch identity before any pairing write or streaming-enable command, accepts mutable patch changes for the paired sensor, and leaves deliberate replacement and read-only capture behavior intact. These tests perform no physical NFC operations.
+
+The statistics policy weights each observation by up to its native preceding sample interval (one minute for trend, 15 minutes for history), clipped to the previous observation and selected period. Mixed-cadence history therefore does not distort “time in range” into a raw sample-count fraction, and unobserved gaps do not count as recorded time.
+
 ## Chosen alarm defaults
 
 - Recovery margin: **0.3 mmol/L**, editable from **0 to 2 mmol/L** in 0.1 steps. This is approximately 5 mg/dL. It is a small product hysteresis setting intended to avoid resetting on tiny threshold fluctuations, not a claim about sensor accuracy. The existing physical sensor record reports approximately one-minute BLE cadence (58–62 seconds), supporting the separate five-minute stale default. Margin suitability still needs observation with real readings.

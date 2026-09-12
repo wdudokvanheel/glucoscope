@@ -9,9 +9,13 @@ GlucoScope is a highly customizable native iOS and Android app for diabetics to 
 | ![1](docs/1.jpeg)   | ![settings](docs/settings.jpeg)  | ![2](docs/2.jpeg) |
 |---------------------|---------------------------|-------------------|
 
-## iOS Libre 2 development
+## iOS Libre 2
 
-Direct sensor collection is in development. See [current implementation and next work](docs/ios-libre2-implementation-plan.md), [app experience decisions](docs/ios-ble-app-experience-plan.md) and [testing](docs/libre2-ble-testing.md).
+The iOS app includes an optional Bluetooth mode that stores direct Libre 2
+readings locally and presents them in Graph, Stats, Sensor, and Settings tabs.
+Viewer mode remains available for Nightscout and the custom backend. See the
+[app experience decisions](docs/ios-ble-app-experience-plan.md), [integration
+audit](docs/ios-ble-app-integration-audit.md), and [physical testing record](docs/libre2-ble-testing.md).
 
 ## Stats
 ![Project stats](https://pstatool.wdudokvanheel.nl/wdudokvanheel/glucoscope.svg)

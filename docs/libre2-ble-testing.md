@@ -1,6 +1,6 @@
 # Libre 2 testing
 
-The current development build saves checked BLE slots into the existing local reading store and shows the latest 15 under **Saved experimental readings**. The detailed decoded-frame display remains separate. The user reports that v11 now commits live and recovered readings on the phone, recovered historical readings match xDrip/Zukka at the corresponding times, and saved readings remain after force-quitting and relaunching the app. Locked real-reading persistence remains to be checked.
+The current iOS app saves checked BLE slots into its local reading store and presents them in Bluetooth mode's **Graph** and **Stats** tabs. **Sensor** is the home for setup, connection state, last-reading state, read-only history import, calibration, and redacted logs. Complete diagnostic export remains a separate explicit action. The user reports that v11 committed live and recovered readings on the phone, recovered historical readings matched xDrip/Zukka at the corresponding times, and saved readings remained after force-quitting and relaunching the app. Locked real-reading persistence remains to be checked.
 
 ## Software checks
 
@@ -20,11 +20,11 @@ The [test README](../ios/Libre2Tests/README.md) describes coverage and fixtures.
 When resuming development-phone collection:
 
 1. Build and launch. Confirm storage opens. Resetting the development database is acceptable if needed.
-2. Reconnect the saved sensor, or deliberately use NFC setup if pairing needs it. Setup can change which collector receives the sensor; use it only when intending to switch collection.
-3. Wait for frames. Confirm **Saved experimental readings** gains dated values and the accepted/saved status advances. An NFC success or CRC-valid packet alone does not demonstrate a saved reading.
+2. In Bluetooth mode, use **Reconnect sensor** for an identity-constrained rescan of the saved sensor, or **Set up replacement sensor** only when deliberately changing sensors. NFC streaming setup can change which collector receives the sensor; use it only when intending to switch collection.
+3. Wait for frames. Confirm Graph shows a current value, Sensor shows a last successful reading, and Stats gains local coverage. An NFC success or CRC-valid packet alone does not demonstrate a saved reading.
 4. Check overlapping packets produce one saved sample per sensor minute and leave sparse gaps. Compare the stored timestamps with the detailed frame's sensor-minute mapping.
 5. During a short locked-screen interval, check new readings are saved and their timestamps appear after unlocking.
-6. Stop collection and confirm new processing/reconnection stops. Saved history should remain visible.
+6. Switch to Viewer and confirm collection, scanning/reconnection, standalone recording, alarms, and Live Activity stop. Return to Bluetooth mode and confirm saved history remains and Graph opens first.
 
 For failures, include app revision, iPhone/iOS, sensor revision, action, elapsed time and an export via [the diagnostics host](diagnostics-host.md). Keep private exports out of commits. A physical comparison is useful when corresponding reference samples are available; it is not needed to keep building the app.
 
@@ -32,7 +32,7 @@ For failures, include app revision, iPhone/iOS, sensor revision, action, elapsed
 
 The first physical scan and subsequent BLE reception succeeded on 12 September 2026 (local time); see the completed observation below. Repeat-scan deduplication and retention of NFC-imported history after relaunch remain device follow-ups.
 
-Use the **Scan sensor for history (NFC)** action on the already paired sensor. This is a read-only memory scan: it does not re-enable streaming, reset pairing or change the saved clock.
+Use **Import sensor history** in the Sensor tab on the already paired sensor. This is a read-only memory scan: it does not re-enable streaming, reset pairing or change the saved clock.
 
 1. Keep the phone near the sensor until the NFC sheet finishes, then wait for the import result. Check the reported new-reading count, trend/history counts and oldest/newest sample dates.
 2. Confirm saved readings appear with their original sensor times. The scan provides up to 16 minute-resolution trend slots and 32 quarter-hour history slots; younger sensors and rejected/unwritten slots provide fewer.

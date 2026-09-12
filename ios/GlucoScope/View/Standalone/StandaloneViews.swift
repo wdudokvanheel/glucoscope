@@ -319,14 +319,14 @@ struct StandaloneGraphView: View {
                     Text("—").font(.system(size: 64, weight: .semibold))
                     Text("Waiting for a sensor reading").font(.caption)
                 }
-                .foregroundStyle(prefs.theme.indicatorLabelColor)
+                .foregroundStyle(prefs.theme.textColor)
             }
         }
         .opacity(glucose.isLatestReadingStale && glucose.latestReading != nil ? 0.72 : 1)
     }
 
     private var currentColor: Color {
-        guard let value = glucose.latestValueMMOL else { return .gray }
+        guard let value = glucose.latestValueMMOL else { return prefs.theme.surfaceColor }
         if value < prefs.bgLow { return prefs.theme.lowColor }
         if value < prefs.bgHigh { return prefs.theme.inRangeColor }
         if value >= prefs.bgUpper { return prefs.theme.upperColor }

@@ -149,7 +149,7 @@ final class StandaloneGlucoseService: ObservableObject {
             timeoutTask?.cancel()
             timeoutTask = nil
             if let attemptID = preferences.standaloneSetupRecord?.attemptID {
-                cancelTimeoutNotification(attemptID: attemptID)
+                cancelSetupNotifications(attemptID: attemptID)
             } else {
                 cancelScheduledTimeoutNotification()
             }
@@ -245,7 +245,7 @@ final class StandaloneGlucoseService: ObservableObject {
 
     private func beginVerification(for attempt: LibreSetupAttempt) {
         if let previous = preferences.standaloneSetupRecord {
-            cancelTimeoutNotification(attemptID: previous.attemptID)
+            cancelSetupNotifications(attemptID: previous.attemptID)
         }
         let record = StandaloneSetupRecord(
             attemptID: attempt.id,
@@ -286,11 +286,7 @@ final class StandaloneGlucoseService: ObservableObject {
         timeoutTask?.cancel()
         timeoutTask = nil
         cancelTimeoutNotification(attemptID: record.attemptID)
-        notify(
-            identifier: "sensor-setup-success-\(record.attemptID.uuidString)",
-            title: "Sensor connected",
-            body: "GlucoScope received a fresh reading from your sensor."
-        )
+        notifySetupSuccess(for: record)
     }
 
     private func scheduleTimeoutIfNeeded() {
@@ -322,22 +318,43 @@ final class StandaloneGlucoseService: ObservableObject {
         if !keepTrying { coordinator.stop() }
     }
 
-    private func notify(identifier: String, title: String, body: String) {
+    private func notifySetupSuccess(for record: StandaloneSetupRecord) {
+        let identifier = "sensor-setup-success-\(record.attemptID.uuidString)"
+        let center = UNUserNotificationCenter.current()
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
+        content.title = "Sensor connected"
+        content.body = "GlucoScope received a fresh reading from your sensor."
         content.sound = .default
-        UNUserNotificationCenter.current().add(
+        center.add(
             UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
-        )
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let remainsCurrent = self.isStandaloneActive
+                    && self.preferences.standaloneSetupRecord?.attemptID == record.attemptID
+                    && self.preferences.standaloneSetupRecord?.outcome == .verified
+                guard !remainsCurrent else { return }
+                center.removePendingNotificationRequests(withIdentifiers: [identifier])
+                center.removeDeliveredNotifications(withIdentifiers: [identifier])
+            }
+        }
     }
 
     private func cancelTimeoutNotification(attemptID: UUID) {
-        let identifier = "sensor-setup-timeout-\(attemptID.uuidString)"
-        if scheduledTimeoutNotificationIdentifier == identifier {
-            scheduledTimeoutNotificationIdentifier = nil
+        let identifiers = timeoutNotificationIdentifiers(attemptID: attemptID)
+        if let scheduledIdentifier = scheduledTimeoutNotificationIdentifier,
+           identifiers.contains(scheduledIdentifier) {
+            self.scheduledTimeoutNotificationIdentifier = nil
         }
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+    }
+
+    private func cancelSetupNotifications(attemptID: UUID) {
+        cancelTimeoutNotification(attemptID: attemptID)
+        let successIdentifier = "sensor-setup-success-\(attemptID.uuidString)"
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [successIdentifier])
+        center.removeDeliveredNotifications(withIdentifiers: [successIdentifier])
     }
 
     private func cancelScheduledTimeoutNotification() {
@@ -347,19 +364,20 @@ final class StandaloneGlucoseService: ObservableObject {
     }
 
     private func scheduleNativeTimeoutNotification(for record: StandaloneSetupRecord, after delay: TimeInterval) {
-        let identifier = "sensor-setup-timeout-\(record.attemptID.uuidString)"
+        let keepTrying = preferences.keepTryingAfterSetupTimeout
+        let identifier = "sensor-setup-timeout-\(record.attemptID.uuidString)-\(keepTrying ? "keep" : "stop")"
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+        center.removePendingNotificationRequests(
+            withIdentifiers: timeoutNotificationIdentifiers(attemptID: record.attemptID)
+        )
         guard preferences.setupTimeoutNotifications else {
-            if scheduledTimeoutNotificationIdentifier == identifier {
-                scheduledTimeoutNotificationIdentifier = nil
-            }
+            scheduledTimeoutNotificationIdentifier = nil
             return
         }
         scheduledTimeoutNotificationIdentifier = identifier
         let content = UNMutableNotificationContent()
         content.title = "Sensor connection needs attention"
-        content.body = preferences.keepTryingAfterSetupTimeout
+        content.body = keepTrying
             ? "No fresh reading arrived in five minutes. GlucoScope will keep trying."
             : "No fresh reading arrived in five minutes. Open the Sensor tab to retry."
         content.sound = .default
@@ -370,10 +388,12 @@ final class StandaloneGlucoseService: ObservableObject {
         )) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                let outcome = self.preferences.standaloneSetupRecord?.outcome
                 let remainsCurrent = self.isStandaloneActive
                     && self.preferences.setupTimeoutNotifications
                     && self.preferences.standaloneSetupRecord?.attemptID == record.attemptID
-                    && self.preferences.standaloneSetupRecord?.outcome == .waiting
+                    && self.scheduledTimeoutNotificationIdentifier == identifier
+                    && (outcome == .waiting || outcome == .timedOut)
                 guard !remainsCurrent else { return }
                 if self.scheduledTimeoutNotificationIdentifier == identifier {
                     self.scheduledTimeoutNotificationIdentifier = nil
@@ -381,5 +401,10 @@ final class StandaloneGlucoseService: ObservableObject {
                 center.removePendingNotificationRequests(withIdentifiers: [identifier])
             }
         }
+    }
+
+    private func timeoutNotificationIdentifiers(attemptID: UUID) -> [String] {
+        let prefix = "sensor-setup-timeout-\(attemptID.uuidString)"
+        return ["\(prefix)-keep", "\(prefix)-stop"]
     }
 }

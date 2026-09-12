@@ -30,6 +30,11 @@ final class AppRuntime: ObservableObject {
         #endif
         let preferences = PreferenceService()
         let viewerDataSource = DataSourceService(prefences: preferences)
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-viewerDemo") {
+            viewerDataSource.startDemoMode()
+        }
+        #endif
         let coordinator = LibreDiagnosticsCoordinator.shared
         let glucose = StandaloneGlucoseService(
             coordinator: coordinator,
