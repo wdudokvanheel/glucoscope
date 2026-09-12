@@ -18,6 +18,7 @@ public actor ReadingStore {
     private let configuration: ReadingStoreConfiguration
     private let faultInjector: ReadingStoreFaultInjector?
     private let commitContinuation: AsyncStream<ReadingCommit>.Continuation
+    private var commitSubscribers: [UUID: AsyncStream<ReadingCommit>.Continuation] = [:]
     private var container: NSPersistentContainer?
     private var writerContext: NSManagedObjectContext?
     private var health: ReadingStoreHealth = .notLoaded
@@ -45,6 +46,7 @@ public actor ReadingStore {
 
     deinit {
         commitContinuation.finish()
+        for continuation in commitSubscribers.values { continuation.finish() }
     }
 
     public func load() async throws {
@@ -82,6 +84,18 @@ public actor ReadingStore {
 
     public func currentHealth() -> ReadingStoreHealth {
         health
+    }
+
+    /// Creates an independent commit stream for one subscriber. Unlike the
+    /// legacy `commits` stream, every stream returned here receives every commit.
+    public func commitStream() -> AsyncStream<ReadingCommit> {
+        let id = UUID()
+        return AsyncStream(bufferingPolicy: .bufferingNewest(64)) { continuation in
+            commitSubscribers[id] = continuation
+            continuation.onTermination = { [weak self] _ in
+                Task { await self?.removeCommitSubscriber(id) }
+            }
+        }
     }
 
     /// Atomically creates metadata for a previously unseen wear or returns the
@@ -348,6 +362,9 @@ public actor ReadingStore {
                 )
             }
             commitContinuation.yield(result.commit)
+            for continuation in commitSubscribers.values {
+                continuation.yield(result.commit)
+            }
         }
         return result.commit
     }
@@ -607,9 +624,17 @@ public actor ReadingStore {
             container = nil
             health = .closed
             commitContinuation.finish()
+            for continuation in commitSubscribers.values { continuation.finish() }
+            commitSubscribers.removeAll()
         } catch {
             throw markUnhealthy(operation: .close, error: error, dropped: 0)
         }
+    }
+}
+
+private extension ReadingStore {
+    func removeCommitSubscriber(_ id: UUID) {
+        commitSubscribers.removeValue(forKey: id)
     }
 }
 
