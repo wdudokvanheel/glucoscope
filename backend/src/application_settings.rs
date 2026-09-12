@@ -1,23 +1,15 @@
-use anyhow::Result;
 use config::builder::DefaultState;
-use config::{Config, ConfigBuilder, Environment, File};
-use librelink_client::client::{Credentials, LibreLinkClient};
+use config::{Config, ConfigBuilder, File};
 use log;
-use log::LevelFilter;
 use serde::{Deserialize, Serialize};
-use simple_logger;
-use simple_logger::SimpleLogger;
 use std::env;
 use std::path::Path;
-use std::sync::Arc;
-use tokio;
-use warp::Filter;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApplicationSettings {
-    pub librelink_username: String,
-    pub librelink_password: String,
-    pub librelink_realm: String,
+    pub librelink_username: Option<String>,
+    pub librelink_password: Option<String>,
+    pub librelink_realm: Option<String>,
     pub influx_url: String,
     pub influx_db: String,
     pub influx_token: String,
@@ -58,13 +50,23 @@ impl ApplicationSettings {
             }
         }
 
-        if let Some(mut config_builder) = config_builder {
+        if let Some(config_builder) = config_builder {
             // config_builder = config_builder.add_source(Environment::with_prefix("SUGARSCOPE"));
             let settings: ApplicationSettings = config_builder.build()?.try_deserialize()?;
 
-            let toml_str = toml::to_string_pretty(&settings)
-                .expect("Failed to convert settings to TOML format");
-            log::info!("Running with settings:\n{}", toml_str);
+            log::info!(
+                "Loaded configuration (LibreLink: {}, API auth: {})",
+                if settings.librelink_username.is_some() {
+                    "configured"
+                } else {
+                    "disabled"
+                },
+                if settings.api_token.is_some() {
+                    "configured"
+                } else {
+                    "disabled"
+                }
+            );
             Ok(settings)
         } else {
             Err(anyhow::anyhow!("Failed to find any configuration file"))

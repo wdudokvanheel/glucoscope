@@ -42,12 +42,12 @@ async fn main() -> Result<()> {
         &settings.influx_token,
     );
 
-    match start_libre_link_sync(influx_client.clone(), &settings).await{
-        Ok(_) => {}
-        Err(error) => {
-            println!("Failed to connect to libre link: {}", error);
-            return Err(error);
-        }
+    if settings.librelink_username.is_some() || settings.librelink_password.is_some() {
+        start_libre_link_sync(influx_client.clone(), &settings)
+            .await
+            .context("Failed to connect to LibreLink")?;
+    } else {
+        log::info!("LibreLink credentials are not configured; direct uploads remain available");
     }
     webserver::start_server(influx_client.clone(), settings.api_token);
 
@@ -63,12 +63,22 @@ pub async fn start_libre_link_sync(
 ) -> Result<()> {
     log::trace!("Authenticating with LibreLink Up…");
 
+    let username = settings
+        .librelink_username
+        .as_ref()
+        .ok_or_else(|| anyhow!("librelink_username and librelink_password must be set together"))?;
+    let password = settings
+        .librelink_password
+        .as_ref()
+        .ok_or_else(|| anyhow!("librelink_username and librelink_password must be set together"))?;
+    let realm = settings.librelink_realm.as_deref().unwrap_or("EU");
+
     let client = LibreLinkClient::new(
         Credentials {
-            username: settings.librelink_username.clone(),
-            password: settings.librelink_password.clone(),
+            username: username.clone(),
+            password: password.clone(),
         },
-        Some(settings.librelink_realm.clone()),
+        Some(realm.to_owned()),
     )
     .await
     .map_err(|e| anyhow!("{}", e))?;

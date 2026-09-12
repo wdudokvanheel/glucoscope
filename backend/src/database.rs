@@ -1,4 +1,4 @@
-use crate::measurement::GlucoseMeasurement;
+use crate::measurement::{GlucoseMeasurement, UploadedGlucoseMeasurement};
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use influxdb::{Client, InfluxDbWriteable, ReadQuery};
@@ -40,6 +40,15 @@ pub async fn get_last_entries(
 pub async fn save_measurement(
     connection: &InfluxConnection,
     measurement: &GlucoseMeasurement,
+) -> Result<()> {
+    let client = connection.open_connection();
+    client.query(&measurement.to_write_query()).await?;
+    Ok(())
+}
+
+pub async fn save_uploaded_measurement(
+    connection: &InfluxConnection,
+    measurement: &UploadedGlucoseMeasurement,
 ) -> Result<()> {
     let client = connection.open_connection();
     client.query(&measurement.to_write_query()).await?;
