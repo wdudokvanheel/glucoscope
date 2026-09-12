@@ -108,7 +108,34 @@
 		CC200000000000000000000C /* ServerUploadCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000C /* ServerUploadCoordinator.swift */; };
 		CC200000000000000000000D /* ServerUploadsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000D /* ServerUploadsView.swift */; };
 		CC200000000000000000000E /* AlarmModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC100000000000000000000E /* AlarmModels.swift */; };
+		DD2000000000000000000000 /* GlucoseLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000000000000000000001 /* GlucoseLiveActivityWidget.swift */; };
+		DD2000000000000000000001 /* GlucoseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000006 /* GlucoseActivityAttributes.swift */; };
+		DD2000000000000000000002 /* GlucoScopeLiveActivityExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = DD1000000000000000000000 /* GlucoScopeLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DD4000000000000000000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2B2853F52D57A2CE009E86E9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD8000000000000000000000;
+			remoteInfo = GlucoScopeLiveActivityExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DD3000000000000000000000 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				DD2000000000000000000002 /* GlucoScopeLiveActivityExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2B109BA22DD7492C0052D0E1 /* ServerSettingsGraphic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSettingsGraphic.swift; sourceTree = "<group>"; };
@@ -213,6 +240,9 @@
 		CC100000000000000000000C /* ServerUploadCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/ServerUploadCoordinator.swift; sourceTree = "<group>"; };
 		CC100000000000000000000D /* ServerUploadsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/Configuration/ServerUploadsView.swift; sourceTree = "<group>"; };
 		CC100000000000000000000E /* AlarmModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms/AlarmModels.swift; sourceTree = "<group>"; };
+		DD1000000000000000000000 /* GlucoScopeLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GlucoScopeLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD1000000000000000000001 /* GlucoseLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseLiveActivityWidget.swift; sourceTree = "<group>"; };
+		DD1000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -231,6 +261,13 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		2B2853FA2D57A2CE009E86E9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD3000000000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -311,6 +348,7 @@
 			children = (
 				2B2853FE2D57A2CE009E86E9 /* Products */,
 				2B2853FF2D57A2CE009E86E9 /* GlucoScope */,
+				DD5000000000000000000000 /* GlucoScopeLiveActivity */,
 			);
 			sourceTree = "<group>";
 		};
@@ -318,6 +356,7 @@
 			isa = PBXGroup;
 			children = (
 				2B2853FD2D57A2CE009E86E9 /* GlucoScope.app */,
+				DD1000000000000000000000 /* GlucoScopeLiveActivityExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -461,6 +500,15 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		DD5000000000000000000000 /* GlucoScopeLiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				DD1000000000000000000001 /* GlucoseLiveActivityWidget.swift */,
+				DD1000000000000000000002 /* Info.plist */,
+			);
+			path = GlucoScopeLiveActivity;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -471,10 +519,12 @@
 				2B2853F92D57A2CE009E86E9 /* Sources */,
 				2B2853FA2D57A2CE009E86E9 /* Frameworks */,
 				2B2853FB2D57A2CE009E86E9 /* Resources */,
+				DD3000000000000000000000 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				DD4000000000000000000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				2BAA51032DAE9B97003981B0 /* Resources */,
@@ -483,6 +533,23 @@
 			productName = SugarScope;
 			productReference = 2B2853FD2D57A2CE009E86E9 /* GlucoScope.app */;
 			productType = "com.apple.product-type.application";
+		};
+		DD8000000000000000000000 /* GlucoScopeLiveActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD7000000000000000000000 /* Build configuration list for PBXNativeTarget "GlucoScopeLiveActivityExtension" */;
+			buildPhases = (
+				DD3000000000000000000001 /* Sources */,
+				DD3000000000000000000002 /* Frameworks */,
+				DD3000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GlucoScopeLiveActivityExtension;
+			productName = GlucoScopeLiveActivityExtension;
+			productReference = DD1000000000000000000000 /* GlucoScopeLiveActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -505,6 +572,9 @@
 							};
 						};
 					};
+					DD8000000000000000000000 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 				};
 			};
 			buildConfigurationList = 2B2853F82D57A2CE009E86E9 /* Build configuration list for PBXProject "GlucoScope" */;
@@ -521,12 +591,20 @@
 			projectRoot = "";
 			targets = (
 				2B2853FC2D57A2CE009E86E9 /* GlucoScope */,
+				DD8000000000000000000000 /* GlucoScopeLiveActivityExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		2B2853FB2D57A2CE009E86E9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD3000000000000000000003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -644,7 +722,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DD3000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD2000000000000000000000 /* GlucoseLiveActivityWidget.swift in Sources */,
+				DD2000000000000000000001 /* GlucoseActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DD4000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD8000000000000000000000 /* GlucoScopeLiveActivityExtension */;
+			targetProxy = DD4000000000000000000000 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2B2854092D57A2D0009E86E9 /* Debug */ = {
@@ -838,6 +933,56 @@
 			};
 			name = Release;
 		};
+		DD6000000000000000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L23NTUN6KV;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GlucoScopeLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.6;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.wdudokvanheel.glucoscope.liveactivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DD6000000000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L23NTUN6KV;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GlucoScopeLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.6;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.wdudokvanheel.glucoscope.liveactivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -855,6 +1000,15 @@
 			buildConfigurations = (
 				2B28540C2D57A2D0009E86E9 /* Debug */,
 				2B28540D2D57A2D0009E86E9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DD7000000000000000000000 /* Build configuration list for PBXNativeTarget "GlucoScopeLiveActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD6000000000000000000000 /* Debug */,
+				DD6000000000000000000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

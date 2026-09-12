@@ -12,7 +12,7 @@ final class AppRuntime: ObservableObject {
     let alarms: StandaloneAlarmService
     let liveActivity: StandaloneLiveActivityService
 
-    @Published var standaloneTab: StandaloneTab = .graph
+    @Published var standaloneTab: StandaloneTab
     @Published var showPendingUploadWarning = false
     @Published private(set) var started = false
 
@@ -20,6 +20,14 @@ final class AppRuntime: ObservableObject {
     private var transitionGeneration = 0
 
     init() {
+        standaloneTab = .graph
+        #if DEBUG
+        if let argumentIndex = ProcessInfo.processInfo.arguments.firstIndex(of: "-standaloneScreenshotTab"),
+           ProcessInfo.processInfo.arguments.indices.contains(argumentIndex + 1),
+           let tab = StandaloneTab(rawValue: ProcessInfo.processInfo.arguments[argumentIndex + 1]) {
+            standaloneTab = tab
+        }
+        #endif
         let preferences = PreferenceService()
         let viewerDataSource = DataSourceService(prefences: preferences)
         let coordinator = LibreDiagnosticsCoordinator.shared
@@ -54,6 +62,7 @@ final class AppRuntime: ObservableObject {
             .sink { [weak self] _ in
                 DispatchQueue.main.async {
                     self?.objectWillChange.send()
+                    self?.synchronizeAlarmActivation()
                     self?.updateConsumers(readings: self?.glucose.readings ?? [])
                 }
             }
@@ -114,7 +123,7 @@ final class AppRuntime: ObservableObject {
             await switchToViewer(generation: generation)
         case .standalone:
             glucose.setStandaloneActive(true)
-            alarms.setStandaloneActive(true)
+            alarms.setStandaloneActive(preferences.standaloneOnboardingCompleted)
             liveActivity.setStandaloneActive(true)
             await uploads.setStandaloneActive(true)
             guard generation == transitionGeneration, preferences.appMode == .standalone else {
@@ -156,6 +165,12 @@ final class AppRuntime: ObservableObject {
     private func refreshTimeSensitiveServices() {
         alarms.refresh()
         liveActivity.refresh()
+    }
+
+    private func synchronizeAlarmActivation() {
+        alarms.setStandaloneActive(
+            preferences.appMode == .standalone && preferences.standaloneOnboardingCompleted
+        )
     }
 
     private func refreshAfterForeground() async {

@@ -30,6 +30,12 @@ struct AppView: View {
             }
         }
         .task { await runtime.start() }
+        .onOpenURL { url in
+            guard url.scheme == "glucoscope",
+                  url.host == "graph",
+                  runtime.mode == .standalone else { return }
+            runtime.standaloneTab = .graph
+        }
         .alert("Uploads are still pending", isPresented: $runtime.showPendingUploadWarning) {
             Button("Stay in Bluetooth mode", role: .cancel) { }
             Button("Switch and pause uploads", role: .destructive) {
