@@ -31,6 +31,7 @@ struct AlarmEngineSmoke {
         schedules()
         missingAndMode()
         historiesAndOverrides()
+        projections()
         try persistence()
         print("Alarm engine: \(checks) temporal checks passed")
     }
@@ -190,5 +191,39 @@ struct AlarmEngineSmoke {
         var restored = try JSONDecoder().decode(StandaloneAlarmEngine.self, from: JSONEncoder().encode(e))
         ingest(&restored, rule, 1, 11)
         require(tick(&restored, rule, 1).isEmpty && restored.episodes[rule.id]?.dismissed == true, "relaunch retains dismissed episode")
+    }
+
+    static func projections() {
+        var high = GlucoseAlarmRule(kind: .high, thresholdMMOL: 10)
+        var e = started(); ingest(&e, high, 0, 11); _ = tick(&e, high, 0)
+        require(e.projectedNotifications(rules: [high], general: general, staleAfter: 300, now: date(0)).isEmpty,
+                "no scheduled glucose alarm at or after stale boundary")
+        ingest(&e, high, 4, 11)
+        let pending = e.projectedNotifications(rules: [high], general: general, staleAfter: 300, now: date(4))
+        require(pending.count == 1 && pending.first?.date == date(5), "fresh sample permits repeat deadline while app sleeps")
+        ingest(&e, high, 4.5, 9)
+        require(e.projectedNotifications(rules: [high], general: general, staleAfter: 300, now: date(4.5)).isEmpty,
+                "recovery withdraws projected notification")
+        var sustained = GlucoseAlarmRule(kind: .sustainedHigh, thresholdMMOL: 10); sustained.durationMinutes = 3
+        e = started(); ingest(&e, sustained, 0, 11); _ = tick(&e, sustained, 0)
+        require(e.projectedNotifications(rules: [sustained], general: general, staleAfter: 300, now: date(0)).first?.date == date(3),
+                "sustained deadline may be scheduled within observed freshness")
+        let missing = GlucoseAlarmRule(kind: .missing, thresholdMMOL: 0)
+        e = started()
+        let missingPending = e.projectedNotifications(rules: [missing], general: general, staleAfter: 300, now: date(0))
+        require(missingPending.map(\.date) == [date(10), date(15), date(20), date(25)], "four bounded missing reminders at configured deadlines")
+        ingest(&e, missing, 1, 6)
+        require(e.projectedNotifications(rules: [missing], general: general, staleAfter: 300, now: date(1)).first?.date == date(11),
+                "fresh reading shifts missing notification deadline")
+        let many = (0..<20).map { _ in GlucoseAlarmRule(kind: .missing, thresholdMMOL: 0) }
+        require(e.projectedNotifications(rules: many, general: general, staleAfter: 300, now: date(1)).count == 48,
+                "forecast obeys shared pending request budget")
+        e.setStandalone(false, now: date(2))
+        require(e.projectedNotifications(rules: many, general: general, staleAfter: 300, now: date(2)).isEmpty,
+                "Viewer has no projected notifications")
+        high.repeats = false
+        e = started(); ingest(&e, high, 0, 11); _ = tick(&e, high, 0)
+        require(e.projectedNotifications(rules: [high], general: general, staleAfter: 300, now: date(1)).isEmpty,
+                "single-fire episode schedules no repeats")
     }
 }

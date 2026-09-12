@@ -251,4 +251,51 @@ struct StandaloneAlarmEngine: Codable {
 
     mutating func resetRule(_ id: UUID) { episodes.removeValue(forKey: id) }
     mutating func replaceEpisode(_ id: UUID, with episode: AlarmEpisode?) { episodes[id] = episode }
+
+    /// A bounded forecast with no invented sensor samples. Glucose alarms can only be
+    /// forecast while the already observed sample remains fresh. Missing-reading alarms
+    /// remain valid until a fresh sample cancels their pending requests.
+    func projectedNotifications(rules: [GlucoseAlarmRule], general: AlarmGeneralSettings,
+                                staleAfter: TimeInterval, now: Date, calendar: Calendar = .current,
+                                limit: Int = 48) -> [AlarmEmission] {
+        guard standalone else { return [] }
+        var result: [AlarmEmission] = []
+        for rule in rules where rule.enabled {
+            var projection = self
+            var cursor = now
+            for _ in 0..<4 {
+                let episode = projection.episodes[rule.id] ?? AlarmEpisode()
+                if episode.dismissed { break }
+                let ready: Date?
+                if episode.active { ready = episode.nextNotification }
+                else if rule.kind == .missing {
+                    ready = (projection.latestReading?.sampleDate ?? projection.startedAt ?? now)
+                        .addingTimeInterval(Double(rule.missingMinutes * 60))
+                } else {
+                    ready = episode.conditionLatched ? episode.qualifyingSince?.addingTimeInterval(
+                        Double(rule.kind.isSustained ? rule.durationMinutes * 60 : 0)) : nil
+                }
+                guard let ready else { break }
+                var due = max(ready, cursor.addingTimeInterval(1))
+                if !rule.isActive(at: due, calendar: calendar) {
+                    // Schedules use wall-clock minutes, including DST transitions. Look far
+                    // enough ahead to include the next occurrence of any selected weekday.
+                    due = Date(timeIntervalSince1970: ceil(due.timeIntervalSince1970 / 60) * 60)
+                    let deadline = due.addingTimeInterval(8 * 86400)
+                    while due < deadline && !rule.isActive(at: due, calendar: calendar) {
+                        due = due.addingTimeInterval(60)
+                    }
+                    if due >= deadline { break }
+                }
+                // The real engine is the single source of truth for margin, snooze,
+                // recovery opt-outs, freshness, and sustained qualification.
+                let emissions = projection.evaluate(rules: [rule], general: general, staleAfter: staleAfter,
+                                                     now: due, calendar: calendar)
+                guard let emission = emissions.first else { break }
+                result.append(emission)
+                cursor = due
+            }
+        }
+        return Array(result.sorted { $0.date == $1.date ? $0.ruleID.uuidString < $1.ruleID.uuidString : $0.date < $1.date }.prefix(max(0, limit)))
+    }
 }
