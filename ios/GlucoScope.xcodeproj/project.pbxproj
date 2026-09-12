@@ -95,6 +95,7 @@
 		BB2000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift */; };
 		CC2000000000000000000000 /* AppRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000000 /* AppRuntime.swift */; };
 		CC2000000000000000000001 /* StandaloneGlucoseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000001 /* StandaloneGlucoseService.swift */; };
+		EE2000000000000000000000 /* StandaloneExperiencePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1000000000000000000000 /* StandaloneExperiencePolicy.swift */; };
 		CC2000000000000000000002 /* StandaloneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000002 /* StandaloneViews.swift */; };
 		CC2000000000000000000003 /* StandaloneSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000003 /* StandaloneSettingsView.swift */; };
 		CC2000000000000000000004 /* AlarmSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000000004 /* AlarmSettingsView.swift */; };
@@ -227,6 +228,7 @@
 		BB1000000000000000000020 /* Sensor/Libre2/Libre2NFCHistoryDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sensor/Libre2/Libre2NFCHistoryDecoder.swift; sourceTree = "<group>"; };
 		CC1000000000000000000000 /* AppRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/AppRuntime.swift; sourceTree = "<group>"; };
 		CC1000000000000000000001 /* StandaloneGlucoseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/StandaloneGlucoseService.swift; sourceTree = "<group>"; };
+		EE1000000000000000000000 /* StandaloneExperiencePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service/StandaloneExperiencePolicy.swift; sourceTree = "<group>"; };
 		CC1000000000000000000002 /* StandaloneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/Standalone/StandaloneViews.swift; sourceTree = "<group>"; };
 		CC1000000000000000000003 /* StandaloneSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View/Standalone/StandaloneSettingsView.swift; sourceTree = "<group>"; };
 		CC1000000000000000000004 /* AlarmSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms/AlarmSettingsView.swift; sourceTree = "<group>"; };
@@ -366,6 +368,7 @@
 			children = (
 				CC1000000000000000000000 /* AppRuntime.swift */,
 				CC1000000000000000000001 /* StandaloneGlucoseService.swift */,
+				EE1000000000000000000000 /* StandaloneExperiencePolicy.swift */,
 				CC1000000000000000000002 /* StandaloneViews.swift */,
 				CC1000000000000000000003 /* StandaloneSettingsView.swift */,
 				CC1000000000000000000004 /* AlarmSettingsView.swift */,
@@ -620,6 +623,7 @@
 			files = (
 				CC2000000000000000000000 /* AppRuntime.swift in Sources */,
 				CC2000000000000000000001 /* StandaloneGlucoseService.swift in Sources */,
+				EE2000000000000000000000 /* StandaloneExperiencePolicy.swift in Sources */,
 				CC2000000000000000000002 /* StandaloneViews.swift in Sources */,
 				CC2000000000000000000003 /* StandaloneSettingsView.swift in Sources */,
 				CC2000000000000000000004 /* AlarmSettingsView.swift in Sources */,

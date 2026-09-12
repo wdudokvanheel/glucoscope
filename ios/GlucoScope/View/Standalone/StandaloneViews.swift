@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum StandaloneTab: Hashable {
+enum StandaloneTab: String, Hashable {
     case graph
     case stats
     case sensor
@@ -390,12 +390,19 @@ struct StandaloneStatsView: View {
     @State private var detail: GlucoseMetric?
 
     private var cutoff: Date {
-        if let days = window.dayCount {
-            return Calendar.current.date(byAdding: .day, value: -days, to: glucose.now) ?? .distantPast
-        }
-        return Calendar.current.startOfDay(for: glucose.now)
+        StandaloneStatistics.windowStart(days: window.dayCount, now: glucose.now)
     }
     private var selected: [StoredReadingSnapshot] { glucose.readings(since: cutoff) }
+    private var statistics: StandaloneStatisticResult {
+        StandaloneStatistics.calculate(
+            readings: selected,
+            start: cutoff,
+            end: glucose.now,
+            low: prefs.bgLow,
+            high: prefs.bgHigh,
+            veryHigh: prefs.bgUpper
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -453,7 +460,7 @@ struct StandaloneStatsView: View {
             Image(systemName: "calendar.badge.clock").foregroundStyle(prefs.theme.accentColor)
             VStack(alignment: .leading, spacing: 3) {
                 Text(coverageText).font(.subheadline.weight(.semibold))
-                Text("Calculated from \(selected.count) locally saved samples. Gaps are not counted as recorded time.")
+                Text("\(statistics.sampleCount) locally saved samples cover \(coveredTimeText). Gaps are not counted as recorded time.")
                     .font(.caption)
                     .foregroundStyle(prefs.theme.textColor.opacity(0.65))
             }
@@ -478,31 +485,28 @@ struct StandaloneStatsView: View {
     }
 
     private var coverageText: String {
-        let days = Set(selected.map { Calendar.current.startOfDay(for: $0.sampleDate) }).count
+        let days = statistics.daysWithData
         if window == .today { return days == 1 ? "Today’s available data" : "Partial data for today" }
         return "\(days) \(days == 1 ? "day" : "days") of data available for the selected \(window.rawValue)"
     }
 
+    private var coveredTimeText: String {
+        let minutes = Int(statistics.coveredSeconds / 60)
+        if minutes >= 60 { return "\(minutes / 60)h \(minutes % 60)m" }
+        return "\(minutes)m"
+    }
+
     private var metrics: [GlucoseMetric] {
-        let values = selected.map { Double($0.glucoseMGDL) / 18.0182 }
-        let count = Double(values.count)
-        let low = values.filter { $0 < prefs.bgLow }.count
-        let inRange = values.filter { $0 >= prefs.bgLow && $0 <= prefs.bgHigh }.count
-        let high = values.filter { $0 > prefs.bgHigh && $0 < prefs.bgUpper }.count
-        let veryHigh = values.filter { $0 >= prefs.bgUpper }.count
-        let average = values.reduce(0, +) / count
-        let variance = values.count > 1
-            ? values.map { pow($0 - average, 2) }.reduce(0, +) / Double(values.count - 1)
-            : 0
-        let cv = average > 0 && values.count > 1 ? sqrt(variance) / average * 100 : nil
-        func percent(_ value: Int) -> String { String(format: "%.0f%%", Double(value) / count * 100) }
+        func percent(_ duration: TimeInterval) -> String {
+            statistics.percentage(duration).map { String(format: "%.0f%%", $0) } ?? "No coverage"
+        }
         return [
-            GlucoseMetric(id: "range", title: "Time in range", value: percent(inRange), icon: "checkmark.circle.fill", color: prefs.theme.inRangeColor, explanation: String(format: "The share of recorded samples between your Low and High display thresholds (%.1f–%.1f mmol/L).", prefs.bgLow, prefs.bgHigh)),
-            GlucoseMetric(id: "average", title: "Average glucose", value: String(format: "%.1f mmol/L", average), icon: "sum", color: prefs.theme.accentColor, explanation: "The arithmetic mean of the available glucose samples in this period."),
-            GlucoseMetric(id: "below", title: "Below range", value: percent(low), icon: "arrow.down.circle.fill", color: prefs.theme.lowColor, explanation: "The share of recorded samples below your Low display threshold."),
-            GlucoseMetric(id: "above", title: "Above range", value: percent(high), icon: "arrow.up.circle", color: prefs.theme.highColor, explanation: "The share above High and below Very high. Very-high samples are shown separately."),
-            GlucoseMetric(id: "veryHigh", title: "Very high", value: percent(veryHigh), icon: "exclamationmark.triangle.fill", color: prefs.theme.upperColor, explanation: "The share of recorded samples at or above your Very high display threshold."),
-            GlucoseMetric(id: "variability", title: "Variability (CV)", value: cv.map { String(format: "%.0f%%", $0) } ?? "Needs 2 samples", icon: "waveform.path.ecg", color: prefs.theme.accentColor, explanation: "Coefficient of variation: sample standard deviation divided by average glucose. It describes how spread out the available readings are; at least two samples are required.")
+            GlucoseMetric(id: "range", title: "Time in range", value: percent(statistics.inRangeSeconds), icon: "checkmark.circle.fill", color: prefs.theme.inRangeColor, explanation: String(format: "The share of observed time between your Low and High display thresholds (%.1f–%.1f mmol/L). Unobserved gaps are excluded.", prefs.bgLow, prefs.bgHigh)),
+            GlucoseMetric(id: "average", title: "Average glucose", value: statistics.average.map { String(format: "%.1f mmol/L", $0) } ?? "No coverage", icon: "sum", color: prefs.theme.accentColor, explanation: "The time-weighted average of available glucose observations in this period."),
+            GlucoseMetric(id: "below", title: "Below range", value: percent(statistics.belowSeconds), icon: "arrow.down.circle.fill", color: prefs.theme.lowColor, explanation: "The share of observed time below your Low display threshold."),
+            GlucoseMetric(id: "above", title: "Above range", value: percent(statistics.aboveSeconds), icon: "arrow.up.circle", color: prefs.theme.highColor, explanation: "The share of observed time above High and below Very high. Very-high time is shown separately."),
+            GlucoseMetric(id: "veryHigh", title: "Very high", value: percent(statistics.veryHighSeconds), icon: "exclamationmark.triangle.fill", color: prefs.theme.upperColor, explanation: "The share of observed time at or above your Very high display threshold."),
+            GlucoseMetric(id: "variability", title: "Variability (CV)", value: statistics.coefficientOfVariation.map { String(format: "%.0f%%", $0) } ?? "Needs 2 samples", icon: "waveform.path.ecg", color: prefs.theme.accentColor, explanation: "Coefficient of variation: time-weighted standard deviation divided by average glucose. It describes how spread out the available readings are; at least two covered observations are required.")
         ]
     }
 }
@@ -523,8 +527,12 @@ struct SensorView: View {
                 if let date = coordinator.sensorPairedAt {
                     LabeledContent("Set up", value: date.formatted(date: .abbreviated, time: .shortened))
                 }
+                if let age = coordinator.sensorAge {
+                    LabeledContent("Sensor age", value: age.formattedSensorAge)
+                }
                 LabeledContent("Collection", value: coordinator.isRunning ? "Running" : "Stopped")
-                LabeledContent("Bluetooth", value: coordinator.bluetoothState)
+                LabeledContent("Connection", value: coordinator.status)
+                LabeledContent("Bluetooth power", value: coordinator.bluetoothState)
                 LabeledContent("Last successful reading", value: lastReadingText)
             }
 
@@ -667,11 +675,34 @@ struct SensorLogView: View {
     }
 
     private func redact(_ message: String) -> String {
-        message.replacingOccurrences(
+        var result = message
+        if let sensorName = coordinator.sensorName, !sensorName.isEmpty {
+            result = result.replacingOccurrences(
+                of: sensorName,
+                with: "<sensor>",
+                options: [.caseInsensitive, .literal]
+            )
+        }
+        result = result.replacingOccurrences(
+            of: "(?i)\\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+            with: "<identifier>",
+            options: .regularExpression
+        )
+        return result.replacingOccurrences(
             of: "(?i)\\b[0-9a-f]{8,}\\b",
             with: "<redacted>",
             options: .regularExpression
         )
+    }
+}
+
+private extension TimeInterval {
+    var formattedSensorAge: String {
+        let minutes = max(0, Int(self / 60))
+        let days = minutes / (24 * 60)
+        let hours = (minutes % (24 * 60)) / 60
+        if days > 0 { return "\(days)d \(hours)h" }
+        return "\(hours)h \(minutes % 60)m"
     }
 }
 

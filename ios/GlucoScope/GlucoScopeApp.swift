@@ -9,7 +9,20 @@ struct GlucoScopeApp: App {
     
 
     @UIApplicationDelegateAdaptor(GlucoScopeAppDelegate.self) private var appDelegate
-    @StateObject private var runtime = AppRuntime()
+    @StateObject private var runtime: AppRuntime
+
+    init() {
+        Self.gateCollectorForPersistedMode()
+        _runtime = StateObject(wrappedValue: AppRuntime())
+    }
+
+    static func gateCollectorForPersistedMode() {
+        let mode = UserDefaults.standard.data(forKey: GlucoScopePreferenceKey.appMode.rawValue)
+            .flatMap { try? JSONDecoder().decode(AppMode?.self, from: $0) } ?? nil
+        if mode != .standalone {
+            UserDefaults.standard.set(false, forKey: "libre2.collectionEnabled")
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -29,11 +42,7 @@ final class GlucoScopeAppDelegate: NSObject, UIApplicationDelegate {
         // Core Bluetooth restoration can construct the collector before SwiftUI.
         // Gate it from the persisted product mode first so Viewer never resumes
         // standalone collection or recording during launch.
-        let mode = UserDefaults.standard.data(forKey: GlucoScopePreferenceKey.appMode.rawValue)
-            .flatMap { try? JSONDecoder().decode(AppMode?.self, from: $0) } ?? nil
-        if mode != .standalone {
-            UserDefaults.standard.set(false, forKey: "libre2.collectionEnabled")
-        }
+        GlucoScopeApp.gateCollectorForPersistedMode()
         _ = LibreDiagnosticsCoordinator.shared
         return true
     }

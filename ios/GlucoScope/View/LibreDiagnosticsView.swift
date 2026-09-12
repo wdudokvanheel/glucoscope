@@ -8,7 +8,7 @@ struct LibreDiagnosticsView: View {
     @AppStorage(LibreDiagnosticsUploader.endpointDefaultsKey)
     private var diagnosticsEndpoint = LibreDiagnosticsUploader.defaultEndpoint
     @AppStorage(LibreDiagnosticsUploader.automaticUploadDefaultsKey)
-    private var automaticDiagnosticsUpload = true
+    private var automaticDiagnosticsUpload = false
 
     var body: some View {
         NavigationStack {
@@ -88,7 +88,7 @@ struct LibreDiagnosticsView: View {
         } header: {
             Text("Diagnostics host")
         } footer: {
-            Text("Automatic upload sends one diagnostics snapshot when an NFC scan finishes. Use Send diagnostics to capture later Bluetooth activity.")
+            Text("Diagnostics are sent only when you tap Send diagnostics, unless you explicitly enable Send after NFC scan.")
         }
     }
 

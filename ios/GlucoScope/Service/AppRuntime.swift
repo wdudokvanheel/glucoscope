@@ -126,10 +126,10 @@ final class AppRuntime: ObservableObject {
             alarms.setStandaloneActive(preferences.standaloneOnboardingCompleted)
             liveActivity.setStandaloneActive(true)
             await uploads.setStandaloneActive(true)
-            guard generation == transitionGeneration, preferences.appMode == .standalone else {
-                await uploads.setStandaloneActive(false)
-                return
-            }
+            // A newer transition has already applied its own upload state. An
+            // obsolete completion must not compensate and overwrite that state.
+            guard generation == transitionGeneration,
+                  preferences.appMode == .standalone else { return }
             updateConsumers(readings: glucose.readings)
             if glucose.allowsAutomaticSetupRetry,
                glucose.coordinator.sensorName != nil,

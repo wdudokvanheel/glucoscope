@@ -48,6 +48,18 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     @Published private(set) var latestSetupFailure: String?
     let diagnosticsUploader = LibreDiagnosticsUploader()
 
+    /// Sensor-reported lifetime inferred from the persisted clock anchor.
+    /// This is unavailable when calibration has not established a valid clock.
+    var sensorAge: TimeInterval? {
+        guard let session = currentSensorSession,
+              let anchor = validClockAnchor(for: session) else { return nil }
+        let elapsedMinutes = floor(Date().timeIntervalSince(anchor.referenceDate) / 60)
+        let sensorMinute = Double(anchor.referenceSensorMinute) + elapsedMinutes
+        guard sensorMinute >= 0,
+              sensorMinute <= Double(Libre2DiagnosticDecoder.maximumSensorMinute) else { return nil }
+        return sensorMinute * 60
+    }
+
     private static let maximumLogEntries = 500
     static let readingsStorageURL = FileManager.default.urls(
         for: .applicationSupportDirectory, in: .userDomainMask
@@ -192,6 +204,26 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     /// Starts a deliberate setup scan. Existing BLE work is stopped first so credentials and
     /// callbacks from two sensors cannot be mixed.
     func startNFCSetup() {
+        startNFCStreamingSetup(expectedSensor: nil)
+    }
+
+    /// Re-enables the saved sensor only. Identity is checked by the NFC session
+    /// before any pairing state is saved or streaming command is sent.
+    func startNFCReconnection() {
+        do {
+            guard let saved = try store.load(), saved.setupComplete else {
+                latestSetupFailure = "Complete sensor setup before reconnecting"
+                status = latestSetupFailure ?? "Complete sensor setup before reconnecting"
+                return
+            }
+            startNFCStreamingSetup(expectedSensor: saved)
+        } catch {
+            latestSetupFailure = "Could not read saved sensor: \(error.localizedDescription)"
+            status = latestSetupFailure ?? "Could not read saved sensor"
+        }
+    }
+
+    private func startNFCStreamingSetup(expectedSensor: LibreSensorSession?) {
         precondition(Thread.isMainThread)
         latestSetupFailure = nil
         bluetooth.invalidateTransportSynchronously()
@@ -201,10 +233,12 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         nfcSession = nil
         isRunning = false
         isScanningNFC = true
-        status = "Stopping Bluetooth before NFC setup"
+        status = expectedSensor == nil
+            ? "Stopping Bluetooth before NFC setup"
+            : "Stopping Bluetooth before NFC reconnection"
         bluetooth.stop { [weak self] in
             guard let self, self.operationGeneration == generation else { return }
-            self.beginNFCSetup(generation: generation)
+            self.beginNFCSetup(generation: generation, expectedSensor: expectedSensor)
         }
     }
 
@@ -240,14 +274,23 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         }
     }
 
-    private func beginNFCSetup(generation: UInt64) {
-        beginNFC(generation: generation, pairedSensor: nil)
+    private func beginNFCSetup(generation: UInt64, expectedSensor: LibreSensorSession?) {
+        beginNFC(
+            generation: generation,
+            pairedSensor: expectedSensor,
+            reconnecting: expectedSensor != nil
+        )
     }
 
-    private func beginNFC(generation: UInt64, pairedSensor saved: LibreSensorSession?, history: Bool = false) {
+    private func beginNFC(
+        generation: UInt64,
+        pairedSensor saved: LibreSensorSession?,
+        history: Bool = false,
+        reconnecting: Bool = false
+    ) {
         nfcHistoryInProgress = history
         let session = LibreNFCSession(store: store)
-        let isCalibration = saved != nil && !history
+        let isCalibration = saved != nil && !history && !reconnecting
         isNFCAvailable = session.isAvailable
         guard isNFCAvailable else {
             isScanningNFC = false
@@ -261,6 +304,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         isScanningNFC = true
         if history { historyStatus = "Reading sensor history; Bluetooth collection continues" }
         else if isCalibration { calibrationStatus = "Reading calibration; Bluetooth collection continues" }
+        else if reconnecting { status = "Scan the currently paired sensor" }
         else { status = "Hold the top of the iPhone near the sensor" }
         session.onLog = { [weak self] message in
             guard let self, self.operationGeneration == generation else { return }
@@ -361,6 +405,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
         }
         nfcSession = session
         if let saved, history { session.startHistory(for: saved) }
+        else if let saved, reconnecting { session.startReconnection(for: saved) }
         else if let saved { session.startCalibration(for: saved) }
         else { session.start() }
     }
@@ -723,7 +768,7 @@ final class LibreDiagnosticsCoordinator: NSObject, ObservableObject {
     private func sendDiagnosticsAfterNFCIfEnabled() {
         let defaults = UserDefaults.standard
         if defaults.object(forKey: LibreDiagnosticsUploader.automaticUploadDefaultsKey) == nil {
-            defaults.set(true, forKey: LibreDiagnosticsUploader.automaticUploadDefaultsKey)
+            defaults.set(false, forKey: LibreDiagnosticsUploader.automaticUploadDefaultsKey)
         }
         guard defaults.bool(forKey: LibreDiagnosticsUploader.automaticUploadDefaultsKey) else { return }
         let endpoint = defaults.string(forKey: LibreDiagnosticsUploader.endpointDefaultsKey)
